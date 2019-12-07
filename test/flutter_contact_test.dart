@@ -3,7 +3,8 @@ import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const MethodChannel channel = MethodChannel('github.com/clovisnicolas/flutter_contacts');
+  const MethodChannel channel =
+      MethodChannel('github.com/clovisnicolas/flutter_contacts');
   final List<MethodCall> log = <MethodCall>[];
   channel.setMockMethodCallHandler((MethodCall methodCall) async {
     log.add(methodCall);
@@ -58,7 +59,8 @@ void main() {
   });
 
   test('should provide initials for contact', () {
-    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName");
+    Contact contact1 =
+        Contact(givenName: "givenName", familyName: "familyName");
     Contact contact2 = Contact(givenName: "givenName");
     Contact contact3 = Contact(familyName: "familyName");
     Contact contact4 = Contact();
@@ -80,11 +82,13 @@ void main() {
   });
 
   test('should show contacts are equal', () {
-    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 =
+        Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "example@example.com"),
       Item(label: "Work", value: "example2@example.com"),
     ]);
-    Contact contact2 = Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact2 =
+        Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Work", value: "example2@example.com"),
       Item(label: "Home", value: "example@example.com"),
     ]);
@@ -93,7 +97,8 @@ void main() {
   });
 
   test('should produce a valid merged contact', () {
-    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 =
+        Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Work", value: "work@example.com"),
     ], phones: [], postalAddresses: []);
@@ -103,9 +108,15 @@ void main() {
       Item(label: "Mobile", value: "mobile@example.com"),
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
+          label: 'Home',
+          street: "1234 Middle-of Rd",
+          city: "Nowhere",
+          postcode: "12345",
+          region: null,
+          country: null)
     ]);
-    Contact mergedContact = Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact mergedContact =
+        Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Mobile", value: "mobile@example.com"),
       Item(label: "Work", value: "work@example.com"),
@@ -113,7 +124,12 @@ void main() {
       Item(label: "Mobile", value: "111-222-3344")
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
+          label: 'Home',
+          street: "1234 Middle-of Rd",
+          city: "Nowhere",
+          postcode: "12345",
+          region: null,
+          country: null)
     ]);
 
     expect(contact1 + contact2, mergedContact);
@@ -168,7 +184,14 @@ void expectMethodCall(List<MethodCall> log, String methodName) {
           {'label': 'label', 'value': null}
         ],
         'postalAddresses': [
-          {'label': 'label', 'street': null, 'city': null, 'postcode': null, 'region': null, 'country': null}
+          {
+            'label': 'label',
+            'street': null,
+            'city': null,
+            'postcode': null,
+            'region': null,
+            'country': null
+          }
         ],
         'avatar': null
       },

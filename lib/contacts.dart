@@ -20,8 +20,11 @@ class Contacts {
   /// Fetches all contacts, or when specified, the contacts with a name
   /// matching [query]
   static Future<Iterable<Contact>> getContacts(
-      {String query, bool withThumbnails = true, bool photoHighResolution = true}) async {
-    Iterable contacts = await _channel.invokeMethod('getContacts', <String, dynamic>{
+      {String query,
+      bool withThumbnails = true,
+      bool photoHighResolution = true}) async {
+    Iterable contacts =
+        await _channel.invokeMethod('getContacts', <String, dynamic>{
       'query': query,
       'withThumbnails': withThumbnails,
       'photoHighResolution': photoHighResolution
@@ -40,7 +43,8 @@ class Contacts {
       {bool withThumbnails = true, bool photoHighResolution = true}) async {
     if (phone == null || phone.isEmpty) return Iterable.empty();
 
-    Iterable contacts = await _channel.invokeMethod('getContactsForPhone', <String, dynamic>{
+    Iterable contacts =
+        await _channel.invokeMethod('getContactsForPhone', <String, dynamic>{
       'phone': phone,
       'withThumbnails': withThumbnails,
       'photoHighResolution': photoHighResolution
@@ -54,7 +58,8 @@ class Contacts {
     bool withThumbnails = true,
     bool photoHighResolution = true,
   }) async {
-    final fromChannel = await _channel.invokeMethod('getContact', <String, dynamic>{
+    final fromChannel =
+        await _channel.invokeMethod('getContact', <String, dynamic>{
       "identifier": identifier,
       "withThumbnails": withThumbnails,
       "photoHighResolution": photoHighResolution,
@@ -69,7 +74,8 @@ class Contacts {
   }
 
   /// Deletes the [contact] if it has a valid identifier
-  static Future deleteContact(Contact contact) => _channel.invokeMethod('deleteContact', contact.toMap());
+  static Future deleteContact(Contact contact) =>
+      _channel.invokeMethod('deleteContact', contact.toMap());
 
   /// Updates the [contact] if it has a valid identifier
   static Future<Contact> updateContact(Contact contact) async {
