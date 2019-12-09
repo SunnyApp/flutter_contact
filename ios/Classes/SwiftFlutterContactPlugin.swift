@@ -496,18 +496,19 @@ extension CNMutableContact {
         }
 
         // Dates
-        if let dates = dictionary["dates"] as? [[String:Any]]{
+        if let dates = dictionary["dates"] as? [[String:Any?]] {
             var updatedItems = [CNLabeledValue<NSDateComponents>]()
-            for item in dates where nil != item["value"] && nil != item["label"] {
+            for item in dates where nil != item["date"] && nil != item["label"] {
                 if let date = item["date"] as? [String:Int] {
                     let dateComp = convertNSDateComponents(date)
-                    let label = item["label"] as? String ?? ""
+                    let label = item["label"] as! String
                     
-                    updatedItems.append(CNLabeledValue(
-                        label: item["label"] as? String ?? "",
-                        value: dateComp))
                     if label == "birthday" {
                         contact.birthday = convertDateComponents(date)
+                    } else {
+                        updatedItems.append(CNLabeledValue(
+                            label: item["label"] as? String ?? "",
+                            value: dateComp))
                     }
                 }
             }
@@ -565,18 +566,18 @@ func convertDateComponents(_ dict: [String:Int])-> DateComponents {
 extension DateComponents {
     func toDictionary()-> [String: Int] {
         var dict = [String:Int]()
-        let year:Int? = self.year
-        if let year = year {
+        let year = self.year
+        if year != NSDateComponentUndefined {
             dict["year"] = year
         }
             
-        let month:Int? = self.month
-        if let month = month {
+        let month = self.month
+        if month != NSDateComponentUndefined {
             dict["month"] = month
         }
         
-        let day:Int? = self.day
-        if let day = day {
+        let day = self.day
+        if day != NSDateComponentUndefined {
             dict["day"] = day
         }
         
@@ -587,19 +588,19 @@ extension DateComponents {
 extension NSDateComponents {
     func toDictionary()-> [String:Int] {
         var dict = [String:Int]()
-        let year:Int? = self.year
-        if let year = year {
+        let year = self.year
+        if year != NSDateComponentUndefined {
             dict["year"] = year
         }
         
-        let month:Int? = self.month
-        if let month = month {
+        let month = self.month
+        if month != NSDateComponentUndefined {
             dict["month"] = month
         }
         
         
-        let day:Int? = self.day
-        if let day = day {
+        let day = self.day
+        if day != NSDateComponentUndefined {
             dict["day"] = day
         }
         
@@ -618,7 +619,7 @@ extension String {
     }
 
     func parseDateComponents()-> NSDateComponents? {
-        var nsDate = NSDateComponents()
+        let nsDate = NSDateComponents()
         let parts = self.split(separator: "-")
             .flatMap { $0.split(separator: "/") }
             .map{ Int($0) }

@@ -160,6 +160,11 @@ class Contact {
       postalAddresses: {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
       avatar: this.avatar ?? other.avatar);
 
+  /// Removes duplicates from the collections.  Duplicates are defined as having the exact same value
+  Contact removeDuplicates() {
+    return this + Contact();
+  }
+
   /// Returns true if all items in this contact are identical.
   @override
   bool operator ==(Object other) {
@@ -204,6 +209,13 @@ class ContactDate {
   String toString() {
     return 'ContactDate{label: $label, date: $date}';
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is ContactDate && label == other.label && date == other.date;
+
+  @override
+  int get hashCode => hashValues(label, date);
 }
 
 // ignore: must_be_immutable
@@ -249,8 +261,29 @@ class Item extends Equatable {
     }
   }
 
+  String get equalsValue => value;
+
   @override
-  List get props => [value];
+  List get props => [equalsValue];
+}
+
+// ignore: must_be_immutable
+class PhoneNumber extends Item {
+  final String _unformattedNumber;
+  PhoneNumber({String label, String number})
+      : _unformattedNumber = _sanitizer(number),
+        super(label: label, value: number);
+
+  @override
+  String get equalsValue {
+    return _unformattedNumber;
+  }
+
+  static PhoneNumberSanitizer _sanitizer = defaultPhoneNumberSanitizer;
+  static set sanitizer(PhoneNumberSanitizer sanitizer) {
+    assert(sanitizer != null);
+    _sanitizer = sanitizer;
+  }
 }
 
 Map<String, dynamic> _itemToMap(Item i) => {"label": i.label, "value": i.value};
@@ -271,17 +304,18 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     ksuffix: contact.suffix,
     kcompany: contact.company,
     kjobTitle: contact.jobTitle,
-    kemails: [for (Item email in contact.emails) _itemToMap(email)],
-    kphones: [for (final phone in contact.phones) _itemToMap(phone)],
-    kdates: [for (final date in contact.dates) _contactDateToMap(date)],
-    ksocialProfiles: [for (final profile in contact.socialProfiles) _itemToMap(profile)],
-    kurls: [for (final profile in contact.urls) _itemToMap(profile)],
-    kpostalAddresses: [for (PostalAddress address in contact.postalAddresses) _addressToMap(address)],
+    kemails: [for (final item in contact.emails.where(notNull())) _itemToMap(item)],
+    kphones: [for (final item in contact.phones.where(notNull())) _itemToMap(item)],
+    kdates: [for (final item in contact.dates.where(notNull())) _contactDateToMap(item)],
+    ksocialProfiles: [for (final item in contact.socialProfiles.where(notNull())) _itemToMap(item)],
+    kurls: [for (final item in contact.urls.where(notNull())) _itemToMap(item)],
+    kpostalAddresses: [for (final address in contact.postalAddresses.where(notNull())) _addressToMap(address)],
     kavatar: contact.avatar,
     knote: contact.note
   };
 }
 
+bool Function(T item) notNull<T>() => (item) => item != null;
 Map _addressToMap(PostalAddress address) => {
       klabel: address.label,
       kstreet: address.street,
@@ -293,5 +327,31 @@ Map _addressToMap(PostalAddress address) => {
 
 Map _contactDateToMap(ContactDate date) => {
       klabel: date.label,
-      kdate: date.date.toJson(),
+      kdate: date.date?.toJson() ?? {},
     };
+
+typedef PhoneNumberSanitizer = String Function(String);
+
+String defaultPhoneNumberSanitizer(String input) {
+  String out = "";
+
+  for (var i = 0; i < input.length; ++i) {
+    var char = input[i];
+    if (_isNumeric((char))) {
+      out += char;
+    }
+  }
+
+  if (out.length == 10 && !out.startsWith("0") && !out.startsWith("1")) {
+    return "1$out";
+  } else {
+    return out;
+  }
+}
+
+bool _isNumeric(String str) {
+  if (str == null) {
+    return false;
+  }
+  return double.tryParse(str) != null;
+}

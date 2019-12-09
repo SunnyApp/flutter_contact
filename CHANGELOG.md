@@ -10,3 +10,8 @@ for Android eventually
 ## 0.4.6
  
 * Fixed exports
+
+## 0.4.7+3
+
+* Added removeDuplicates function to contact
+* Fixed some issues with dates (specifically birthday on IOS)

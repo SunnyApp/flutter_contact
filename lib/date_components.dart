@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
+import 'package:quiver/core.dart';
 
 const months = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
@@ -117,6 +118,18 @@ class DateComponents {
   DateComponents withoutDay() => DateComponents(day: null, month: month, year: year);
 
   DateComponents withoutYear() => DateComponents(day: day, month: month, year: null);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DateComponents &&
+          runtimeType == other.runtimeType &&
+          day == other.day &&
+          month == other.month &&
+          year == other.year;
+
+  @override
+  int get hashCode => hash3(day, month, year);
 }
 
 List<String> tokenizeString(String input, {bool splitAll = false, Pattern splitOn}) {

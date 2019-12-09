@@ -82,6 +82,38 @@ void main() {
     expect(contact4.initials(), "");
   });
 
+  test('should remove duplicates', () {
+    Contact contact1 = Contact(
+      givenName: "givenName",
+      familyName: "familyName",
+      dates: [
+        ContactDate(label: "birthday", date: DateComponents(month: 12, day: 28)),
+        ContactDate(label: "birthday", date: DateComponents(month: 12, day: 28)),
+      ],
+      emails: [
+        Item(label: "home", value: "smartytime@gmail.com"),
+        Item(label: "work", value: "smartytime@gmail.com"),
+      ],
+      phones: [
+        PhoneNumber(label: "home", number: "1-480-227-4399"),
+        PhoneNumber(label: "work", number: "4802274399"),
+      ],
+      urls: [
+        Item(label: "home", value: "www.website.com"),
+        Item(label: "work", value: "www.website.com"),
+      ],
+    );
+
+    Contact dedup = contact1.removeDuplicates();
+    expect(dedup.phones, hasLength(1));
+    expect(dedup.emails, hasLength(1));
+    expect(dedup.dates, hasLength(1));
+
+    expect(contact1.phones, hasLength(2));
+    expect(contact1.emails, hasLength(2));
+    expect(contact1.dates, hasLength(2));
+  });
+
   test('should update contact', () async {
     mock.addContact(Contact(
       identifier: 'needToUpdate',
