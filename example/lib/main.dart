@@ -13,9 +13,7 @@ class ContactsExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: ContactListPage(),
-      routes: <String, WidgetBuilder>{
-        '/add': (BuildContext context) => AddContactPage()
-      },
+      routes: <String, WidgetBuilder>{'/add': (BuildContext context) => AddContactPage()},
     );
   }
 }
@@ -47,7 +45,7 @@ class _ContactListPageState extends State<ContactListPage> {
   refreshContacts() async {
     PermissionStatus permissionStatus = await _getContactPermission();
     if (permissionStatus == PermissionStatus.granted) {
-      var contacts = await Contacts.getContacts(photoHighResolution: false);
+      var contacts = await Contacts.getContacts(withHiResPhoto: false);
       var groups = await Contacts.getGroups();
 //      var contacts = await ContactsService.getContactsForPhone("8554964652");
       setState(() {
@@ -63,9 +61,7 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   updateContact() async {
-    Contact ninja = _contacts
-        .toList()
-        .firstWhere((contact) => contact.familyName.startsWith("Ninja"));
+    Contact ninja = _contacts.toList().firstWhere((contact) => contact.familyName.startsWith("Ninja"));
     ninja.avatar = null;
     await Contacts.updateContact(ninja);
 
@@ -73,15 +69,11 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   Future<PermissionStatus> _getContactPermission() async {
-    PermissionStatus permission = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.contacts);
-    if (permission != PermissionStatus.granted &&
-        permission != PermissionStatus.disabled) {
+    PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.contacts);
+    if (permission != PermissionStatus.granted && permission != PermissionStatus.disabled) {
       Map<PermissionGroup, PermissionStatus> permissionStatus =
-          await PermissionHandler()
-              .requestPermissions([PermissionGroup.contacts]);
-      return permissionStatus[PermissionGroup.contacts] ??
-          PermissionStatus.unknown;
+          await PermissionHandler().requestPermissions([PermissionGroup.contacts]);
+      return permissionStatus[PermissionGroup.contacts] ?? PermissionStatus.unknown;
     } else {
       return permission;
     }
@@ -89,15 +81,10 @@ class _ContactListPageState extends State<ContactListPage> {
 
   void _handleInvalidPermissions(PermissionStatus permissionStatus) {
     if (permissionStatus == PermissionStatus.denied) {
-      throw new PlatformException(
-          code: "PERMISSION_DENIED",
-          message: "Access to location data denied",
-          details: null);
+      throw new PlatformException(code: "PERMISSION_DENIED", message: "Access to location data denied", details: null);
     } else if (permissionStatus == PermissionStatus.disabled) {
       throw new PlatformException(
-          code: "PERMISSION_DISABLED",
-          message: "Location data is not available on device",
-          details: null);
+          code: "PERMISSION_DISABLED", message: "Location data is not available on device", details: null);
     }
   }
 
@@ -135,9 +122,7 @@ class _ContactListPageState extends State<ContactListPage> {
                             builder: (BuildContext context) => GroupDetailsPage(
                                   g,
                                   g.contacts.map(
-                                    (contactId) => _contacts.firstWhere(
-                                        (contact) =>
-                                            contact.identifier == contactId),
+                                    (contactId) => _contacts.firstWhere((contact) => contact.identifier == contactId),
                                   ),
                                 )));
                       },
@@ -151,12 +136,11 @@ class _ContactListPageState extends State<ContactListPage> {
                         final loadedContact = await Contacts.getContact(
                           c.identifier,
                           withThumbnails: true,
-                          photoHighResolution: true,
+                          withHiResPhoto: true,
                         );
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (BuildContext context) =>
-                                ContactDetailsPage(loadedContact,
-                                    _groupsForContact(c.identifier))));
+                                ContactDetailsPage(loadedContact, _groupsForContact(c.identifier))));
                       },
                       leading: (c.avatar != null && c.avatar.length > 0)
                           ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
@@ -175,9 +159,9 @@ class _ContactListPageState extends State<ContactListPage> {
                           fontSize: 25,
                           fontWeight: FontWeight.bold,
                         )),
-                    subtitle: Text(
-                        "This demo should request permissions when it starts. If you're seeing this message, "
-                        "you may need to reset your permission settings"),
+                    subtitle:
+                        Text("This demo should request permissions when it starts. If you're seeing this message, "
+                            "you may need to reset your permission settings"),
                   ))
                 : Center(
                     child: CircularProgressIndicator(),
@@ -187,10 +171,7 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   _viewEvents() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => ContactEventsPage(events: _events)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ContactEventsPage(events: _events)));
   }
 
   Iterable<Group> _groupsForContact(String contactId) {
@@ -235,9 +216,7 @@ class ContactDetailsPage extends StatelessWidget {
             if (_contact.hasAvatar == true)
               Container(
                 height: 120,
-                decoration: BoxDecoration(
-                    image:
-                        DecorationImage(image: MemoryImage(_contact.avatar))),
+                decoration: BoxDecoration(image: DecorationImage(image: MemoryImage(_contact.avatar))),
               ),
             ListTile(
               title: Text("Name"),
@@ -274,7 +253,7 @@ class ContactDetailsPage extends StatelessWidget {
             AddressesTile(_contact.postalAddresses),
             ItemsTile("Phones", _contact.phones),
             ItemsTile("Social Profiles", _contact.socialProfiles),
-            ItemsTile("Dates", _contact.dates),
+            ItemsTile("Dates", _contact.dates.map((d) => Item(label: d.label, value: d.date.toString()))),
             ItemsTile("URLs", _contact.urls),
             ItemsTile("Emails", _contact.emails),
             GroupsTile(_groups)
@@ -300,11 +279,7 @@ class ContactEventsPage extends StatelessWidget {
       body: SafeArea(
         child: ListView(
           children: <Widget>[
-            if (events.isEmpty)
-              Card(
-                  child: ListTile(
-                      title: Text(
-                          "No events.  Try saving a contact on your device"))),
+            if (events.isEmpty) Card(child: ListTile(title: Text("No events.  Try saving a contact on your device"))),
             for (final event in events)
               Card(
                 child: ListTile(
@@ -502,14 +477,12 @@ class _AddContactPageState extends State<AddContactPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                onSaved: (v) => contact.phones = [Item(label: "mobile", value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                onSaved: (v) => contact.emails = [Item(label: "work", value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -584,8 +557,7 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
               _formKey.currentState.save();
               contact.postalAddresses = [address];
               await Contacts.updateContact(contact).then((_) {
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => ContactListPage()));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ContactListPage()));
               });
             },
           ),
@@ -624,14 +596,12 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                onSaved: (v) => contact.phones = [Item(label: "mobile", value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                onSaved: (v) => contact.emails = [Item(label: "work", value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(

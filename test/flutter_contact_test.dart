@@ -1,41 +1,32 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
+import 'package:flutter_contact/date_components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'mock_contact_service.dart';
+
 void main() {
-  const MethodChannel channel =
-      MethodChannel('github.com/clovisnicolas/flutter_contacts');
-  final List<MethodCall> log = <MethodCall>[];
-  channel.setMockMethodCallHandler((MethodCall methodCall) async {
-    log.add(methodCall);
-    if (methodCall.method == 'getContacts') {
-      return [
-        {'givenName': 'givenName1'},
-        {
-          'givenName': 'givenName2',
-          'postalAddresses': [
-            {'label': 'label'}
-          ],
-          'emails': [
-            {'label': 'label'}
-          ]
-        },
-      ];
-    }
-    return null;
-  });
+  WidgetsFlutterBinding.ensureInitialized();
+  const MethodChannel channel = MethodChannel('github.com/sunnyapp/flutter_contact');
+  final mock = ContactsMocks();
+  channel.setMockMethodCallHandler(mock.handler);
 
   tearDown(() {
-    log.clear();
+    mock.clear();
   });
 
   test('should get contacts', () async {
+    mock.addContact(Contact(identifier: '1', givenName: "Frank"));
+    mock.addContact(Contact(identifier: '2', givenName: "Larry"));
+    mock.addContact(Contact(identifier: '3', givenName: "Moe"));
+
     final Iterable contacts = await Contacts.getContacts();
-    expect(contacts.length, 2);
+    expect(contacts.length, 3);
     expect(contacts, everyElement(isInstanceOf<Contact>()));
-    expect(contacts.toList()[0].givenName, 'givenName1');
-    expect(contacts.toList()[1].postalAddresses.toList()[0].label, 'label');
-    expect(contacts.toList()[1].emails.toList()[0].label, 'label');
+    expect(contacts.toList()[0].givenName, 'Frank');
+    expect(contacts.toList()[1].givenName, 'Larry');
+    expect(contacts.toList()[2].givenName, 'Moe');
   });
 
   test('should add contact', () async {
@@ -45,7 +36,28 @@ void main() {
       phones: [Item(label: 'label')],
       postalAddresses: [PostalAddress(label: 'label')],
     ));
-    expectMethodCall(log, 'addContact');
+    mock.expectMethodCall('addContact');
+  });
+
+  test('dates serialize as maps', () async {
+    final contact = Contact(
+      givenName: 'Bob',
+      dates: [ContactDate(label: 'birthday', date: DateComponents(month: 12, day: 28))],
+      phones: [Item(label: 'label')],
+      postalAddresses: [PostalAddress(label: 'label')],
+    );
+    final cmap = contact.toMap();
+    final dates = cmap["dates"].first["date"];
+    expect(dates, isA<Map>());
+    expect(dates[kyear], isNull);
+    expect(dates[kmonth], 12);
+    expect(dates[kday], 28);
+  });
+
+  test('null response shoud not raise error', () async {
+    final response = await Contacts.getContact("missing");
+    mock.expectMethodCall('getContact');
+    expect(response, isNull);
   });
 
   test('should delete contact', () async {
@@ -55,12 +67,11 @@ void main() {
       phones: [Item(label: 'label')],
       postalAddresses: [PostalAddress(label: 'label')],
     ));
-    expectMethodCall(log, 'deleteContact');
+    mock.expectMethodCall('deleteContact');
   });
 
   test('should provide initials for contact', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName");
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName");
     Contact contact2 = Contact(givenName: "givenName");
     Contact contact3 = Contact(familyName: "familyName");
     Contact contact4 = Contact();
@@ -72,23 +83,36 @@ void main() {
   });
 
   test('should update contact', () async {
-    await Contacts.updateContact(Contact(
-      givenName: 'givenName',
-      emails: [Item(label: 'label')],
-      phones: [Item(label: 'label')],
-      postalAddresses: [PostalAddress(label: 'label')],
+    mock.addContact(Contact(
+      identifier: 'needToUpdate',
+      givenName: "Frank",
+      emails: [
+        Item(label: 'home', value: '480-223-4123'),
+        Item(label: 'home', value: '480-442-1222'),
+      ],
     ));
-    expectMethodCall(log, 'updateContact');
+
+    final updated = Contact(
+      identifier: 'needToUpdate',
+      givenName: 'Francis',
+      emails: [
+        Item(label: 'home', value: '480-555-4123'),
+        Item(label: 'home', value: '480-223-4123'),
+        Item(label: 'home', value: '480-442-1222'),
+      ],
+    );
+
+    final savedContact = await Contacts.updateContact(updated);
+    mock.expectMethodCall('updateContact');
+    expect(savedContact, equals(savedContact));
   });
 
   test('should show contacts are equal', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "example@example.com"),
       Item(label: "Work", value: "example2@example.com"),
     ]);
-    Contact contact2 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact2 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Work", value: "example2@example.com"),
       Item(label: "Home", value: "example@example.com"),
     ]);
@@ -97,8 +121,7 @@ void main() {
   });
 
   test('should produce a valid merged contact', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Work", value: "work@example.com"),
     ], phones: [], postalAddresses: []);
@@ -108,15 +131,9 @@ void main() {
       Item(label: "Mobile", value: "mobile@example.com"),
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home',
-          street: "1234 Middle-of Rd",
-          city: "Nowhere",
-          postcode: "12345",
-          region: null,
-          country: null)
+          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
     ]);
-    Contact mergedContact =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact mergedContact = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Mobile", value: "mobile@example.com"),
       Item(label: "Work", value: "work@example.com"),
@@ -124,12 +141,7 @@ void main() {
       Item(label: "Mobile", value: "111-222-3344")
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home',
-          street: "1234 Middle-of Rd",
-          city: "Nowhere",
-          postcode: "12345",
-          region: null,
-          country: null)
+          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
     ]);
 
     expect(contact1 + contact2, mergedContact);
@@ -149,6 +161,9 @@ void main() {
       "givenName": "givenName",
       "middleName": null,
       "familyName": "familyName",
+      "socialProfiles": [],
+      "dates": [],
+      "urls": [],
       "prefix": null,
       "suffix": null,
       "company": null,
@@ -162,39 +177,35 @@ void main() {
   });
 }
 
-void expectMethodCall(List<MethodCall> log, String methodName) {
-  expect(log, <Matcher>[
-    isMethodCall(
-      methodName,
-      arguments: <String, dynamic>{
-        'identifier': null,
-        'displayName': null,
-        'givenName': 'givenName',
-        'middleName': null,
-        'familyName': null,
-        'prefix': null,
-        'suffix': null,
-        'company': null,
-        'jobTitle': null,
-        'note': null,
-        'emails': [
-          {'label': 'label', 'value': null}
-        ],
-        'phones': [
-          {'label': 'label', 'value': null}
-        ],
-        'postalAddresses': [
-          {
-            'label': 'label',
-            'street': null,
-            'city': null,
-            'postcode': null,
-            'region': null,
-            'country': null
-          }
-        ],
-        'avatar': null
-      },
-    ),
-  ]);
-}
+//void expectMethodCall(List<MethodCall> log, String methodName) {
+//  expect(log, <Matcher>[
+//    isMethodCall(
+//      methodName,
+//      arguments: <String, dynamic>{
+//        'identifier': null,
+//        'displayName': null,
+//        'givenName': 'givenName',
+//        'middleName': null,
+//        'familyName': null,
+//        'prefix': null,
+//        'suffix': null,
+//        'company': null,
+//        'jobTitle': null,
+//        'note': null,
+//        'emails': [
+//          {'label': 'label', 'value': null}
+//        ],
+//        'phones': [
+//          {'label': 'label', 'value': null}
+//        ],
+//        'postalAddresses': [
+//          {'label': 'label', 'street': null, 'city': null, 'postcode': null, 'region': null, 'country': null}
+//        ],
+//        'avatar': null
+//      },
+//    ),
+//  ]);
+//}
+
+typedef MethodHandler = Future<dynamic> Function(MethodCall call);
+typedef RawMethodHandler = Future<dynamic> Function(dynamic call);

@@ -93,8 +93,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
                 let saved = try addContact(contact: contact)
                 result(saved.toDictionary())
             case "deleteContact":
-                let _ = try deleteContact(call.args)
-                result(nil)
+                let deleted = try deleteContact(call.args)
+                result(deleted)
             case "updateContact":
                 let contact = try updateContact(call.args)
                 result(contact.toDictionary())
@@ -225,7 +225,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
 
     @available(iOS 9.0, *)
-    func deleteContact(_ dictionary: [String:Any?]) throws {
+    func deleteContact(_ dictionary: [String:Any?]) throws -> Bool {
         guard let identifier = dictionary["identifier"] as? String else {
             throw ContactError.runtimeError("No identifier for contact")
         }
@@ -236,6 +236,9 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
             let request = CNSaveRequest()
             request.delete(contact)
             try store.execute(request)
+            return true
+        } else {
+            return false
         }
 
     }
@@ -411,21 +414,20 @@ extension CNContact {
         }
 
         if contact.isKeyAvailable(CNContactDatesKey) {
-            var dates = [[String:String]]()
+            var dates = [[String:Any]]()
             for date in contact.dates {
-                var dateDict = [String:String]()
+                var dateDict = [String:Any]()
                 dateDict["label"] = "other"
-
-                dateDict["value"] = date.value.date!.convertFromCNDate?.isoDateString
+                dateDict["date"] = date.value.toDictionary()
                 if let label = date.label{
                     dateDict["label"] = CNLabeledValue<NSString>.localizedString(forLabel: label)
                 }
                 dates.append(dateDict)
             }
-            if let bDay = contact.birthday?.date?.convertFromCNDate {
+            if let bDay = contact.birthday?.toDictionary() {
                 dates.append([
                     "label": "birthday",
-                    "value": bDay.isoDateString])
+                    "date": bDay])
             }
             result["dates"] = dates
         }
@@ -494,13 +496,19 @@ extension CNMutableContact {
         }
 
         // Dates
-        if let dates = dictionary["dates"] as? [[String:String]]{
+        if let dates = dictionary["dates"] as? [[String:Any]]{
             var updatedItems = [CNLabeledValue<NSDateComponents>]()
             for item in dates where nil != item["value"] && nil != item["label"] {
-                if let date = item["value"]!.parseDateComponents() {
+                if let date = item["date"] as? [String:Int] {
+                    let dateComp = convertNSDateComponents(date)
+                    let label = item["label"] as? String ?? ""
+                    
                     updatedItems.append(CNLabeledValue(
-                        label: item["label"]!,
-                        value: date))
+                        label: item["label"] as? String ?? "",
+                        value: dateComp))
+                    if label == "birthday" {
+                        contact.birthday = convertDateComponents(date)
+                    }
                 }
             }
             contact.dates = updatedItems
@@ -525,6 +533,81 @@ extension CNMutableContact {
     }
 }
 
+func convertNSDateComponents(_ dict: [String:Int])-> NSDateComponents {
+   let nsDate = NSDateComponents()
+    if let year = dict["year"] {
+         nsDate.setValue(year, forComponent: .year)
+    }
+    if let month = dict["month"] {
+        nsDate.setValue(month, forComponent: .month)
+    }
+    if let day = dict["day"] {
+        nsDate.setValue(day, forComponent: .day)
+    }
+    return nsDate
+}
+
+
+func convertDateComponents(_ dict: [String:Int])-> DateComponents {
+   var nsDate = DateComponents()
+    if let year = dict["year"] {
+         nsDate.setValue(year, for: .year)
+    }
+    if let month = dict["month"] {
+        nsDate.setValue(month, for: .month)
+    }
+    if let day = dict["day"] {
+        nsDate.setValue(day, for: .day)
+    }
+    return nsDate
+}
+
+extension DateComponents {
+    func toDictionary()-> [String: Int] {
+        var dict = [String:Int]()
+        let year:Int? = self.year
+        if let year = year {
+            dict["year"] = year
+        }
+            
+        let month:Int? = self.month
+        if let month = month {
+            dict["month"] = month
+        }
+        
+        let day:Int? = self.day
+        if let day = day {
+            dict["day"] = day
+        }
+        
+        return dict
+    }
+}
+
+extension NSDateComponents {
+    func toDictionary()-> [String:Int] {
+        var dict = [String:Int]()
+        let year:Int? = self.year
+        if let year = year {
+            dict["year"] = year
+        }
+        
+        let month:Int? = self.month
+        if let month = month {
+            dict["month"] = month
+        }
+        
+        
+        let day:Int? = self.day
+        if let day = day {
+            dict["day"] = day
+        }
+        
+        return dict
+    }
+}
+
+
 extension String {
     ///Attempts to parse a date from string in yyyyMMdd format
     func parseDate(format: String) -> Date? {
@@ -535,7 +618,7 @@ extension String {
     }
 
     func parseDateComponents()-> NSDateComponents? {
-        let nsDate = NSDateComponents()
+        var nsDate = NSDateComponents()
         let parts = self.split(separator: "-")
             .flatMap { $0.split(separator: "/") }
             .map{ Int($0) }

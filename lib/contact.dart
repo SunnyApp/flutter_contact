@@ -1,43 +1,113 @@
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_contact/date_components.dart';
 
-// ignore: must_be_immutable
-class Contact extends Equatable {
+const kgivenName = "givenName";
+const kidentifier = "identifier";
+const kmiddleName = "middleName";
+const kdisplayName = "displayName";
+const kprefix = "prefix";
+const ksuffix = "suffix";
+const kfamilyName = "familyName";
+const kcompany = "company";
+const kjobTitle = "jobTitle";
+const kemails = "emails";
+const kphones = "phones";
+const kpostalAddresses = "postalAddresses";
+const ksocialProfiles = "socialProfiles";
+const kurls = "urls";
+const kdates = "dates";
+const kavatar = "avatar";
+const klabel = "label";
+const kvalue = "value";
+const kdate = "date";
+const knote = "note";
+
+const kstreet = "street";
+const kcity = "city";
+const kpostcode = "postcode";
+const kregion = "region";
+const kcountry = "country";
+
+class Contact {
   Contact(
       {this.givenName,
+      this.identifier,
       this.middleName,
+      this.displayName,
       this.prefix,
       this.suffix,
       this.familyName,
       this.company,
       this.jobTitle,
-      this.emails,
-      this.phones,
-      this.postalAddresses,
-      this.socialProfiles,
-      this.urls,
-      this.dates,
+      List<Item> emails,
+      List<Item> phones,
+      List<PostalAddress> postalAddresses,
+      List<Item> socialProfiles,
+      List<Item> urls,
+      List<ContactDate> dates,
       this.avatar,
-      this.note});
+      this.note})
+      : _emails = [...?emails],
+        _phones = [...?phones],
+        _socialProfiles = [...?socialProfiles],
+        _urls = [...?urls],
+        _dates = [...?dates],
+        _postalAddresses = [...?postalAddresses];
 
-  String identifier,
-      displayName,
-      givenName,
-      middleName,
-      prefix,
-      suffix,
-      familyName,
-      company,
-      jobTitle,
-      note;
-  Iterable<Item> emails = [];
-  Iterable<Item> phones = [];
-  Iterable<Item> socialProfiles = [];
-  Iterable<Item> dates = [];
-  Iterable<Item> urls = [];
-  Iterable<PostalAddress> postalAddresses = [];
+  String identifier, displayName, givenName, middleName, prefix, suffix, familyName, company, jobTitle, note;
+  final List<Item> _emails;
+  final List<Item> _phones;
+  final List<Item> _socialProfiles;
+  final List<ContactDate> _dates;
+  final List<Item> _urls;
+  final List<PostalAddress> _postalAddresses;
   Uint8List avatar;
+
+  List<Item> get emails => _emails;
+
+  set emails(List<Item> value) {
+    _emails.clear();
+    emails.addAll([...?value]);
+  }
+
+  List<Item> get phones => _phones;
+
+  set phones(List<Item> value) {
+    _phones.clear();
+    phones.addAll([...?value]);
+  }
+
+  List<Item> get socialProfiles => _socialProfiles;
+
+  set socialProfiles(List<Item> value) {
+    _socialProfiles.clear();
+    _socialProfiles.addAll([...?value]);
+  }
+
+  List<ContactDate> get dates => _dates;
+
+  set dates(List<ContactDate> value) {
+    _dates.clear();
+    dates.addAll([...?value]);
+  }
+
+  List<Item> get urls => _urls;
+
+  set urls(List<Item> value) {
+    _urls.clear();
+    urls.addAll([...?value]);
+  }
+
+  List<PostalAddress> get postalAddresses => _postalAddresses;
+
+  set postalAddresses(List<PostalAddress> value) {
+    _postalAddresses.clear();
+    postalAddresses.addAll([...?value]);
+  }
 
   bool get hasAvatar => avatar?.isNotEmpty == true;
 
@@ -47,29 +117,28 @@ class Contact extends Equatable {
         .toUpperCase();
   }
 
-  Contact.fromMap(Map m) {
-    identifier = m["identifier"];
-    displayName = m["displayName"];
-    givenName = m["givenName"];
-    middleName = m["middleName"];
-    familyName = m["familyName"];
-    prefix = m["prefix"];
-    suffix = m["suffix"];
-    company = m["company"];
-    jobTitle = m["jobTitle"];
-    emails = (m["emails"] as Iterable)?.map((m) => Item.fromMap(m));
-    phones = (m["phones"] as Iterable)?.map((m) => Item.fromMap(m));
-    socialProfiles =
-        (m["socialProfiles"] as Iterable)?.map((m) => Item.fromMap(m));
-    urls = (m["urls"] as Iterable)?.map((m) => Item.fromMap(m));
-    dates = (m["dates"] as Iterable)?.map((m) => Item.fromMap(m));
-    postalAddresses = (m["postalAddresses"] as Iterable)
-        ?.map((m) => PostalAddress.fromMap(m));
-    avatar = m["avatar"];
-    note = m["note"];
-  }
+  Contact.fromMap(final dyn)
+      : this(
+          identifier: dyn[kidentifier] as String,
+          displayName: dyn[kdisplayName] as String,
+          givenName: dyn[kgivenName] as String,
+          middleName: dyn[kmiddleName] as String,
+          familyName: dyn[kfamilyName] as String,
+          prefix: dyn[kprefix] as String,
+          suffix: dyn[ksuffix] as String,
+          company: dyn[kcompany] as String,
+          jobTitle: dyn[kjobTitle] as String,
+          emails: [for (final m in _iterableKey(dyn, kemails)) Item.fromMap(m)],
+          phones: [for (final m in _iterableKey(dyn, kphones)) Item.fromMap(m)],
+          socialProfiles: [for (final m in _iterableKey(dyn, ksocialProfiles)) Item.fromMap(m)],
+          urls: [for (final m in _iterableKey(dyn, kurls)) Item.fromMap(m)],
+          dates: [for (final m in _iterableKey(dyn, kdates)) ContactDate.fromMap(m)],
+          postalAddresses: [for (final m in _iterableKey(dyn, kpostalAddresses)) PostalAddress.fromMap(m)],
+          avatar: dyn[kavatar] as Uint8List,
+          note: dyn[knote] as String,
+        );
 
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return _contactToMap(this);
   }
 
@@ -83,96 +152,75 @@ class Contact extends Equatable {
       company: this.company ?? other.company,
       jobTitle: this.jobTitle ?? other.jobTitle,
       note: this.note ?? other.note,
-      emails: this.emails == null
-          ? other.emails
-          : this.emails.toSet().union(other.emails?.toSet() ?? Set()).toList(),
-      socialProfiles: this.socialProfiles == null
-          ? other.socialProfiles
-          : this
-              .socialProfiles
-              .toSet()
-              .union(other.socialProfiles?.toSet() ?? Set())
-              .toList(),
-      dates: this.dates == null
-          ? other.dates
-          : this.dates.toSet().union(other.dates?.toSet() ?? Set()).toList(),
-      urls: this.urls == null
-          ? other.urls
-          : this.urls.toSet().union(other.urls?.toSet() ?? Set()).toList(),
-      phones: this.phones == null
-          ? other.phones
-          : this.phones.toSet().union(other.phones?.toSet() ?? Set()).toList(),
-      postalAddresses: this.postalAddresses == null
-          ? other.postalAddresses
-          : this
-              .postalAddresses
-              .toSet()
-              .union(other.postalAddresses?.toSet() ?? Set())
-              .toList(),
+      emails: {...?this.emails, ...?other.emails}.toList(),
+      socialProfiles: {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
+      dates: {...?this.dates, ...?other.dates}.toList(),
+      urls: {...?this.urls, ...?other.urls}.toList(),
+      phones: {...?this.phones, ...?other.phones}.toList(),
+      postalAddresses: {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
       avatar: this.avatar ?? other.avatar);
 
-//  /// Returns true if all items in this contact are identical.
-//  @override
-//  bool operator ==(Object other) {
-//    return other is Contact &&
-//        this.company == other.company &&
-//        this.displayName == other.displayName &&
-//        this.givenName == other.givenName &&
-//        this.familyName == other.familyName &&
-//        this.identifier == other.identifier &&
-//        this.jobTitle == other.jobTitle &&
-//        this.middleName == other.middleName &&
-//        this.note == other.note &&
-//        this.prefix == other.prefix &&
-//        this.suffix == other.suffix &&
-//        DeepCollectionEquality.unordered().equals(this.phones, other.phones) &&
-//        DeepCollectionEquality.unordered().equals(this.socialProfiles, other.socialProfiles) &&
-//        DeepCollectionEquality.unordered().equals(this.urls, other.urls) &&
-//        DeepCollectionEquality.unordered().equals(this.dates, other.dates) &&
-//        DeepCollectionEquality.unordered().equals(this.emails, other.emails) &&
-//        DeepCollectionEquality.unordered().equals(this.postalAddresses, other.postalAddresses);
-//  }
+  /// Returns true if all items in this contact are identical.
+  @override
+  bool operator ==(Object other) {
+    return other is Contact &&
+        this.company == other.company &&
+        this.displayName == other.displayName &&
+        this.givenName == other.givenName &&
+        this.familyName == other.familyName &&
+        this.identifier == other.identifier &&
+        this.jobTitle == other.jobTitle &&
+        this.middleName == other.middleName &&
+        this.note == other.note &&
+        this.prefix == other.prefix &&
+        this.suffix == other.suffix &&
+        DeepCollectionEquality.unordered().equals(this.phones, other.phones) &&
+        DeepCollectionEquality.unordered().equals(this.socialProfiles, other.socialProfiles) &&
+        DeepCollectionEquality.unordered().equals(this.urls, other.urls) &&
+        DeepCollectionEquality.unordered().equals(this.dates, other.dates) &&
+        DeepCollectionEquality.unordered().equals(this.emails, other.emails) &&
+        DeepCollectionEquality.unordered().equals(this.postalAddresses, other.postalAddresses);
+  }
 
   @override
-  List get props => [
-        this.company,
-        this.displayName,
-        this.familyName,
-        this.givenName,
-        this.identifier,
-        this.jobTitle,
-        this.middleName,
-        this.note,
-        this.prefix,
-        this.suffix,
-        this.phones,
-        this.socialProfiles,
-        this.urls,
-        this.dates,
-        this.emails,
-        this.postalAddresses
-      ];
+  int get hashCode {
+    return hashValues(
+        identifier, company, displayName, givenName, familyName, jobTitle, middleName, note, prefix, suffix);
+  }
+}
+
+class ContactDate {
+  final String label;
+  final DateComponents date;
+
+  ContactDate({this.label, this.date});
+
+  factory ContactDate.fromMap(final dyn) {
+    if (dyn is! Map<dynamic, dynamic>) return null;
+    return ContactDate(label: dyn[klabel] as String, date: DateComponents.fromJson(dyn[kdate]));
+  }
+
+  @override
+  String toString() {
+    return 'ContactDate{label: $label, date: $date}';
+  }
 }
 
 // ignore: must_be_immutable
 class PostalAddress extends Equatable {
-  PostalAddress(
-      {this.label,
-      this.street,
-      this.city,
-      this.postcode,
-      this.region,
-      this.country});
+  PostalAddress({this.label, this.street, this.city, this.postcode, this.region, this.country});
 
   String label, street, city, postcode, region, country;
 
-  PostalAddress.fromMap(Map m) {
-    label = m["label"];
-    street = m["street"];
-    city = m["city"];
-    postcode = m["postcode"];
-    region = m["region"];
-    country = m["country"];
+  PostalAddress.fromMap(final dyn) {
+    if (dyn is Map) {
+      label = dyn[klabel] as String;
+      street = dyn[kstreet] as String;
+      city = dyn[kcity] as String;
+      postcode = dyn[kpostcode] as String;
+      region = dyn[kregion] as String;
+      country = dyn[kcountry] as String;
+    }
   }
 
   @override
@@ -194,72 +242,56 @@ class Item extends Equatable {
 
   String label, value;
 
-  Item.fromMap(Map m) {
-    label = m["label"];
-    value = m["value"];
+  Item.fromMap(final dyn) {
+    if (dyn is Map) {
+      value = dyn["value"] as String;
+      label = dyn["label"] as String;
+    }
   }
 
   @override
-  List get props => [label, value];
+  List get props => [value];
 }
 
-Map _itemToMap(Item i) => {"label": i.label, "value": i.value};
+Map<String, dynamic> _itemToMap(Item i) => {"label": i.label, "value": i.value};
 
-Map _contactToMap(Contact contact) {
-  var emails = [];
-  for (Item email in contact.emails ?? []) {
-    emails.add(_itemToMap(email));
-  }
-  var phones = [];
-  for (Item phone in contact.phones ?? []) {
-    phones.add(_itemToMap(phone));
-  }
-  var socialProfiles = [];
-  for (Item profile in contact.socialProfiles ?? []) {
-    socialProfiles.add(_itemToMap(profile));
-  }
+Iterable _iterableKey(map, String key) {
+  if (map == null) return [];
+  return map[key] as Iterable ?? [];
+}
 
-  var urls = [];
-  for (Item profile in contact.urls ?? []) {
-    urls.add(_itemToMap(profile));
-  }
-
-  var dates = [];
-  for (Item date in contact.dates ?? []) {
-    dates.add(_itemToMap(date));
-  }
-
-  var postalAddresses = [];
-  for (PostalAddress address in contact.postalAddresses ?? []) {
-    postalAddresses.add(_addressToMap(address));
-  }
-
+Map<String, dynamic> _contactToMap(Contact contact) {
   return {
-    "identifier": contact.identifier,
-    "displayName": contact.displayName,
-    "givenName": contact.givenName,
-    "middleName": contact.middleName,
-    "familyName": contact.familyName,
-    "prefix": contact.prefix,
-    "suffix": contact.suffix,
-    "company": contact.company,
-    "jobTitle": contact.jobTitle,
-    "emails": emails,
-    "phones": phones,
-    "dates": dates,
-    "socialProfiles": socialProfiles,
-    "urls": urls,
-    "postalAddresses": postalAddresses,
-    "avatar": contact.avatar,
-    "note": contact.note
+    kidentifier: contact.identifier,
+    kdisplayName: contact.displayName,
+    kgivenName: contact.givenName,
+    kmiddleName: contact.middleName,
+    kfamilyName: contact.familyName,
+    kprefix: contact.prefix,
+    ksuffix: contact.suffix,
+    kcompany: contact.company,
+    kjobTitle: contact.jobTitle,
+    kemails: [for (Item email in contact.emails) _itemToMap(email)],
+    kphones: [for (final phone in contact.phones) _itemToMap(phone)],
+    kdates: [for (final date in contact.dates) _contactDateToMap(date)],
+    ksocialProfiles: [for (final profile in contact.socialProfiles) _itemToMap(profile)],
+    kurls: [for (final profile in contact.urls) _itemToMap(profile)],
+    kpostalAddresses: [for (PostalAddress address in contact.postalAddresses) _addressToMap(address)],
+    kavatar: contact.avatar,
+    knote: contact.note
   };
 }
 
 Map _addressToMap(PostalAddress address) => {
-      "label": address.label,
-      "street": address.street,
-      "city": address.city,
-      "postcode": address.postcode,
-      "region": address.region,
-      "country": address.country
+      klabel: address.label,
+      kstreet: address.street,
+      kcity: address.city,
+      kpostcode: address.postcode,
+      kregion: address.region,
+      kcountry: address.country
+    };
+
+Map _contactDateToMap(ContactDate date) => {
+      klabel: date.label,
+      kdate: date.date.toJson(),
     };

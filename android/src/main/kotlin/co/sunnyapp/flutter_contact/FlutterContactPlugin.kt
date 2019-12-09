@@ -147,6 +147,7 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
                     .withValue(ContactsContract.CommonDataKinds.Email.TYPE, Item.stringToEmailType(email.label))
                     .build()
         }
+
         //Postal addresses
         for (address in contact.postalAddresses) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
@@ -161,7 +162,6 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
                     .withValue(ContactsContract.CommonDataKinds.StructuredPostal.COUNTRY, address.country)
                     .build()
         }
-
 
         val saveResult = context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
         val contactId = saveResult.first().uri.lastPathSegment?.toLong()

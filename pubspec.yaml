@@ -10,8 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  uuid: ^2.0.4
   logging: ^0.11.3+2
   equatable: ^1.0.1
+  collection: any
+  quiver: ^2.0.5
+  intl: any
 
 dev_dependencies:
   flutter_test:
