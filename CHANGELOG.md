@@ -15,3 +15,8 @@ for Android eventually
 
 * Added removeDuplicates function to contact
 * Fixed some issues with dates (specifically birthday on IOS)
+
+## 0.4.7+4
+
+* Fixing issue with copying identifier
+* Also improved error handling

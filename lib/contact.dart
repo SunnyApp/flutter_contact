@@ -144,6 +144,8 @@ class Contact {
 
   /// The [+] operator fills in this contact's empty fields with the fields from [other]
   operator +(Contact other) => Contact(
+      identifier: this.identifier ?? other.identifier,
+      displayName: this.displayName ?? other.displayName,
       givenName: this.givenName ?? other.givenName,
       middleName: this.middleName ?? other.middleName,
       prefix: this.prefix ?? other.prefix,
@@ -169,11 +171,11 @@ class Contact {
   @override
   bool operator ==(Object other) {
     return other is Contact &&
+        this.identifier == other.identifier &&
         this.company == other.company &&
         this.displayName == other.displayName &&
         this.givenName == other.givenName &&
         this.familyName == other.familyName &&
-        this.identifier == other.identifier &&
         this.jobTitle == other.jobTitle &&
         this.middleName == other.middleName &&
         this.note == other.note &&

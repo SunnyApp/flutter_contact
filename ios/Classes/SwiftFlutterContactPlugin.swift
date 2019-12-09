@@ -101,12 +101,22 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
             default:
                 result(FlutterMethodNotImplemented)
             }
-        } catch let error as NSError {
+        } catch let error as ContactError {
+            switch(error) {
+            case .runtimeError(let code, let message):
+                result(FlutterError(
+                    code: code,
+                    message: message,
+                    details: nil))
+            }
+        
+        } catch _ as NSError {
             result(FlutterError(
-                code: "\(error.code)",
-                message: error.localizedFailureReason ?? "Unknown Error",
-                details: nil))
+            code: "unknown",
+            message: "unknown error",
+            details: nil))
         }
+        
     }
 
     func getGroups() throws ->[[String:Any?]] {
@@ -227,7 +237,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
     @available(iOS 9.0, *)
     func deleteContact(_ dictionary: [String:Any?]) throws -> Bool {
         guard let identifier = dictionary["identifier"] as? String else {
-            throw ContactError.runtimeError("No identifier for contact")
+            throw ContactError.runtimeError(code: "invalid.input", message: "No identifier for contact")
         }
         let store = CNContactStore()
         let keys = [CNContactIdentifierKey as NSString]
@@ -248,7 +258,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
         // Check to make sure dictionary has an identifier
         guard let identifier = dictionary["identifier"] as? String else {
-            throw ContactError.runtimeError("No identifier for contact");
+            throw ContactError.runtimeError(code: "invalid.input", message: "No identifier for contact");
         }
 
         let store = CNContactStore()
@@ -267,7 +277,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
             try store.execute(request)
             return contact
         } else {
-            throw ContactError.runtimeError("Couldn't find contact")
+            throw ContactError.runtimeError(code: "contact.notFound", message: "Couldn't find contact")
         }
     }
 }
@@ -678,7 +688,7 @@ extension String {
 }
 
 enum ContactError: Error {
-    case runtimeError(String)
+    case runtimeError(code:String, message:String)
 }
 
 extension FlutterMethodCall {
