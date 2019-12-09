@@ -81,10 +81,13 @@ class _ContactListPageState extends State<ContactListPage> {
 
   void _handleInvalidPermissions(PermissionStatus permissionStatus) {
     if (permissionStatus == PermissionStatus.denied) {
-      throw new PlatformException(code: "PERMISSION_DENIED", message: "Access to location data denied", details: null);
+      throw PlatformException(code: "PERMISSION_DENIED", message: "Access to location data denied", details: null);
     } else if (permissionStatus == PermissionStatus.disabled) {
-      throw new PlatformException(
-          code: "PERMISSION_DISABLED", message: "Location data is not available on device", details: null);
+      throw PlatformException(
+        code: "PERMISSION_DISABLED",
+        message: "Location data is not available on device",
+        details: null,
+      );
     }
   }
 
@@ -138,11 +141,11 @@ class _ContactListPageState extends State<ContactListPage> {
                           withThumbnails: true,
                           withHiResPhoto: true,
                         );
-                        Navigator.of(context).push(MaterialPageRoute(
+                        await Navigator.of(context).push(MaterialPageRoute(
                             builder: (BuildContext context) =>
                                 ContactDetailsPage(loadedContact, _groupsForContact(c.identifier))));
                       },
-                      leading: (c.avatar != null && c.avatar.length > 0)
+                      leading: (c.avatar != null && c.avatar.isNotEmpty)
                           ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
                           : CircleAvatar(child: Text(c.initials())),
                       title: Text(c.displayName ?? ""),
@@ -308,7 +311,7 @@ class GroupDetailsPage extends StatelessWidget {
         child: ListView(
           children: _contacts
               .map((c) => ListTile(
-                  leading: (c.avatar != null && c.avatar.length > 0)
+                  leading: (c.avatar != null && c.avatar.isNotEmpty)
                       ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
                       : CircleAvatar(child: Text(c.initials())),
                   title: Text(c.displayName ?? "")))
