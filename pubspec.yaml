@@ -1,6 +1,6 @@
 name: flutter_contact
 description: A Flutter plugin to retrieve, create and save contacts and contact-related events on Android and iOS devices.
-version: 0.4.4
+version: 0.4.6
 homepage: https://github.com/SunnyApp/flutter_contact
 maintainer: Eric Martineau
 
@@ -13,9 +13,9 @@ dependencies:
   uuid: ^2.0.4
   logging: ^0.11.3+2
   equatable: ^1.0.1
-  collection: any
+  collection: ^1.14.11
   quiver: ^2.0.5
-  intl: any
+  intl: ^0.16.0
 
 dev_dependencies:
   flutter_test:

@@ -10,6 +10,7 @@ import 'logging.dart';
 
 export 'contact.dart';
 export 'contact_events.dart';
+export 'date_components.dart';
 export 'group.dart';
 
 final _log = Logger("contactsService");
