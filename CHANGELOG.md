@@ -24,3 +24,7 @@ for Android eventually
 ## 0.4.7+5
 
 * Added streaming methods for improved performance
+
+## 0.4.7+6
+
+* Fixing ios paging logic
