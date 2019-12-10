@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/paging_iterable.dart';
@@ -38,6 +39,7 @@ abstract class ContactsContract {
       bool withHiResPhoto = true});
   void configureLogs({Level level, Logging onLog});
   Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true});
+  Future<Uint8List> getContactImage(String identifier);
   Future<Contact> addContact(Contact contact);
   Future<bool> deleteContact(Contact contact);
   Future<Contact> updateContact(Contact contact);
@@ -84,6 +86,13 @@ class _Contacts extends ContactsContract {
       bufferSize: bufferSize,
     );
     return stream;
+  }
+
+  @override
+  Future<Uint8List> getContactImage(String identifier) async {
+    if (identifier == null) return null;
+    final data = await _channel.invokeMethod('getContactImage', {'identifier': identifier});
+    return data as Uint8List;
   }
 
   @override

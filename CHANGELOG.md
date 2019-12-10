@@ -28,3 +28,8 @@ for Android eventually
 ## 0.4.7+6
 
 * Fixing ios paging logic
+
+## 0.4.7+7
+
+* Move all ios operation to background as .userInitiated
+* Provide convenience getter for fetching contact avatar.

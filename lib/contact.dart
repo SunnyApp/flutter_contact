@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact/date_components.dart';
 
 const kgivenName = "givenName";
@@ -65,7 +67,18 @@ class Contact {
   final List<ContactDate> _dates;
   final List<Item> _urls;
   final List<PostalAddress> _postalAddresses;
+
   Uint8List avatar;
+
+  /// If the avatar is already loaded, uses it.  Otherwise, fetches the avatar from the server,
+  /// but does not cache the result in memory.
+  ///
+  /// May be null.
+  FutureOr<Uint8List> getOrFetchAvatar() {
+    if (avatar != null) return avatar;
+
+    return Contacts.getContactImage(this.identifier);
+  }
 
   List<Item> get emails => _emails;
 

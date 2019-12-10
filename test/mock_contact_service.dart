@@ -17,6 +17,7 @@ class ContactsMocks {
         _log = log ?? [] {
     _mockMethods = <String, RawMethodHandler>{
       "getContacts": _getContacts,
+      "getContactImage": _getContactImage,
       "updateContact": _updateContact,
       "getContact": _getContact,
       "addContact": _addContact,
@@ -44,6 +45,11 @@ class ContactsMocks {
     } else {
       return [];
     }
+  }
+
+  Future<dynamic> _getContactImage(args) async {
+    /// Don't return images in test mode
+    return null;
   }
 
   operator [](String key) {
