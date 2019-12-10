@@ -20,3 +20,7 @@ for Android eventually
 
 * Fixing issue with copying identifier
 * Also improved error handling
+
+## 0.4.7+5
+
+* Added streaming methods for improved performance
