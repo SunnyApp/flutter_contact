@@ -69,8 +69,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
                                        withThumbnails: call.getBool("withThumbnails"),
                                        photoHighResolution: call.getBool("photoHighResolution"),
                                        phoneQuery: false,
-                                       limit: call.argx("limit") ?? 50,
-                                       offset: call.argx("offset") ?? 0,
+                                       limit: call.arg("limit"),
+                                       offset: call.arg("offset"),
                                        ids: call.argx("ids") ?? [String]())
                 result(contacts.map{$0.toDictionary()})
             
@@ -160,7 +160,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         // Fetch contacts
         var count = 0
         try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop ) -> Void in
-            if count >= limit {
+            if contacts.count >= limit {
                 stop.initialize(to: true)
                 return
             }
@@ -168,14 +168,14 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
                 if query != nil && self.has(contact: contact, phone: query!) {
                     if count >= offset {
                         contacts.append(contact)
-                        count = count + 1
                     }
+                    count = count + 1
                 }
             } else {
                 if count >= offset {
                     contacts.append(contact)
-                    count = count + 1
                 }
+                count = count + 1
             }
             
         })

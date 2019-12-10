@@ -47,7 +47,7 @@ class _ContactListPageState extends State<ContactListPage> {
   refreshContacts() async {
     PermissionStatus permissionStatus = await _getContactPermission();
     if (permissionStatus == PermissionStatus.granted) {
-      var contacts = await Contacts.getContacts(withHiResPhoto: false).toList();
+      var contacts = await Contacts.streamContacts(withHiResPhoto: false).toList();
       var groups = await Contacts.getGroups();
       setState(() {
         _contacts = contacts;
@@ -105,6 +105,12 @@ class _ContactListPageState extends State<ContactListPage> {
           icon: const Icon(Icons.assessment),
           onPressed: _viewEvents,
         ),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: refreshContacts,
+          )
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),

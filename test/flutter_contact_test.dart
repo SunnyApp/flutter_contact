@@ -65,8 +65,6 @@ void main() {
     }
 
     final PagingList<Contact> contacts = Contacts.listContacts();
-    int page = 0;
-    int curr = 0;
     await contacts.moveNextPage();
     final cpage = await contacts.currentPage;
     expect(cpage, hasLength(20));
