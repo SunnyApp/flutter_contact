@@ -2,7 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact/date_components.dart';
+import 'package:flutter_contact/paging_iterable.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quiver/iterables.dart';
 
 import 'mock_contact_service.dart';
 
@@ -21,12 +23,54 @@ void main() {
     mock.addContact(Contact(identifier: '2', givenName: "Larry"));
     mock.addContact(Contact(identifier: '3', givenName: "Moe"));
 
-    final Iterable contacts = await Contacts.getContacts();
+    final List<Contact> contacts = await Contacts.streamContacts().toList();
     expect(contacts.length, 3);
     expect(contacts, everyElement(isInstanceOf<Contact>()));
     expect(contacts.toList()[0].givenName, 'Frank');
     expect(contacts.toList()[1].givenName, 'Larry');
     expect(contacts.toList()[2].givenName, 'Moe');
+  });
+
+  test('should stream contacts (paging stream)', () async {
+    for (final x in range(0, 100)) {
+      mock.addContact(Contact(identifier: '$x', givenName: "Contact$x"));
+    }
+
+    final List<Contact> contacts = await Contacts.streamContacts().toList();
+    expect(contacts.length, 100);
+    expect(contacts, everyElement(isInstanceOf<Contact>()));
+    for (int i = 0; i < 100; i++) {
+      expect(contacts.toList()[i].givenName, 'Contact$i');
+    }
+  });
+
+  test('should stream contacts (paging list)', () async {
+    for (final x in range(0, 100)) {
+      mock.addContact(Contact(identifier: '$x', givenName: "Contact$x"));
+    }
+
+    final PagingList<Contact> contacts = Contacts.listContacts();
+    var i = 0;
+    while (await contacts.moveNext()) {
+      final curr = await contacts.current;
+      expect(curr.givenName, 'Contact$i');
+      i++;
+    }
+    expect(i, equals(100));
+  });
+
+  test('should get contacts (paged)', () async {
+    for (final x in range(0, 100)) {
+      mock.addContact(Contact(identifier: '$x', givenName: "Contact$x"));
+    }
+
+    final PagingList<Contact> contacts = Contacts.listContacts();
+    int page = 0;
+    int curr = 0;
+    await contacts.moveNextPage();
+    final cpage = await contacts.currentPage;
+    expect(cpage, hasLength(20));
+    expect(cpage[0].identifier, '0');
   });
 
   test('should add contact', () async {
@@ -208,36 +252,6 @@ void main() {
     });
   });
 }
-
-//void expectMethodCall(List<MethodCall> log, String methodName) {
-//  expect(log, <Matcher>[
-//    isMethodCall(
-//      methodName,
-//      arguments: <String, dynamic>{
-//        'identifier': null,
-//        'displayName': null,
-//        'givenName': 'givenName',
-//        'middleName': null,
-//        'familyName': null,
-//        'prefix': null,
-//        'suffix': null,
-//        'company': null,
-//        'jobTitle': null,
-//        'note': null,
-//        'emails': [
-//          {'label': 'label', 'value': null}
-//        ],
-//        'phones': [
-//          {'label': 'label', 'value': null}
-//        ],
-//        'postalAddresses': [
-//          {'label': 'label', 'street': null, 'city': null, 'postcode': null, 'region': null, 'country': null}
-//        ],
-//        'avatar': null
-//      },
-//    ),
-//  ]);
-//}
 
 typedef MethodHandler = Future<dynamic> Function(MethodCall call);
 typedef RawMethodHandler = Future<dynamic> Function(dynamic call);

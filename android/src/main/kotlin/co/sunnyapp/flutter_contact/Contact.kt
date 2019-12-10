@@ -33,7 +33,7 @@ data class Contact(
         val phones: MutableList<Item> = mutableListOf(),
         val socialProfiles: MutableList<Item> = mutableListOf(),
         val urls: MutableList<Item> = mutableListOf(),
-        val dates: MutableList<ContactDate> = mutableListOf(),
+        val dates: MutableList<Item> = mutableListOf(),
         val postalAddresses: MutableList<PostalAddress> = mutableListOf(),
         var avatar: ByteArray? = null
 ) {
@@ -57,7 +57,7 @@ data class Contact(
       "groups" to groups.toList(),
       "socialProfiles" to socialProfiles.toItemMap(),
       "urls" to urls.toItemMap(),
-      "dates" to dates.toContactDateMap(),
+      "dates" to dates.toItemMap(),
       "postalAddresses" to postalAddresses.toAddressMap()
   )
 
@@ -79,7 +79,7 @@ data class Contact(
           emails = (map["emails"] as? StructList?).toItemList(),
           phones = (map["phones"] as? StructList?).toItemList(),
           socialProfiles = (map["socialProfiles"] as? StructList?).toItemList(),
-          dates = (map["dates"] as? StructList?).toContactDateList(),
+          dates = (map["dates"] as? StructList?).toItemList(),
           urls = (map["urls"] as? StructList?).toItemList(),
           postalAddresses = (map["postAddresses"] as? StructList?).toPostalAddressList()
       )

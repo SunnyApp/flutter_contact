@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/contact.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,7 +36,14 @@ class ContactsMocks {
   addLog(MethodCall log) => _log.add(log);
 
   Future<dynamic> _getContacts(args) async {
-    return [..._data.values];
+    final offset = args["offset"] ?? 0;
+    final limit = args["limit"] ?? 50;
+    final allItems = [..._data.values];
+    if (allItems.length > offset) {
+      return allItems.sublist(offset, min(allItems.length, offset + limit));
+    } else {
+      return [];
+    }
   }
 
   operator [](String key) {

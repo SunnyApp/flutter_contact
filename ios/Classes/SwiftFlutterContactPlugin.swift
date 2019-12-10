@@ -65,28 +65,22 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         do {
             switch call.method {
             case "getContacts":
-
                 let contacts: [CNContact] = try getContacts(query: call.getString("query"),
                                        withThumbnails: call.getBool("withThumbnails"),
                                        photoHighResolution: call.getBool("photoHighResolution"),
-                                       phoneQuery: false)
+                                       phoneQuery: false,
+                                       limit: call.argx("limit") ?? 50,
+                                       offset: call.argx("offset") ?? 0,
+                                       ids: call.argx("ids") ?? [String]())
                 result(contacts.map{$0.toDictionary()})
+            
             case "getContact":
-
                 let contact: CNContact? = try getContact(identifier: call.getString("identifier")!,
                                                          withThumbnails: call.getBool("withThumbnails"),
                                                          photoHighResolution: call.getBool("photoHighResolution"))
                 result(contact?.toDictionary())
             case "getGroups":
                 result(try getGroups())
-            case "getContactsForPhone":
-
-                let contacts: [CNContact] = try getContacts(query: call.getString("phone"),
-                                                            withThumbnails: call.getBool("withThumbnails"),
-                                                            photoHighResolution: call.getBool("photoHighResolution"),
-                                                            phoneQuery:  true)
-                result(contacts.map {$0.toDictionary() })
-
             case "addContact":
                 let contact = CNMutableContact()
                 contact.takeFromDictionary(call.args)
@@ -101,7 +95,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
             default:
                 result(FlutterMethodNotImplemented)
             }
-        } catch let error as ContactError {
+        } catch let error as PluginError {
             switch(error) {
             case .runtimeError(let code, let message):
                 result(FlutterError(
@@ -109,7 +103,6 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
                     message: message,
                     details: nil))
             }
-        
         } catch _ as NSError {
             result(FlutterError(
             code: "unknown",
@@ -123,7 +116,6 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         let store = CNContactStore()
 
         // Fetch groups
-
         let groups:[[String:Any]] = try store.groups(matching: nil)
             .map { group in
                 var dict = [String:Any]()
@@ -141,7 +133,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
     }
 
-    func getContacts(query : String?, withThumbnails: Bool, photoHighResolution: Bool, phoneQuery: Bool) throws -> [CNContact] {
+    func getContacts(query : String?, withThumbnails: Bool, photoHighResolution: Bool, phoneQuery: Bool,
+                     limit: Int, offset: Int, ids: [String]) throws -> [CNContact] {
 
         var contacts : [CNContact] = []
 
@@ -150,8 +143,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
         var keys = contactFetchKeys
 
-        if(withThumbnails){
-            if(photoHighResolution){
+        if (withThumbnails) {
+            if(photoHighResolution) {
                 keys.append(CNContactImageDataKey)
             } else {
                 keys.append(CNContactThumbnailImageDataKey)
@@ -165,15 +158,26 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         }
 
         // Fetch contacts
-        try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop) -> Void in
+        var count = 0
+        try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop ) -> Void in
+            if count >= limit {
+                stop.initialize(to: true)
+                return
+            }
             if phoneQuery {
                 if query != nil && self.has(contact: contact, phone: query!) {
-                    contacts.append(contact)
+                    if count >= offset {
+                        contacts.append(contact)
+                        count = count + 1
+                    }
                 }
             } else {
-                contacts.append(contact)
+                if count >= offset {
+                    contacts.append(contact)
+                    count = count + 1
+                }
             }
-
+            
         })
         return contacts
     }
@@ -237,7 +241,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
     @available(iOS 9.0, *)
     func deleteContact(_ dictionary: [String:Any?]) throws -> Bool {
         guard let identifier = dictionary["identifier"] as? String else {
-            throw ContactError.runtimeError(code: "invalid.input", message: "No identifier for contact")
+            throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact")
         }
         let store = CNContactStore()
         let keys = [CNContactIdentifierKey as NSString]
@@ -258,7 +262,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
         // Check to make sure dictionary has an identifier
         guard let identifier = dictionary["identifier"] as? String else {
-            throw ContactError.runtimeError(code: "invalid.input", message: "No identifier for contact");
+            throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact");
         }
 
         let store = CNContactStore()
@@ -277,7 +281,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
             try store.execute(request)
             return contact
         } else {
-            throw ContactError.runtimeError(code: "contact.notFound", message: "Couldn't find contact")
+            throw PluginError.runtimeError(code: "contact.notFound", message: "Couldn't find contact")
         }
     }
 }
@@ -428,13 +432,13 @@ extension CNContact {
             for date in contact.dates {
                 var dateDict = [String:Any]()
                 dateDict["label"] = "other"
-                dateDict["date"] = date.value.toDictionary()
+                dateDict["date"] = date.value.toDict()
                 if let label = date.label{
                     dateDict["label"] = CNLabeledValue<NSString>.localizedString(forLabel: label)
                 }
                 dates.append(dateDict)
             }
-            if let bDay = contact.birthday?.toDictionary() {
+            if let bDay = contact.birthday?.toDict() {
                 dates.append([
                     "label": "birthday",
                     "date": bDay])
@@ -544,174 +548,5 @@ extension CNMutableContact {
     }
 }
 
-func convertNSDateComponents(_ dict: [String:Int])-> NSDateComponents {
-   let nsDate = NSDateComponents()
-    if let year = dict["year"] {
-         nsDate.setValue(year, forComponent: .year)
-    }
-    if let month = dict["month"] {
-        nsDate.setValue(month, forComponent: .month)
-    }
-    if let day = dict["day"] {
-        nsDate.setValue(day, forComponent: .day)
-    }
-    return nsDate
-}
-
-
-func convertDateComponents(_ dict: [String:Int])-> DateComponents {
-   var nsDate = DateComponents()
-    if let year = dict["year"] {
-         nsDate.setValue(year, for: .year)
-    }
-    if let month = dict["month"] {
-        nsDate.setValue(month, for: .month)
-    }
-    if let day = dict["day"] {
-        nsDate.setValue(day, for: .day)
-    }
-    return nsDate
-}
-
-extension DateComponents {
-    func toDictionary()-> [String: Int] {
-        var dict = [String:Int]()
-        let year = self.year
-        if year != NSDateComponentUndefined {
-            dict["year"] = year
-        }
-            
-        let month = self.month
-        if month != NSDateComponentUndefined {
-            dict["month"] = month
-        }
-        
-        let day = self.day
-        if day != NSDateComponentUndefined {
-            dict["day"] = day
-        }
-        
-        return dict
-    }
-}
-
-extension NSDateComponents {
-    func toDictionary()-> [String:Int] {
-        var dict = [String:Int]()
-        let year = self.year
-        if year != NSDateComponentUndefined {
-            dict["year"] = year
-        }
-        
-        let month = self.month
-        if month != NSDateComponentUndefined {
-            dict["month"] = month
-        }
-        
-        
-        let day = self.day
-        if day != NSDateComponentUndefined {
-            dict["day"] = day
-        }
-        
-        return dict
-    }
-}
-
-
-extension String {
-    ///Attempts to parse a date from string in yyyyMMdd format
-    func parseDate(format: String) -> Date? {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = format
-        return dateFormatter.date(from: self)
-    }
-
-    func parseDateComponents()-> NSDateComponents? {
-        let nsDate = NSDateComponents()
-        let parts = self.split(separator: "-")
-            .flatMap { $0.split(separator: "/") }
-            .map{ Int($0) }
-            .compactMap{$0}
-
-        if parts.count == 1 {
-            // Year
-
-            if parts.first! > 1000 {
-                nsDate.setValue(parts.first!, forComponent: .year)
-            } else {
-                nsDate.setValue(parts.first!, forComponent: .day)
-            }
-
-        } else if parts.count == 2 {
-            if parts.contains(where: {$0 > 1000}) {
-                for part in parts {
-                    if part > 1000 {
-                        nsDate.setValue(part, forComponent: .year)
-                    } else {
-                        nsDate.setValue(part, forComponent: .month)
-                    }
-                }
-            } else {
-                nsDate.setValue(parts[0], forComponent: .month)
-                nsDate.setValue(parts[1], forComponent: .day)
-            }
-        } else if parts.count == 3 {
-            if parts[0] > 1000 {
-                nsDate.setValue(parts[0], forComponent: .year)
-                nsDate.setValue(parts[1], forComponent: .month)
-                nsDate.setValue(parts[2], forComponent: .day)
-            } else {
-                nsDate.setValue(parts[0], forComponent: .month)
-                nsDate.setValue(parts[1], forComponent: .day)
-                nsDate.setValue(parts[2], forComponent: .year)
-            }
-        } else {
-            return nil
-        }
-
-        return nsDate
-
-    }
-
-    @available(iOS 9.0, *)
-    func toPhoneLabel() -> String{
-        let labelValue = self
-        switch(labelValue){
-        case "main": return CNLabelPhoneNumberMain
-        case "mobile": return CNLabelPhoneNumberMobile
-        case "iPhone": return CNLabelPhoneNumberiPhone
-        default: return labelValue
-        }
-    }
-}
-
-enum ContactError: Error {
-    case runtimeError(code:String, message:String)
-}
-
-extension FlutterMethodCall {
-
-    func getBool(_ key: String)-> Bool {
-        return (args[key] as? Bool) ?? false
-    }
-
-    func getString(_ key: String)-> String? {
-        return args[key] as? String
-    }
-
-    func getDict(_ key: String)-> [String:Any?] {
-        return (args[key] as? [String:Any?]) ?? [String:Any?]()
-    }
-
-
-    // Quick way to access args as a dictionary
-    var args: [String:Any?] {
-        get {
-            return self.arguments as? [String:Any?] ?? [String:Any?]()
-        }
-    }
-}
 
 

@@ -47,7 +47,7 @@ class _ContactListPageState extends State<ContactListPage> {
   refreshContacts() async {
     PermissionStatus permissionStatus = await _getContactPermission();
     if (permissionStatus == PermissionStatus.granted) {
-      var contacts = await Contacts.getContacts(withHiResPhoto: false);
+      var contacts = await Contacts.getContacts(withHiResPhoto: false).toList();
       var groups = await Contacts.getGroups();
       setState(() {
         _contacts = contacts;

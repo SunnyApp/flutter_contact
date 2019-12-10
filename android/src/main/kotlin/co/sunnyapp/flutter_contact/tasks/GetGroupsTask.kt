@@ -66,7 +66,7 @@ class GetGroupsTask(private val result: MethodChannel.Result,
         }
 
         resolver.queryContacts()
-                .toContactList()
+                .toContactList(100, 0)
                 .forEach { contact ->
                     for (groupId in contact.groups) {
                         val group = groupsById[groupId] ?: continue

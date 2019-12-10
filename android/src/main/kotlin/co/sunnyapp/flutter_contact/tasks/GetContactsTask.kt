@@ -11,7 +11,9 @@ import io.flutter.plugin.common.MethodChannel
 class GetContactsTask(private val getContactResult: MethodChannel.Result,
                       override val resolver: ContentResolver,
                       private val withThumbnails: Boolean,
-                      private val photoHighResolution: Boolean) : ContactTask, AsyncTask<String, Void, Result<StructList>>() {
+                      private val photoHighResolution: Boolean,
+                      private val limit: Int,
+                      private val offset: Int) : ContactTask, AsyncTask<String, Void, Result<StructList>>() {
 
     @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun doInBackground(vararg query: String): Result<StructList> {

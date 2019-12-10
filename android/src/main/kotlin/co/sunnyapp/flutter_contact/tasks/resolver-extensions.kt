@@ -1,5 +1,6 @@
 package co.sunnyapp.flutter_contact.tasks
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.database.Cursor
 import android.provider.ContactsContract
@@ -17,6 +18,7 @@ data class Result<T> internal constructor(val value: T?,
             exception = exception)
 }
 
+@SuppressLint("Recycle")
 fun ContentResolver.queryContacts(query: String? = null): Cursor? {
     var selectionArgs = arrayOf(
             ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE,
@@ -47,12 +49,16 @@ fun ContentResolver.findContactById(identifier: String): Cursor? {
  * @param cursor
  * @return the list of contacts
  */
-fun Cursor?.toContactList(): List<Contact> {
+fun Cursor?.toContactList(limit: Int, offset: Int): List<Contact> {
     val cursor = this ?: return emptyList()
+
+    if(!cursor.move(offset)) {
+        return emptyList()
+    }
 
     val contactsById = mutableMapOf<String, Contact>()
 
-    while (cursor.moveToNext()) {
+    while (cursor.moveToNext() && contactsById.size <= limit) {
         val columnIndex = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID)
         val contactId = cursor.getString(columnIndex)
 

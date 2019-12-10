@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_contact/paging_iterable.dart';
 import 'package:logging/logging.dart';
 
 import 'contact.dart';
@@ -21,9 +22,21 @@ final _events = EventChannel('github.com/sunnyapp/flutter_contact_events');
 final Contacts = _Contacts();
 
 abstract class ContactsContract {
-  Future<Iterable<Contact>> getContacts({String query, bool withThumbnails = true, bool withHiResPhoto = true});
+  Stream<Contact> streamContacts(
+      {List<String> ids,
+      String query,
+      String phoneQuery,
+      int bufferSize = 20,
+      bool withThumbnails = true,
+      bool withHiResPhoto = true});
+  PagingList<Contact> listContacts(
+      {List<String> ids,
+      String query,
+      String phoneQuery,
+      int bufferSize = 20,
+      bool withThumbnails = true,
+      bool withHiResPhoto = true});
   void configureLogs({Level level, Logging onLog});
-  Future<Iterable<Contact>> getContactsForPhone(String phone, {bool withThumbnails = true, bool withHiResPhoto = true});
   Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true});
   Future<Contact> addContact(Contact contact);
   Future<bool> deleteContact(Contact contact);
@@ -32,14 +45,60 @@ abstract class ContactsContract {
   Stream<ContactEvent> get contactEvents;
 }
 
+const kwithThumbnails = 'kwithThumbnails';
+const kphotoHighResolution = 'photoHighResolution';
+const klimit = 'limit';
+const koffset = 'offset';
+const kquery = 'query';
+const kphoneQuery = 'phoneQuery';
+const kids = 'ids';
+
+PageGenerator<Contact> _defaultPageGenerator(
+        String query, String phoneQuery, Iterable<String> ids, bool withThumbnails, bool withHiResPhoto) =>
+    (int limit, int offset) async {
+      final List page = await _channel.invokeMethod('getContacts', {
+        kquery: query,
+        klimit: limit,
+        if (ids != null) kids: ids,
+        koffset: offset,
+        kphoneQuery: phoneQuery,
+        kwithThumbnails: withThumbnails,
+        kphotoHighResolution: withHiResPhoto,
+      });
+      return [...page.where(notNull()).map((_) => Contact.fromMap(_))];
+    };
+
 class _Contacts extends ContactsContract {
   /// Fetches all contacts, or when specified, the contacts with a name
   /// matching [query]
   @override
-  Future<Iterable<Contact>> getContacts({String query, bool withThumbnails = true, bool withHiResPhoto = true}) async {
-    Iterable contacts = await _channel.invokeMethod('getContacts',
-        <String, dynamic>{'query': query, 'withThumbnails': withThumbnails, 'photoHighResolution': withHiResPhoto});
-    return contacts.map((m) => Contact.fromMap(m));
+  Stream<Contact> streamContacts(
+      {String query,
+      String phoneQuery,
+      Iterable<String> ids,
+      bool withThumbnails = true,
+      bool withHiResPhoto = true,
+      int bufferSize = 20}) {
+    final stream = PagingStream<Contact>(
+      pageGenerator: _defaultPageGenerator(query, phoneQuery, ids, withThumbnails, withHiResPhoto),
+      bufferSize: bufferSize,
+    );
+    return stream;
+  }
+
+  @override
+  PagingList<Contact> listContacts(
+      {String query,
+      String phoneQuery,
+      Iterable<String> ids,
+      bool withThumbnails = true,
+      bool withHiResPhoto = true,
+      int bufferSize = 20}) {
+    final list = PagingList<Contact>(
+      pageGenerator: _defaultPageGenerator(query, phoneQuery, ids, withThumbnails, withHiResPhoto),
+      bufferSize: bufferSize,
+    );
+    return list;
   }
 
   /// Configures logging.  FlutterPhoneState uses the [logging] plugin.
@@ -48,25 +107,13 @@ class _Contacts extends ContactsContract {
     configureLogging(logger: _log, level: level, onLog: onLog);
   }
 
-  /// Fetches all contacts, or when specified, the contacts with a name
-  /// matching [query]
-  @override
-  Future<Iterable<Contact>> getContactsForPhone(String phone,
-      {bool withThumbnails = true, bool withHiResPhoto = true}) async {
-    if (phone == null || phone.isEmpty) return Iterable.empty();
-
-    Iterable contacts = await _channel.invokeMethod('getContactsForPhone',
-        <String, dynamic>{'phone': phone, 'withThumbnails': withThumbnails, 'photoHighResolution': withHiResPhoto});
-    return contacts.map((m) => Contact.fromMap(m));
-  }
-
   /// Retrieves a single contact by identifier
   @override
   Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true}) async {
     final fromChannel = await _channel.invokeMethod('getContact', <String, dynamic>{
-      "identifier": identifier,
-      "withThumbnails": withThumbnails,
-      "photoHighResolution": withHiResPhoto,
+      kidentifier: identifier,
+      kwithThumbnails: withThumbnails,
+      kphotoHighResolution: withHiResPhoto,
     });
     if (fromChannel == null) return null;
     return Contact.fromMap(fromChannel);
