@@ -33,3 +33,9 @@ for Android eventually
 
 * Move all ios operation to background as .userInitiated
 * Provide convenience getter for fetching contact avatar.
+
+## 0.4.7+8
+
+* Improved performance of count
+* Beefed up example screen to handle search and other features.
+* Known issue: this build doesn't work for Android

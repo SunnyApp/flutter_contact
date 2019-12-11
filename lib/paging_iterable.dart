@@ -5,19 +5,49 @@ import 'package:flutter/widgets.dart';
 typedef PageGenerator<T> = FutureOr<List<T>> Function(int limit, int offset);
 
 class PagingList<T> {
+  FutureOr<int> _length;
+
   final int bufferSize;
   int _page = 0;
-  List<T> _pageList = [];
+  List<T> _pageList;
   Future<List<T>> _pageFuture;
   Iterator<T> _currIter;
   final PageGenerator<T> pageGenerator;
 
-  PagingList({this.pageGenerator, this.bufferSize = 20});
+  PagingList({this.pageGenerator, this.bufferSize = 20, @required final FutureOr<int> length}) : _length = length {
+    if (length is Future<int>) {
+      length.then((_resolved) {
+        _length = _resolved;
+      });
+    }
+  }
+
+  bool _isPageLoaded(int index) {
+    final upper = _page * bufferSize;
+    final lower = upper - bufferSize;
+    final inPage = index >= lower && index <= upper;
+    return inPage;
+  }
+
+  Future<T> get(int index) async {
+    if (!_isPageLoaded(index)) {
+      final pageNum = index ~/ bufferSize;
+      final page = await jumpToPage(pageNum);
+      return page.get(index % bufferSize);
+    } else {
+      return (await currentPage).get(index % bufferSize);
+    }
+  }
+
+  FutureOr<int> get length => _length;
+  int get lengthOrEmpty => _length is Future<int> ? 0 : _length;
 
   Future<List<T>> get currentPage {
     if (_pageFuture != null) return _pageFuture;
     return Future.value(_pageList);
   }
+
+  int get pageNumber => _page;
 
   Future<T> get current async {
     if (_pageFuture != null) {
@@ -26,9 +56,15 @@ class PagingList<T> {
     return _currIter?.current;
   }
 
-  FutureOr<bool> jumpToPage(int page) {
+  Future reload() async {
+    return await jumpToPage(_page);
+  }
+
+  Future<List<T>> jumpToPage(int page) async {
     _page = page;
-    return moveNextPage();
+    final moved = await moveNextPage();
+    if (moved == false) return [];
+    return await currentPage;
   }
 
   FutureOr<bool> moveNextPage() {
@@ -69,8 +105,9 @@ class PagingStream<T> extends Stream<T> {
 
   _resume() async {
     try {
-      assert(_isPaused == true);
-      assert(_controller.isClosed != true);
+      if (_isPaused == false) return;
+      if (_controller.isClosed) return;
+
       _isPaused = false;
 
       while (await moveNext()) {
@@ -114,7 +151,7 @@ class PagingStream<T> extends Stream<T> {
     _controller ??= StreamController(
       onListen: () => _resume(),
       onCancel: () {
-        if (!_controller.isClosed) _controller.close();
+//        if (!_controller.isClosed) _controller.close();
       },
       onPause: () => _isPaused = true,
       onResume: () => _resume(),
@@ -126,5 +163,13 @@ class PagingStream<T> extends Stream<T> {
       onDone: () => onDone?.call(),
       cancelOnError: cancelOnError,
     );
+  }
+}
+
+extension SafeList<X> on List<X> {
+  X get(int index) {
+    if (this == null) return null;
+    if (index > this.length) return null;
+    return this[index];
   }
 }

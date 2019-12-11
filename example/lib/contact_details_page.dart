@@ -8,6 +8,7 @@ import 'items_tile.dart';
 
 class ContactDetailsPage extends StatefulWidget {
   ContactDetailsPage(this._contact, this._groups);
+
   final Contact _contact;
   final Iterable<Group> _groups;
 
@@ -17,11 +18,25 @@ class ContactDetailsPage extends StatefulWidget {
 
 class _ContactDetailsPageState extends State<ContactDetailsPage> {
   Contact _contact;
+  bool _avatarZoomed = false;
+  double _avatarSize = 150.0;
 
   @override
   void initState() {
     super.initState();
     _contact = widget._contact;
+  }
+
+  _toggleAvatarSize(BuildContext context) {
+    setState(() {
+      if (!_avatarZoomed) {
+        _avatarSize = MediaQuery.of(context).size.width;
+        _avatarZoomed = true;
+      } else {
+        _avatarZoomed = false;
+        _avatarSize = 150.0;
+      }
+    });
   }
 
   @override
@@ -56,9 +71,21 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
         child: ListView(
           children: <Widget>[
             if (widget._contact.hasAvatar == true)
-              Container(
-                height: 120,
-                decoration: BoxDecoration(image: DecorationImage(image: MemoryImage(widget._contact.avatar))),
+              GestureDetector(
+                key: Key("contact-avatar-${_contact.identifier}"),
+                onTap: () => _toggleAvatarSize(context),
+                child: AnimatedContainer(
+                  width: _avatarSize,
+                  height: _avatarSize,
+                  child: Container(
+                    width: _avatarSize,
+                    height: _avatarSize,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(fit: BoxFit.cover, image: MemoryImage(widget._contact.avatar)),
+                    ),
+                  ),
+                  duration: Duration(milliseconds: 300),
+                ),
               ),
             ListTile(
               title: Text("Name"),
@@ -98,7 +125,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
             DatesTile(widget._contact, widget._contact.dates, onChange),
             ItemsTile(widget._contact, "URLs", widget._contact.urls, onChange),
             ItemsTile(widget._contact, "Emails", widget._contact.emails, onChange),
-            GroupsTile(widget._groups)
+            GroupsTile(groups: widget._groups)
           ],
         ),
       ),

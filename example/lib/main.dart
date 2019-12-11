@@ -5,6 +5,7 @@ import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact/group.dart';
 import 'package:flutter_contact_example/contact_details_page.dart';
 import 'package:flutter_contact_example/contact_events_page.dart';
+import 'package:flutter_contact_example/main_search.dart';
 import 'package:logging/logging.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -26,11 +27,13 @@ class ContactListPage extends StatefulWidget {
 }
 
 class _ContactListPageState extends State<ContactListPage> {
-  Iterable<Contact> _contacts;
-  List<Group> _groups;
+  Iterable<Group> _groups;
   List<ContactEvent> _events = [];
 
+  PagingList<Contact> _contacts;
+
   bool _isPermissionInvalid = false;
+  SearchDelegate _delegate;
 
   @override
   initState() {
@@ -42,15 +45,21 @@ class _ContactListPageState extends State<ContactListPage> {
         _events.add(event);
       });
     });
+    _delegate = ContactSearchDelegate();
   }
 
   refreshContacts() async {
     PermissionStatus permissionStatus = await _getContactPermission();
     if (permissionStatus == PermissionStatus.granted) {
-      var contacts = await Contacts.streamContacts(withHiResPhoto: false).toList();
       var groups = await Contacts.getGroups();
-      setState(() {
+      if (_contacts == null) {
+        final contacts = Contacts.listContacts(withHiResPhoto: false);
+        final length = await contacts.length;
         _contacts = contacts;
+      } else {
+        _contacts.reload();
+      }
+      setState(() {
         _groups = groups.toList();
       });
     } else {
@@ -62,7 +71,8 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   updateContact() async {
-    Contact ninja = _contacts.toList().firstWhere((contact) => contact.familyName.startsWith("Ninja"));
+    Contact ninja = await Contacts.streamContacts(withHiResPhoto: false)
+        .firstWhere((contact) => contact.familyName.startsWith("Ninja"));
     ninja.avatar = null;
     await Contacts.updateContact(ninja);
 
@@ -92,15 +102,14 @@ class _ContactListPageState extends State<ContactListPage> {
     }
   }
 
-  int get _contactCount => _contacts?.length ?? 0;
-
+  int get _contactCount => _contacts?.lengthOrEmpty ?? 0;
   int get _groupCount => _groups?.length ?? 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Contacts Plugin Example'),
+        title: Text('Contacts ${_contactCount > 0 ? '($_contactCount)' : ''}'),
         leading: IconButton(
           icon: const Icon(Icons.assessment),
           onPressed: _viewEvents,
@@ -109,7 +118,13 @@ class _ContactListPageState extends State<ContactListPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: refreshContacts,
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch<Contact>(context: context, delegate: _delegate);
+            },
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -123,59 +138,40 @@ class _ContactListPageState extends State<ContactListPage> {
       body: SafeArea(
         child: _contacts != null
             ? ListView.builder(
-                itemCount: _contactCount + _groupCount,
-                itemBuilder: (BuildContext context, int index) {
-                  if (index >= _contactCount) {
-                    Group g = _groups[index - _contactCount];
-                    return ListTile(
-                      onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (BuildContext context) => GroupDetailsPage(
-                                  g,
-                                  g.contacts.map(
-                                    (contactId) => _contacts.firstWhere((contact) => contact.identifier == contactId),
-                                  ),
-                                )));
-                      },
-                      title: Text(g.name ?? "No Name"),
-                    );
-                  } else {
-                    Contact c = _contacts?.elementAt(index);
-                    return ListTile(
-                      onTap: () async {
-                        // Test loading the contact by id
-                        final loadedContact = await Contacts.getContact(
-                          c.identifier,
-                          withThumbnails: true,
-                          withHiResPhoto: true,
-                        );
-                        await Navigator.of(context).push(MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                ContactDetailsPage(loadedContact, _groupsForContact(c.identifier))));
-                        setState(() {});
-                      },
-                      leading: (c.avatar != null && c.avatar.isNotEmpty)
-                          ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
-                          : CircleAvatar(child: Text(c.initials())),
-                      title: Text(c.displayName ?? ""),
-                    );
-                  }
+                primary: true,
+                itemBuilder: (context, index) {
+                  return PagingListIndexBuilder(
+                    name: "contact-list",
+                    index: index,
+                    itemBuilder: (context, idx, contact) {
+                      return ContactListTile(
+                        key: IndexKey("contact-tile", index),
+                        contact: contact,
+                        groups: () => _groupsForContact(contact.identifier),
+                      );
+                    },
+                    list: _contacts,
+                  );
                 },
+                itemCount: _contactCount,
+                itemExtent: 50,
               )
             : _isPermissionInvalid
                 ? Center(
                     child: ListTile(
-                    title: Text("Invalid Permissions",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                        )),
+                    title: Text(
+                      "Invalid Permissions",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     subtitle:
                         Text("This demo should request permissions when it starts. If you're seeing this message, "
                             "you may need to reset your permission settings"),
                   ))
-                : Center(
+                : const Center(
                     child: CircularProgressIndicator(),
                   ),
       ),
@@ -191,30 +187,67 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 }
 
-class GroupDetailsPage extends StatelessWidget {
-  GroupDetailsPage(this._group, this._contacts);
+typedef Provider<T> = T Function();
 
-  final Group _group;
-  final Iterable<Contact> _contacts;
+class IndexKey extends ValueKey {
+  final String list;
+  final int index;
+  IndexKey(this.list, this.index) : super("$list-$index");
+}
+
+class ContactListTile extends StatelessWidget {
+  final Contact contact;
+  final Provider<Iterable<Group>> groups;
+
+  ContactListTile({Key key, this.contact, this.groups}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    print("Built ${contact.identifier}");
+    return ListTile(
+      onTap: () async {
+        // Test loading the contact by id
+        final loadedContact = await Contacts.getContact(
+          contact.identifier,
+          withThumbnails: true,
+          withHiResPhoto: true,
+        );
+        await Navigator.of(context)
+            .push(MaterialPageRoute(builder: (BuildContext context) => ContactDetailsPage(loadedContact, groups())));
+      },
+      leading: (contact.avatar != null && contact.avatar.isNotEmpty)
+          ? CircleAvatar(backgroundImage: MemoryImage(contact.avatar))
+          : CircleAvatar(child: Text(contact.initials())),
+      title: Text(contact.displayName ?? ""),
+    );
+  }
+}
+
+class GroupDetailsPage extends StatelessWidget {
+  GroupDetailsPage({@required this.group});
+
+  final Group group;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_group.name ?? "No Name"),
-      ),
-      body: SafeArea(
-        child: ListView(
-          children: _contacts
-              .map((c) => ListTile(
-                  leading: (c.avatar != null && c.avatar.isNotEmpty)
-                      ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
-                      : CircleAvatar(child: Text(c.initials())),
-                  title: Text(c.displayName ?? "")))
-              .toList(),
+        appBar: AppBar(
+          title: Text(group.name ?? "No Name"),
         ),
-      ),
-    );
+        body: SafeArea(
+          child: FutureBuilder<Iterable<Contact>>(
+            builder: (context, snapshot) => ListView(
+              children: (snapshot.data ?? [])
+                  .map((c) => ListTile(
+                      leading: (c.avatar != null && c.avatar.isNotEmpty)
+                          ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
+                          : CircleAvatar(child: Text(c.initials())),
+                      title: Text(c.displayName ?? "")))
+                  .toList(),
+            ),
+            future: Contacts.streamContacts().where((contact) => group.contacts.contains(contact.identifier)).toList(),
+          ),
+        ));
   }
 }
 
@@ -265,9 +298,9 @@ class AddressesTile extends StatelessWidget {
 }
 
 class GroupsTile extends StatelessWidget {
-  GroupsTile(this._groups);
+  GroupsTile({@required this.groups});
 
-  final Iterable<Group> _groups;
+  final Iterable<Group> groups;
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +309,7 @@ class GroupsTile extends StatelessWidget {
       children: <Widget>[
         ListTile(title: Text("Groups")),
         Column(
-          children: _groups
+          children: groups
               .map(
                 (i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -392,6 +425,38 @@ class _AddContactPageState extends State<AddContactPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+typedef ItemBuilder<T> = Widget Function(BuildContext context, int index, T item);
+
+class PagingListIndexBuilder<T> extends StatelessWidget {
+  final int index;
+  final PagingList<T> list;
+  final ItemBuilder<T> itemBuilder;
+  final String name;
+
+  PagingListIndexBuilder({@required this.index, @required this.list, @required this.itemBuilder, @required this.name})
+      : super(key: Key("list-builder-$name-$index"));
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<T>(
+      key: IndexKey("$name-future", index),
+      future: Future.value(list.get(index)),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return itemBuilder(context, index, snapshot.data);
+        } else if (snapshot.hasError) {
+          return Text("${snapshot.error}");
+        } else {
+          return const SizedBox(
+            height: 0,
+            width: 0,
+          );
+        }
+      },
     );
   }
 }

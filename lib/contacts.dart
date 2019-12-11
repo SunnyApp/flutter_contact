@@ -14,6 +14,7 @@ export 'contact.dart';
 export 'contact_events.dart';
 export 'date_components.dart';
 export 'group.dart';
+export 'paging_iterable.dart';
 
 final _log = Logger("contactsService");
 const _channel = MethodChannel('github.com/sunnyapp/flutter_contact');
@@ -26,14 +27,16 @@ abstract class ContactsContract {
   Stream<Contact> streamContacts(
       {List<String> ids,
       String query,
-      String phoneQuery,
+      bool phoneQuery,
       int bufferSize = 20,
       bool withThumbnails = true,
       bool withHiResPhoto = true});
+  Future<int> getTotalContacts({String query, bool phoneQuery, Iterable<String> ids});
+
   PagingList<Contact> listContacts(
       {List<String> ids,
       String query,
-      String phoneQuery,
+      bool phoneQuery,
       int bufferSize = 20,
       bool withThumbnails = true,
       bool withHiResPhoto = true});
@@ -56,7 +59,7 @@ const kphoneQuery = 'phoneQuery';
 const kids = 'ids';
 
 PageGenerator<Contact> _defaultPageGenerator(
-        String query, String phoneQuery, Iterable<String> ids, bool withThumbnails, bool withHiResPhoto) =>
+        String query, bool phoneQuery, Iterable<String> ids, bool withThumbnails, bool withHiResPhoto) =>
     (int limit, int offset) async {
       final List page = await _channel.invokeMethod('getContacts', {
         kquery: query,
@@ -76,7 +79,7 @@ class _Contacts extends ContactsContract {
   @override
   Stream<Contact> streamContacts(
       {String query,
-      String phoneQuery,
+      bool phoneQuery,
       Iterable<String> ids,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
@@ -96,9 +99,22 @@ class _Contacts extends ContactsContract {
   }
 
   @override
+  Future<int> getTotalContacts({
+    String query,
+    bool phoneQuery,
+    Iterable<String> ids,
+  }) {
+    return _channel.invokeMethod('getTotalContacts', {
+      kquery: query,
+      kphoneQuery: phoneQuery,
+      kids: ids,
+    });
+  }
+
+  @override
   PagingList<Contact> listContacts(
       {String query,
-      String phoneQuery,
+      bool phoneQuery,
       Iterable<String> ids,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
@@ -106,6 +122,7 @@ class _Contacts extends ContactsContract {
     final list = PagingList<Contact>(
       pageGenerator: _defaultPageGenerator(query, phoneQuery, ids, withThumbnails, withHiResPhoto),
       bufferSize: bufferSize,
+      length: getTotalContacts(query: query, phoneQuery: phoneQuery, ids: ids),
     );
     return list;
   }
