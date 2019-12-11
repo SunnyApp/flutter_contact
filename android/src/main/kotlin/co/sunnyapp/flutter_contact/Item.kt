@@ -1,6 +1,7 @@
 package co.sunnyapp.flutter_contact
 
 import android.database.Cursor
+import android.location.Address
 import android.provider.ContactsContract.CommonDataKinds.*
 
 /***
@@ -75,6 +76,16 @@ fun Cursor.getEmailLabel(): String {
     Email.TYPE_WORK -> "work"
     Email.TYPE_MOBILE -> "mobile"
     else -> string(Email.LABEL)?.toLowerCase() ?: "other"
+  }
+}
+
+fun Cursor.getAddressLabel(): String {
+  val type = getInt(getColumnIndex(StructuredPostal.TYPE))
+
+  return when (type) {
+    StructuredPostal.TYPE_HOME -> "home"
+    StructuredPostal.TYPE_WORK -> "work"
+    else -> string(StructuredPostal.LABEL)?.toLowerCase() ?: "other"
   }
 }
 

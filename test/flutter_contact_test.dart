@@ -10,8 +10,7 @@ import 'mock_contact_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  const MethodChannel channel =
-      MethodChannel('github.com/sunnyapp/flutter_contact');
+  const MethodChannel channel = MethodChannel('github.com/sunnyapp/flutter_contact');
   final mock = ContactsMocks();
   channel.setMockMethodCallHandler(mock.handler);
 
@@ -85,9 +84,7 @@ void main() {
   test('dates serialize as maps', () async {
     final contact = Contact(
       givenName: 'Bob',
-      dates: [
-        ContactDate(label: 'birthday', date: DateComponents(month: 12, day: 28))
-      ],
+      dates: [ContactDate(label: 'birthday', date: DateComponents(month: 12, day: 28))],
       phones: [Item(label: 'label')],
       postalAddresses: [PostalAddress(label: 'label')],
     );
@@ -116,8 +113,7 @@ void main() {
   });
 
   test('should provide initials for contact', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName");
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName");
     Contact contact2 = Contact(givenName: "givenName");
     Contact contact3 = Contact(familyName: "familyName");
     Contact contact4 = Contact();
@@ -133,10 +129,8 @@ void main() {
       givenName: "givenName",
       familyName: "familyName",
       dates: [
-        ContactDate(
-            label: "birthday", date: DateComponents(month: 12, day: 28)),
-        ContactDate(
-            label: "birthday", date: DateComponents(month: 12, day: 28)),
+        ContactDate(label: "birthday", date: DateComponents(month: 12, day: 28)),
+        ContactDate(label: "birthday", date: DateComponents(month: 12, day: 28)),
       ],
       emails: [
         Item(label: "home", value: "smartytime@gmail.com"),
@@ -188,13 +182,11 @@ void main() {
   });
 
   test('should show contacts are equal', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "example@example.com"),
       Item(label: "Work", value: "example2@example.com"),
     ]);
-    Contact contact2 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact2 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Work", value: "example2@example.com"),
       Item(label: "Home", value: "example@example.com"),
     ]);
@@ -203,8 +195,7 @@ void main() {
   });
 
   test('should produce a valid merged contact', () {
-    Contact contact1 =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact contact1 = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Work", value: "work@example.com"),
     ], phones: [], postalAddresses: []);
@@ -214,15 +205,9 @@ void main() {
       Item(label: "Mobile", value: "mobile@example.com"),
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home',
-          street: "1234 Middle-of Rd",
-          city: "Nowhere",
-          postcode: "12345",
-          region: null,
-          country: null)
+          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
     ]);
-    Contact mergedContact =
-        Contact(givenName: "givenName", familyName: "familyName", emails: [
+    Contact mergedContact = Contact(givenName: "givenName", familyName: "familyName", emails: [
       Item(label: "Home", value: "home@example.com"),
       Item(label: "Mobile", value: "mobile@example.com"),
       Item(label: "Work", value: "work@example.com"),
@@ -230,12 +215,7 @@ void main() {
       Item(label: "Mobile", value: "111-222-3344")
     ], postalAddresses: [
       PostalAddress(
-          label: 'Home',
-          street: "1234 Middle-of Rd",
-          city: "Nowhere",
-          postcode: "12345",
-          region: null,
-          country: null)
+          label: 'Home', street: "1234 Middle-of Rd", city: "Nowhere", postcode: "12345", region: null, country: null)
     ]);
 
     expect(contact1 + contact2, mergedContact);
@@ -255,6 +235,7 @@ void main() {
       "givenName": "givenName",
       "middleName": null,
       "familyName": "familyName",
+      "lastModified": null,
       "socialProfiles": [],
       "dates": [],
       "urls": [],

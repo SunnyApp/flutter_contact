@@ -1,19 +1,19 @@
-@file:Suppress("UNCHECKED_CAST")
+@file:Suppress("UNCHECKED_CAST", "NewApi")
 
 package co.sunnyapp.flutter_contact
 
 
 import android.annotation.TargetApi
 import android.content.ContentProviderOperation
+import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
+import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.provider.ContactsContract
-import co.sunnyapp.flutter_contact.tasks.GetContactTask
-import co.sunnyapp.flutter_contact.tasks.GetContactsTask
-import co.sunnyapp.flutter_contact.tasks.GetGroupsTask
+import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -27,51 +27,61 @@ const val flutterContactsChannelName = "github.com/sunnyapp/flutter_contact"
 const val flutterContactsEventName = "github.com/sunnyapp/flutter_contact_events"
 
 class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
-    EventChannel.StreamHandler {
+    EventChannel.StreamHandler, ResolverExtensions {
+
+  override val resolver: ContentResolver
+    get() = context.contentResolver
+
+  @RequiresApi(Build.VERSION_CODES.O)
   override fun onMethodCall(call: MethodCall, result: Result) {
     try {
       when (call.method) {
-        "getContacts" -> this.getContacts(
-            query = call.argument("query"),
-            withThumbnails = call.argument<Any?>("withThumbnails") == true,
-            photoHighResolution = call.argument<Any?>("photoHighResolution") == true,
-            limit = call.argument("limit"),
-            offset = call.argument("offset"),
-            phoneQuery = call.argument("phoneQuery"),
-            result = result)
-        "getContact" -> this.getContact(
-            identifier = ContactId(call.argument<String>("identifier")!!),
-            withThumbnails = call.argument<Any?>("withThumbnails") == true,
-            photoHighResolution = call.argument<Any?>("photoHighResolution") == true,
-            result = result)
-        "getGroups" -> this.getGroups(result = result)
+        "getContacts" -> asyncTask(result) {
+          this.getContacts(
+              query = call.argument("query"),
+              withThumbnails = call.argument<Any?>("withThumbnails") == true,
+              photoHighResolution = call.argument<Any?>("photoHighResolution") == true,
+              limit = call.argument("limit"),
+              offset = call.argument("offset"),
+              sortBy = call.argument("sortBy"),
+              phoneQuery = call.argument("phoneQuery"))
+        }
+        "getTotalContacts" -> asyncTask(result) {
+          this.getTotalContacts(
+              query = call.argument("query"),
+              phoneQuery = call.argument("phoneQuery"))
+        }
+        "getContactImage" -> asyncTask(result) {
+          this.getContactImage(call.argument("identifier"))
+        }
+        "getContact" -> asyncTask(result) {
+          this.getContact(
+              identifier = ContactId(call.argument<String>("identifier")!!),
+              withThumbnails = call.argument<Any?>("withThumbnails") == true,
+              photoHighResolution = call.argument<Any?>("photoHighResolution") == true)
+        }
+        "getGroups" -> asyncTask(result) {
+          resolver.listAllGroups()
+              ?.toGroupList()
+              ?.filter { group -> group.contacts.isNotEmpty() }
+              ?.map { it.toMap() }
+              ?: emptyList()
+        }
         "addContact" -> {
           val c = Contact.fromMap(call.arguments as Map<String, *>)
-          try {
-            this.addContact(c, result)
-          } catch (e: Throwable) {
-            result.error("failed-add", "Failed to add the contact", "$e")
-          }
-
+          this.addContact(c)
         }
         "deleteContact" -> {
           val ct = Contact.fromMap(call.arguments as Map<String, *>)
-          if (this.deleteContact(ct)) {
-            result.success(null)
-          } else {
-            result.error("failed-delete", "Failed to delete the contact, make sure it has a valid identifier", null)
-          }
+          this.deleteContact(ct)
         }
         "updateContact" -> {
           val ct1 = Contact.fromMap(call.arguments as Map<String, *>)
-          try {
-            this.updateContact(ct1, result)
-          } catch (e: Throwable) {
-            result.error("failed-update", "Failed to update the contact, make sure it has a valid identifier", null)
-          }
+          this.updateContact(ct1)
         }
         else -> result.notImplemented()
       }
+
     } catch (e: Exception) {
       result.error("unknown-error", "Unknown error", "$e")
     }
@@ -79,29 +89,49 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
 
   @TargetApi(Build.VERSION_CODES.ECLAIR)
   private fun getContacts(query: String?, withThumbnails: Boolean, photoHighResolution: Boolean,
-                          phoneQuery: String?, offset: Int?, limit: Int?,
-                          result: Result) {
-    GetContactsTask(result, resolver = context.contentResolver, withThumbnails = withThumbnails,
-        photoHighResolution = photoHighResolution, offset = offset ?: 0, limit = limit ?: 30
-    ).execute(query ?: phoneQuery)
+                          sortBy: String? = null,
+                          phoneQuery: Boolean?, offset: Int?, limit: Int?): StructList {
+
+    val contacts = resolver.queryContacts(query, sortBy)
+        ?.toContactList(limit ?: 30, offset ?: 0)
+        ?.onEach { contact ->
+          if (withThumbnails || photoHighResolution) {
+            contact.setAvatarDataForContactIfAvailable(photoHighResolution)
+          }
+        } ?: emptyList()
+
+    return contacts.map { it.toMap() }
+  }
+
+  private fun getTotalContacts(query: String?, phoneQuery: Boolean?): Int {
+    return resolver.queryContacts(query, null, forCount = true)
+        ?.count ?: 0
+  }
+
+  private fun getContactImage(identifier: String?): ByteArray? {
+    return getAvatarDataForContactIfAvailable(identifier?.toLongOrNull() ?: return null)
   }
 
 
-  @TargetApi(Build.VERSION_CODES.ECLAIR)
-  private fun getContact(identifier: ContactId, withThumbnails: Boolean, photoHighResolution: Boolean, result: Result) {
-    GetContactTask(result,
-        resolver = context.contentResolver,
-        withThumbnails = withThumbnails,
-        highResolutionPhoto = photoHighResolution).execute(identifier)
+  private fun getContact(identifier: ContactId, withThumbnails: Boolean,
+                         photoHighResolution: Boolean
+  ): Struct {
+    val contactList = context.contentResolver.findContactById(identifier.value)
+        ?.toContactList(1, 0)
+    val contact = contactList
+        ?.firstOrNull()
+        ?: methodError("getContact", "notFound",
+            "Expected a single result for contact ${identifier.value}, " +
+                "but instead found ${contactList?.size ?: 0}")
+
+    if (withThumbnails || photoHighResolution) {
+      contact.setAvatarDataForContactIfAvailable(photoHighResolution)
+    }
+    return contact.toMap()
   }
 
-  @TargetApi(Build.VERSION_CODES.ECLAIR)
-  private fun getGroups(result: Result) {
-    GetGroupsTask(result, resolver = context.contentResolver).execute()
-  }
 
-
-  private fun addContact(contact: Contact, result: Result) {
+  private fun addContact(contact: Contact): Struct {
     val ops = arrayListOf<ContentProviderOperation>()
 
     ops += ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
@@ -167,12 +197,33 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
           .withValue(ContactsContract.CommonDataKinds.StructuredPostal.POSTCODE, address.postcode)
           .withValue(ContactsContract.CommonDataKinds.StructuredPostal.COUNTRY, address.country)
           .build()
+
+      for (date in contact.dates) {
+        ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Event.TYPE, date.label?.toEventType())
+            .withValue(ContactsContract.CommonDataKinds.Event.LABEL, date.label?.toEventType())
+            .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, date.value)
+            .build()
+      }
+
+      for (url in contact.urls) {
+        ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Website.TYPE, url.label)
+            .withValue(ContactsContract.CommonDataKinds.Website.URL, url.value)
+            .build()
+      }
+
     }
 
     val saveResult = context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
     val contactId = saveResult.first().uri.lastPathSegment?.toLong()
-        ?: error("Expected a valid id")
-    getContact(ContactId("$contactId"), withThumbnails = true, photoHighResolution = true, result = result)
+        ?: pluginError("invalidId", "Expected a valid id")
+
+    return getContact(ContactId("$contactId"), withThumbnails = true, photoHighResolution = true)
   }
 
 
@@ -189,7 +240,7 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
     }
   }
 
-  private fun updateContact(contact: Contact, result: Result) {
+  private fun updateContact(contact: Contact): Struct {
     val ops = arrayListOf<ContentProviderOperation>()
 
     // Drop all details about contact except name
@@ -221,6 +272,8 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
     ops += ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
         .withSelection(ContactsContract.Data.CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
             arrayOf(contact.identifier?.value, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE))
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contact.displayName
+            ?: listOfNotNull(contact.givenName, contact.familyName).joinToString(" "))
         .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, contact.givenName)
         .withValue(ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME, contact.middleName)
         .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, contact.familyName)
@@ -275,10 +328,31 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
     }
 
 
+
+    for (date in contact.dates) {
+      ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Event.TYPE, date.label?.toEventType())
+          .withValue(ContactsContract.CommonDataKinds.Event.LABEL, date.label?.toEventType())
+          .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, date.value)
+          .build()
+    }
+
+    for (url in contact.urls) {
+      ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Website.TYPE, url.label)
+          .withValue(ContactsContract.CommonDataKinds.Website.URL, url.value)
+          .build()
+    }
+
     context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-    getContact(contact.identifier
-        ?: error("Updated contact should have an id"), withThumbnails = true,
-        photoHighResolution = true, result = result)
+    return getContact(contact.identifier
+        ?: pluginError("invalidInput", "Updated contact should have an id"),
+        withThumbnails = true,
+        photoHighResolution = true)
 
   }
 
@@ -296,9 +370,15 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
   var contentObserver: ContactsContentObserver? = null
   override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
     if (events != null) {
-      val contentObserver = ContactsContentObserver(events, Handler(context.mainLooper))
-      context.contentResolver.registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, contentObserver)
-      this.contentObserver = contentObserver
+      try {
+        val contentObserver = ContactsContentObserver(events, Handler(context.mainLooper))
+        context.contentResolver.registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, contentObserver)
+        this.contentObserver = contentObserver
+      } catch (e: SecurityException) {
+        events.error("invalidPermissions", "No permissions for event.  Try" +
+            "starting the listener after you've requested permissions", null)
+        events.endOfStream()
+      }
     }
   }
 
@@ -339,4 +419,20 @@ class ContactsContentObserver(private val sink: EventChannel.EventSink, handler:
   fun close() {
     sink.endOfStream()
   }
+
+
 }
+
+fun ContentResolver.listAllGroups(): Cursor? {
+  return query(ContactsContract.Groups.CONTENT_URI, groupProjections, null, null, null)
+}
+
+
+val groupProjections: Array<String> = arrayOf(
+    ContactsContract.Groups.SOURCE_ID,
+    ContactsContract.Groups.ACCOUNT_TYPE,
+    ContactsContract.Groups.ACCOUNT_NAME,
+    ContactsContract.Groups.DELETED,
+    ContactsContract.Groups.FAVORITES,
+    ContactsContract.Groups.TITLE,
+    ContactsContract.Groups.NOTES)

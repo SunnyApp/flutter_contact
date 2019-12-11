@@ -1,5 +1,6 @@
 package co.sunnyapp.flutter_contact
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.database.Cursor
 import android.os.Build
@@ -16,7 +17,7 @@ data class PostalAddress(
         val country: String? = null) {
 
     constructor(cursor: Cursor) : this(
-            label = cursor.getLabel(),
+            label = cursor.getAddressLabel(),
             street = cursor.string(StructuredPostal.STREET),
             city = cursor.string(StructuredPostal.CITY),
             postcode = cursor.string(StructuredPostal.POSTCODE),
@@ -50,6 +51,8 @@ fun String?.toEventType(): Int {
     return ContactsContract.CommonDataKinds.Event.TYPE_OTHER
 
 }
+
+
 
 fun String?.toPostalAddressType(): Int {
     val label = this;
@@ -91,3 +94,23 @@ fun PostalAddress.toMap() = mapOf(
         "postcode" to postcode,
         "region" to region,
         "country" to country)
+
+@SuppressLint("DefaultLocale")
+fun String?.toUrlType(): Int {
+    val label = this;
+
+    if (label != null) {
+        return when (label.toLowerCase()) {
+            "work" -> ContactsContract.CommonDataKinds.Website.TYPE_WORK
+            "blog" -> ContactsContract.CommonDataKinds.Website.TYPE_BLOG
+            "home" -> ContactsContract.CommonDataKinds.Website.TYPE_HOME
+            "website" -> ContactsContract.CommonDataKinds.Website.TYPE_HOMEPAGE
+            "homepage" -> ContactsContract.CommonDataKinds.Website.TYPE_HOMEPAGE
+            "ftp" -> ContactsContract.CommonDataKinds.Website.TYPE_FTP
+            "profile" -> ContactsContract.CommonDataKinds.Website.TYPE_PROFILE
+            else -> ContactsContract.CommonDataKinds.Website.TYPE_OTHER
+        }
+    }
+    return ContactsContract.CommonDataKinds.Event.TYPE_OTHER
+
+}

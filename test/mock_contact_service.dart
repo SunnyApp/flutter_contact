@@ -19,6 +19,7 @@ class ContactsMocks {
       "getContacts": _getContacts,
       "getContactImage": _getContactImage,
       "updateContact": _updateContact,
+      "getTotalContacts": _getTotalContacts,
       "getContact": _getContact,
       "addContact": _addContact,
       "deleteContact": _deleteContact,
@@ -67,6 +68,10 @@ class ContactsMocks {
     if (id == null) return null;
     _data[id] = args;
     return _data;
+  }
+
+  Future<int> _getTotalContacts(args) async {
+    return _data.length;
   }
 
   Future<dynamic> _deleteContact(args) async {

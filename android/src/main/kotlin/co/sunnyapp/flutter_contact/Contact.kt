@@ -4,10 +4,13 @@ package co.sunnyapp.flutter_contact
 
 import android.content.ContentUris
 import android.net.Uri
+import android.os.Build
 import android.provider.ContactsContract
+import androidx.annotation.RequiresApi
+import java.time.OffsetDateTime
 
 typealias StructList = List<Struct>
-typealias Struct = Map<String, Any?>
+typealias Struct = Map<String, Any>
 
 data class ContactId(val value: String) {
   fun toUri(): Uri {
@@ -27,6 +30,7 @@ data class Contact(
         var suffix: String? = null,
         var company: String? = null,
         var jobTitle: String? = null,
+        var lastModified: OffsetDateTime? = null,
         var note: String? = null,
         val emails: MutableList<Item> = mutableListOf(),
         val groups: MutableSet<String> = linkedSetOf(),
@@ -50,6 +54,7 @@ data class Contact(
       "suffix" to suffix,
       "company" to company,
       "jobTitle" to jobTitle,
+      "lastModified" to lastModified.toString(),
       "avatar" to avatar,
       "note" to note,
       "phones" to phones.toItemMap(),
@@ -59,10 +64,11 @@ data class Contact(
       "urls" to urls.toItemMap(),
       "dates" to dates.toItemMap(),
       "postalAddresses" to postalAddresses.toAddressMap()
-  )
+  ).filterValuesNotNull()
 
   companion object {
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun fromMap(map: Map<String, *>): Contact {
       val contact = Contact(
           identifier = (map["identifier"] as String?)?.let{ContactId(it)},
@@ -71,6 +77,7 @@ data class Contact(
           familyName = map["familyName"] as String?,
           prefix = map["prefix"] as String?,
           suffix = map["suffix"] as String?,
+          lastModified = (map["lastModified"] as? String)?.toDate(),
           company = map["company"] as String?,
           jobTitle = map["jobTitle"] as String?,
           avatar = (map["avatar"] as? ByteArray?),
@@ -81,7 +88,7 @@ data class Contact(
           socialProfiles = (map["socialProfiles"] as? StructList?).toItemList(),
           dates = (map["dates"] as? StructList?).toItemList(),
           urls = (map["urls"] as? StructList?).toItemList(),
-          postalAddresses = (map["postAddresses"] as? StructList?).toPostalAddressList()
+          postalAddresses = (map["postalAddresses"] as? StructList?).toPostalAddressList()
       )
 
       return contact
@@ -89,6 +96,8 @@ data class Contact(
   }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun String.toDate(): OffsetDateTime = OffsetDateTime.parse(this)
 fun MutableList<ContactDate>.toContactDateMap() = map { it.toMap() }
 fun MutableList<Item>.toItemMap() = map { it.toMap() }
 fun MutableList<PostalAddress>.toAddressMap() = map { it.toMap() }
@@ -103,3 +112,7 @@ fun StructList?.toPostalAddressList(): MutableList<PostalAddress> = this
     ?.toMutableList() ?: mutableListOf()
 
 fun <T> Iterable<T>?.orEmpty() = this ?: emptyList()
+
+fun <T> Map<String, T?>.filterValuesNotNull(): Map<String, T> {
+  return toList().filter { (_,v)-> v != null }.map { (k,v)-> k to v!! }.toMap()
+}
