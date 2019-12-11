@@ -110,8 +110,6 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   int get _contactCount => _contacts?.lengthOrEmpty ?? 0;
-  int get _groupCount => _groups?.length ?? 0;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

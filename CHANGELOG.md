@@ -1,3 +1,7 @@
+## 0.4.10
+
+* Improving docs
+
 ## 0.4.9
 
 * Getting Android up to speed

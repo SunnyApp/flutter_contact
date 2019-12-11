@@ -7,34 +7,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact/date_components.dart';
 
-const kgivenName = "givenName";
-const kidentifier = "identifier";
-const kmiddleName = "middleName";
-const kdisplayName = "displayName";
-const kprefix = "prefix";
-const ksuffix = "suffix";
-const kfamilyName = "familyName";
-const kcompany = "company";
-const kjobTitle = "jobTitle";
-const kemails = "emails";
-const kphones = "phones";
-const kpostalAddresses = "postalAddresses";
-const ksocialProfiles = "socialProfiles";
-const kurls = "urls";
-const kdates = "dates";
-const kavatar = "avatar";
-const klabel = "label";
-const kvalue = "value";
-const kdate = "date";
-const knote = "note";
-const klastModified = "lastModified";
-
-const kstreet = "street";
-const kcity = "city";
-const kpostcode = "postcode";
-const kregion = "region";
-const kcountry = "country";
-
 class Contact {
   Contact(
       {this.givenName,
@@ -135,24 +107,24 @@ class Contact {
 
   Contact.fromMap(final dyn)
       : this(
-          identifier: dyn[kidentifier] as String,
-          displayName: dyn[kdisplayName] as String,
-          givenName: dyn[kgivenName] as String,
-          middleName: dyn[kmiddleName] as String,
-          familyName: dyn[kfamilyName] as String,
-          prefix: dyn[kprefix] as String,
-          lastModified: parseDateTime(dyn[klastModified]),
-          suffix: dyn[ksuffix] as String,
-          company: dyn[kcompany] as String,
-          jobTitle: dyn[kjobTitle] as String,
-          emails: [for (final m in _iterableKey(dyn, kemails)) Item.fromMap(m)],
-          phones: [for (final m in _iterableKey(dyn, kphones)) Item.fromMap(m)],
-          socialProfiles: [for (final m in _iterableKey(dyn, ksocialProfiles)) Item.fromMap(m)],
-          urls: [for (final m in _iterableKey(dyn, kurls)) Item.fromMap(m)],
-          dates: [for (final m in _iterableKey(dyn, kdates)) ContactDate.fromMap(m)],
-          postalAddresses: [for (final m in _iterableKey(dyn, kpostalAddresses)) PostalAddress.fromMap(m)],
-          avatar: dyn[kavatar] as Uint8List,
-          note: dyn[knote] as String,
+          identifier: dyn[_kidentifier] as String,
+          displayName: dyn[_kdisplayName] as String,
+          givenName: dyn[_kgivenName] as String,
+          middleName: dyn[_kmiddleName] as String,
+          familyName: dyn[_kfamilyName] as String,
+          prefix: dyn[_kprefix] as String,
+          lastModified: parseDateTime(dyn[_klastModified]),
+          suffix: dyn[_ksuffix] as String,
+          company: dyn[_kcompany] as String,
+          jobTitle: dyn[_kjobTitle] as String,
+          emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)],
+          phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)],
+          socialProfiles: [for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)],
+          urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)],
+          dates: [for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)],
+          postalAddresses: [for (final m in _iterableKey(dyn, _kpostalAddresses)) PostalAddress.fromMap(m)],
+          avatar: dyn[_kavatar] as Uint8List,
+          note: dyn[_knote] as String,
         );
 
   Map<String, dynamic> toMap() {
@@ -223,7 +195,7 @@ class ContactDate {
 
   factory ContactDate.fromMap(final dyn) {
     if (dyn is! Map<dynamic, dynamic>) return null;
-    return ContactDate(label: dyn[klabel] as String, date: DateComponents.fromJson(dyn[kdate]));
+    return ContactDate(label: dyn[_klabel] as String, date: DateComponents.fromJson(dyn[_kdate]));
   }
 
   @override
@@ -247,12 +219,12 @@ class PostalAddress extends Equatable {
 
   PostalAddress.fromMap(final dyn) {
     if (dyn is Map) {
-      label = dyn[klabel] as String;
-      street = dyn[kstreet] as String;
-      city = dyn[kcity] as String;
-      postcode = dyn[kpostcode] as String;
-      region = dyn[kregion] as String;
-      country = dyn[kcountry] as String;
+      label = dyn[_klabel] as String;
+      street = dyn[_kstreet] as String;
+      city = dyn[_kcity] as String;
+      postcode = dyn[_kpostcode] as String;
+      region = dyn[_kregion] as String;
+      country = dyn[_kcountry] as String;
     }
   }
 
@@ -316,40 +288,40 @@ Iterable _iterableKey(map, String key) {
 
 Map<String, dynamic> _contactToMap(Contact contact) {
   return {
-    kidentifier: contact.identifier,
-    kdisplayName: contact.displayName,
-    kgivenName: contact.givenName,
-    kmiddleName: contact.middleName,
-    kfamilyName: contact.familyName,
-    klastModified: contact.lastModified?.toIso8601String(),
-    kprefix: contact.prefix,
-    ksuffix: contact.suffix,
-    kcompany: contact.company,
-    kjobTitle: contact.jobTitle,
-    kemails: [for (final item in contact.emails.where(notNull())) _itemToMap(item)],
-    kphones: [for (final item in contact.phones.where(notNull())) _itemToMap(item)],
-    kdates: [for (final item in contact.dates.where(notNull())) _contactDateToMap(item)],
-    ksocialProfiles: [for (final item in contact.socialProfiles.where(notNull())) _itemToMap(item)],
-    kurls: [for (final item in contact.urls.where(notNull())) _itemToMap(item)],
-    kpostalAddresses: [for (final address in contact.postalAddresses.where(notNull())) _addressToMap(address)],
-    kavatar: contact.avatar,
-    knote: contact.note
+    _kidentifier: contact.identifier,
+    _kdisplayName: contact.displayName,
+    _kgivenName: contact.givenName,
+    _kmiddleName: contact.middleName,
+    _kfamilyName: contact.familyName,
+    _klastModified: contact.lastModified?.toIso8601String(),
+    _kprefix: contact.prefix,
+    _ksuffix: contact.suffix,
+    _kcompany: contact.company,
+    _kjobTitle: contact.jobTitle,
+    _kemails: [for (final item in contact.emails.where(notNull())) _itemToMap(item)],
+    _kphones: [for (final item in contact.phones.where(notNull())) _itemToMap(item)],
+    _kdates: [for (final item in contact.dates.where(notNull())) _contactDateToMap(item)],
+    _ksocialProfiles: [for (final item in contact.socialProfiles.where(notNull())) _itemToMap(item)],
+    _kurls: [for (final item in contact.urls.where(notNull())) _itemToMap(item)],
+    _kpostalAddresses: [for (final address in contact.postalAddresses.where(notNull())) _addressToMap(address)],
+    _kavatar: contact.avatar,
+    _knote: contact.note
   };
 }
 
 bool Function(T item) notNull<T>() => (item) => item != null;
 Map _addressToMap(PostalAddress address) => {
-      klabel: address.label,
-      kstreet: address.street,
-      kcity: address.city,
-      kpostcode: address.postcode,
-      kregion: address.region,
-      kcountry: address.country
+      _klabel: address.label,
+      _kstreet: address.street,
+      _kcity: address.city,
+      _kpostcode: address.postcode,
+      _kregion: address.region,
+      _kcountry: address.country
     };
 
 Map _contactDateToMap(ContactDate date) => {
-      klabel: date.label,
-      kdate: date.date?.toJson() ?? {},
+      _klabel: date.label,
+      _kdate: date.date?.toJson() ?? {},
     };
 
 typedef PhoneNumberSanitizer = String Function(String);
@@ -383,3 +355,30 @@ DateTime parseDateTime(final dyn) {
   if (dyn == null) return null;
   return DateTime.tryParse(dyn);
 }
+
+const _kgivenName = "givenName";
+const _kidentifier = "identifier";
+const _kmiddleName = "middleName";
+const _kdisplayName = "displayName";
+const _kprefix = "prefix";
+const _ksuffix = "suffix";
+const _kfamilyName = "familyName";
+const _kcompany = "company";
+const _kjobTitle = "jobTitle";
+const _kemails = "emails";
+const _kphones = "phones";
+const _kpostalAddresses = "postalAddresses";
+const _ksocialProfiles = "socialProfiles";
+const _kurls = "urls";
+const _kdates = "dates";
+const _kavatar = "avatar";
+const _klabel = "label";
+const _kdate = "date";
+const _knote = "note";
+const _klastModified = "lastModified";
+
+const _kstreet = "street";
+const _kcity = "city";
+const _kpostcode = "postcode";
+const _kregion = "region";
+const _kcountry = "country";

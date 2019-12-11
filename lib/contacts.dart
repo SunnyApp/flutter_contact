@@ -20,9 +20,12 @@ export 'paging_iterable.dart';
 final _log = Logger("contactsService");
 const _channel = MethodChannel('github.com/sunnyapp/flutter_contact');
 final _events = EventChannel('github.com/sunnyapp/flutter_contact_events');
+const _kidentifier = "identifier";
+const _kwithThumbnails = "withThumbnails";
+const _kphotoHighResolution = "photoHighResolution";
 
 // ignore: non_constant_identifier_names
-final Contacts = _Contacts();
+final Contacts = ContactService();
 
 abstract class ContactsContract {
   Stream<Contact> streamContacts(
@@ -85,7 +88,7 @@ PageGenerator<Contact> _defaultPageGenerator(
       return [...page.where(notNull()).map((_) => Contact.fromMap(_))];
     };
 
-class _Contacts extends ContactsContract {
+class ContactService implements ContactsContract {
   /// Fetches all contacts, or when specified, the contacts with a name
   /// matching [query]
   @override
@@ -148,9 +151,9 @@ class _Contacts extends ContactsContract {
   @override
   Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true}) async {
     final fromChannel = await _channel.invokeMethod('getContact', <String, dynamic>{
-      kidentifier: identifier,
-      kwithThumbnails: withThumbnails,
-      kphotoHighResolution: withHiResPhoto,
+      _kidentifier: identifier,
+      _kwithThumbnails: withThumbnails,
+      _kphotoHighResolution: withHiResPhoto,
     });
     if (fromChannel == null) return null;
     return Contact.fromMap(fromChannel);
@@ -223,6 +226,7 @@ class ContactSortOrder extends Equatable {
   final String _value;
 
   const ContactSortOrder.lastName() : _value = _kSortLastName;
+
   const ContactSortOrder.firstName() : _value = _kSortFirstName;
 
   @override

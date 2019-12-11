@@ -1,15 +1,14 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter_contact/contact.dart';
 
-const kid = "id";
-const kname = "name";
-const kdescription = "description";
-const kcontacts = "contacts";
+const _kidentifier = "identifier";
+const _kid = "id";
+const _kname = "name";
+const _kdescription = "description";
+const _kcontacts = "contacts";
 
 /// Group class used for contact groups or labels
 class Group extends Equatable {
-  Group(
-      {this.identifier, this.name, this.description, Iterable<String> contacts})
+  Group({this.identifier, this.name, this.description, Iterable<String> contacts})
       : contacts = (contacts ?? []).cast<String>().toSet();
 
   final String identifier, name, description;
@@ -17,17 +16,12 @@ class Group extends Equatable {
 
   Group.fromMap(dyn)
       : this(
-            identifier: dyn[kidentifier] as String,
-            name: dyn[kname] as String,
-            description: dyn[kdescription] as String,
-            contacts: (dyn[kcontacts] as Iterable).cast<String>());
+            identifier: dyn[_kidentifier] as String,
+            name: dyn[_kname] as String,
+            description: dyn[_kdescription] as String,
+            contacts: (dyn[_kcontacts] as Iterable).cast<String>());
 
-  Map toMap() => {
-        kid: identifier,
-        kname: name,
-        kdescription: description,
-        kcontacts: contacts.toList()
-      };
+  Map toMap() => {_kid: identifier, _kname: name, _kdescription: description, _kcontacts: contacts.toList()};
 
   @override
   List<Object> get props => [identifier, name, description];
