@@ -1,14 +1,73 @@
-# flutter_contact
 
-A new flutter plugin project.
+# contacts_service  
+[![pub package](https://img.shields.io/pub/v/flutter_contact.svg)](https://pub.dartlang.org/packages/flutter_contact)
+[![Coverage Status](https://coveralls.io/repos/github/ericmartineau/flutter_contact/badge.svg?branch=master)](https://coveralls.io/github/ericmartineau/flutter_contact?branch=master)
 
-## Getting Started
+A Flutter plugin to access and manage the device's native contacts.  
+  
+## Usage  
+  
+To use this plugin, add `flutter_contact` as a [dependency in your `pubspec.yaml` file](https://flutter.io/platform-plugins/).  
+For example:  
+```yaml  
+dependencies:  
+    flutter_contact: ^0.4.7+10
+```  
+  
+## Permissions  
+### Android  
+Add the following permissions to your AndroidManifest.xml:  
+  
+```xml  
+<uses-permission android:name="android.permission.READ_CONTACTS" />  
+<uses-permission android:name="android.permission.WRITE_CONTACTS" />  
+```  
+### iOS
+Set the `NSContactsUsageDescription` in your `Info.plist` file  
+  
+```xml  
+<key>NSContactsUsageDescription</key>  
+<string>Your description of why you are requesting permissions.</string>  
+```  
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
+**Note**  
+`flutter_contact` does not handle the process of asking and checking for permissions. To check and request user permission to access contacts, try using the following plugins: [flutter_simple_permissions](https://github.com/AppleEducate/flutter_simple_permissions)  or [permission_handler](https://pub.dartlang.org/packages/permission_handler).
+  
+If you do not request user permission or have it granted, the application will fail. For testing purposes, you can manually set the permissions for your test app in Settings for your app on the device that you are using. For Android, go to "Settings" - "Apps" - select your test app - "Permissions" - then turn "on" the slider for contacts.   
+  
+## Example  
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+``` dart  
+// Import package  
+import 'package:flutter_contact/flutter_contact.dart';  
+  
+// Get all contacts on device as a stream
+Stream<Contact> contacts = await Contacts.streamContacts();  
+
+// Get all contacts without thumbnail(faster)
+Iterable<Contact> contacts = await Contacts.streamContacts(withThumbnails: false);
+  
+// Get contacts matching a string
+Stream<Contact> johns = await Contacts.streamContacts(query : "john");
+
+// Add a contact  
+// The contact must have a firstName / lastName to be successfully added  
+await Contacts.addContact(newContact);  
+  
+// Delete a contact
+// The contact must have a valid identifier
+await Contacts.deleteContact(contact);  
+
+// Update a contact
+// The contact must have a valid identifier
+await Contacts.updateContact(contact);
+
+```  
+
+
+## Credits
+
+This plugin was originally a fork of the 
+https://pub.dev/packages/contacts_service plugin, but has effectively been mostly rewritten (in 
+part because it was ported to kotlin)
+

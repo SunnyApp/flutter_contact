@@ -1,38 +1,15 @@
-## 0.4.4
+## 0.4.8
 
-* Initial checkin
+* Adding documentation
+* Working on CI setup
 
-## 0.4.5 
+## 0.4.7+10
 
-* Changed how dates are handled - more closely aligning to DateComponents in ios - will use a kotlin class
-for Android eventually
+* Adding sort order
 
-## 0.4.6
- 
-* Fixed exports
+## 0.4.7+9
 
-## 0.4.7+3
-
-* Added removeDuplicates function to contact
-* Fixed some issues with dates (specifically birthday on IOS)
-
-## 0.4.7+4
-
-* Fixing issue with copying identifier
-* Also improved error handling
-
-## 0.4.7+5
-
-* Added streaming methods for improved performance
-
-## 0.4.7+6
-
-* Fixing ios paging logic
-
-## 0.4.7+7
-
-* Move all ios operation to background as .userInitiated
-* Provide convenience getter for fetching contact avatar.
+* Fixing issue with fetching full-res images
 
 ## 0.4.7+8
 
@@ -40,10 +17,42 @@ for Android eventually
 * Beefed up example screen to handle search and other features.
 * Known issue: this build doesn't work for Android
 
-## 0.4.7+9
+## 0.4.7+7
 
-* Fixing issue with fetching full-res images
+* Move all ios operation to background as .userInitiated
+* Provide convenience getter for fetching contact avatar.
 
-## 0.4.7+10
+## 0.4.7+6
 
-* Adding sort order
+* Fixing ios paging logic
+
+## 0.4.7+5
+
+* Added streaming methods for improved performance
+
+## 0.4.7+4
+
+* Fixing issue with copying identifier
+* Also improved error handling
+
+## 0.4.7+3
+
+* Added removeDuplicates function to contact
+* Fixed some issues with dates (specifically birthday on IOS)
+
+## 0.4.6
+ 
+* Fixed exports
+
+## 0.4.5 
+
+* Changed how dates are handled - more closely aligning to DateComponents in ios - will use a kotlin class
+for Android eventually
+
+## 0.4.4
+
+* Initial checkin
+
+
+
+
