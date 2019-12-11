@@ -1,6 +1,6 @@
 # contacts_service  
 [![pub package](https://img.shields.io/pub/v/flutter_contact.svg)](https://pub.dartlang.org/packages/flutter_contact)
-[![Coverage Status](https://coveralls.io/repos/github/ericmartineau/flutter_contact/badge.svg?branch=master)](https://coveralls.io/github/ericmartineau/flutter_contact?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/SunnyApp/flutter_contact/badge.svg?branch=master)](https://coveralls.io/github/SunnyApp/flutter_contact?branch=master)
 
 A Flutter plugin to access and manage the device's native contacts.  
   
