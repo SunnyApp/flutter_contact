@@ -16,7 +16,9 @@ class ContactsExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: ContactListPage(),
-      routes: <String, WidgetBuilder>{'/add': (BuildContext context) => AddContactPage()},
+      routes: <String, WidgetBuilder>{
+        '/add': (BuildContext context) => AddContactPage()
+      },
     );
   }
 }
@@ -80,11 +82,15 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   Future<PermissionStatus> _getContactPermission() async {
-    PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.contacts);
-    if (permission != PermissionStatus.granted && permission != PermissionStatus.disabled) {
+    PermissionStatus permission = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.contacts);
+    if (permission != PermissionStatus.granted &&
+        permission != PermissionStatus.disabled) {
       Map<PermissionGroup, PermissionStatus> permissionStatus =
-          await PermissionHandler().requestPermissions([PermissionGroup.contacts]);
-      return permissionStatus[PermissionGroup.contacts] ?? PermissionStatus.unknown;
+          await PermissionHandler()
+              .requestPermissions([PermissionGroup.contacts]);
+      return permissionStatus[PermissionGroup.contacts] ??
+          PermissionStatus.unknown;
     } else {
       return permission;
     }
@@ -92,7 +98,10 @@ class _ContactListPageState extends State<ContactListPage> {
 
   void _handleInvalidPermissions(PermissionStatus permissionStatus) {
     if (permissionStatus == PermissionStatus.denied) {
-      throw PlatformException(code: "PERMISSION_DENIED", message: "Access to location data denied", details: null);
+      throw PlatformException(
+          code: "PERMISSION_DENIED",
+          message: "Access to location data denied",
+          details: null);
     } else if (permissionStatus == PermissionStatus.disabled) {
       throw PlatformException(
         code: "PERMISSION_DISABLED",
@@ -167,9 +176,9 @@ class _ContactListPageState extends State<ContactListPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    subtitle:
-                        Text("This demo should request permissions when it starts. If you're seeing this message, "
-                            "you may need to reset your permission settings"),
+                    subtitle: Text(
+                        "This demo should request permissions when it starts. If you're seeing this message, "
+                        "you may need to reset your permission settings"),
                   ))
                 : const Center(
                     child: CircularProgressIndicator(),
@@ -179,7 +188,10 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   _viewEvents() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ContactEventsPage(events: _events)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ContactEventsPage(events: _events)));
   }
 
   Iterable<Group> _groupsForContact(String contactId) {
@@ -212,8 +224,9 @@ class ContactListTile extends StatelessWidget {
           withThumbnails: true,
           withHiResPhoto: true,
         );
-        await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (BuildContext context) => ContactDetailsPage(loadedContact, groups())));
+        await Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) =>
+                ContactDetailsPage(loadedContact, groups())));
       },
       leading: (contact.avatar != null && contact.avatar.isNotEmpty)
           ? CircleAvatar(backgroundImage: MemoryImage(contact.avatar))
@@ -245,7 +258,9 @@ class GroupDetailsPage extends StatelessWidget {
                       title: Text(c.displayName ?? "")))
                   .toList(),
             ),
-            future: Contacts.streamContacts().where((contact) => group.contacts.contains(contact.identifier)).toList(),
+            future: Contacts.streamContacts()
+                .where((contact) => group.contacts.contains(contact.identifier))
+                .toList(),
           ),
         ));
   }
@@ -381,12 +396,14 @@ class _AddContactPageState extends State<AddContactPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) => contact.phones = [Item(label: "mobile", value: v)],
+                onSaved: (v) =>
+                    contact.phones = [Item(label: "mobile", value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) => contact.emails = [Item(label: "work", value: v)],
+                onSaved: (v) =>
+                    contact.emails = [Item(label: "work", value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -429,7 +446,8 @@ class _AddContactPageState extends State<AddContactPage> {
   }
 }
 
-typedef ItemBuilder<T> = Widget Function(BuildContext context, int index, T item);
+typedef ItemBuilder<T> = Widget Function(
+    BuildContext context, int index, T item);
 
 class PagingListIndexBuilder<T> extends StatelessWidget {
   final int index;
@@ -437,7 +455,11 @@ class PagingListIndexBuilder<T> extends StatelessWidget {
   final ItemBuilder<T> itemBuilder;
   final String name;
 
-  PagingListIndexBuilder({@required this.index, @required this.list, @required this.itemBuilder, @required this.name})
+  PagingListIndexBuilder(
+      {@required this.index,
+      @required this.list,
+      @required this.itemBuilder,
+      @required this.name})
       : super(key: Key("list-builder-$name-$index"));
 
   @override

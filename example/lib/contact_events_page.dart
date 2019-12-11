@@ -17,7 +17,11 @@ class ContactEventsPage extends StatelessWidget {
       body: SafeArea(
         child: ListView(
           children: <Widget>[
-            if (events.isEmpty) Card(child: ListTile(title: Text("No events.  Try saving a contact on your device"))),
+            if (events.isEmpty)
+              Card(
+                  child: ListTile(
+                      title: Text(
+                          "No events.  Try saving a contact on your device"))),
             for (final event in events)
               Card(
                 child: ListTile(

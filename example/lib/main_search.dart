@@ -28,12 +28,15 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    if (query.isNotEmpty != true) return Center(heightFactor: 8, child: Text("Search for contacts"));
-    final results = Contacts.listContacts(query: this.query, withHiResPhoto: false);
+    if (query.isNotEmpty != true)
+      return Center(heightFactor: 8, child: Text("Search for contacts"));
+    final results =
+        Contacts.listContacts(query: this.query, withHiResPhoto: false);
     return FutureBuilder<int>(
       builder: (BuildContext context, snapshot) {
         final length = snapshot.data;
-        if (length == null) return const Center(child: CircularProgressIndicator());
+        if (length == null)
+          return const Center(child: CircularProgressIndicator());
         if (length != null && length == 0) {
           return const ListTile(title: Text("No results found"));
         }

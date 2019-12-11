@@ -8,7 +8,8 @@ const kcontacts = "contacts";
 
 /// Group class used for contact groups or labels
 class Group extends Equatable {
-  Group({this.identifier, this.name, this.description, Iterable<String> contacts})
+  Group(
+      {this.identifier, this.name, this.description, Iterable<String> contacts})
       : contacts = (contacts ?? []).cast<String>().toSet();
 
   final String identifier, name, description;
@@ -21,7 +22,12 @@ class Group extends Equatable {
             description: dyn[kdescription] as String,
             contacts: (dyn[kcontacts] as Iterable).cast<String>());
 
-  Map toMap() => {kid: identifier, kname: name, kdescription: description, kcontacts: contacts.toList()};
+  Map toMap() => {
+        kid: identifier,
+        kname: name,
+        kdescription: description,
+        kcontacts: contacts.toList()
+      };
 
   @override
   List<Object> get props => [identifier, name, description];

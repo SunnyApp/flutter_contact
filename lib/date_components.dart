@@ -110,14 +110,18 @@ class DateComponents {
   bool get hasDay => day != null;
 
   @override
-  String toString() =>
-      [year, month, day].where((_) => _ != null).map((part) => part < 10 ? "0$part" : "$part").join("-");
+  String toString() => [year, month, day]
+      .where((_) => _ != null)
+      .map((part) => part < 10 ? "0$part" : "$part")
+      .join("-");
 
   DateTime toDateTime() => DateTime(year ?? 1971, month ?? 1, day ?? 1);
 
-  DateComponents withoutDay() => DateComponents(day: null, month: month, year: year);
+  DateComponents withoutDay() =>
+      DateComponents(day: null, month: month, year: year);
 
-  DateComponents withoutYear() => DateComponents(day: day, month: month, year: null);
+  DateComponents withoutYear() =>
+      DateComponents(day: day, month: month, year: null);
 
   @override
   bool operator ==(Object other) =>
@@ -132,9 +136,11 @@ class DateComponents {
   int get hashCode => hash3(day, month, year);
 }
 
-List<String> tokenizeString(String input, {bool splitAll = false, Pattern splitOn}) {
+List<String> tokenizeString(String input,
+    {bool splitAll = false, Pattern splitOn}) {
   if (input == null) return [];
-  splitOn ??= (splitAll == true) ? aggresiveTokenizerPattern : spaceTokenizerPattern;
+  splitOn ??=
+      (splitAll == true) ? aggresiveTokenizerPattern : spaceTokenizerPattern;
   return input.split(splitOn).where((_) => _.isNotEmpty == true).toList();
 }
 

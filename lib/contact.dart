@@ -60,7 +60,16 @@ class Contact {
         _dates = [...?dates],
         _postalAddresses = [...?postalAddresses];
 
-  String identifier, displayName, givenName, middleName, prefix, suffix, familyName, company, jobTitle, note;
+  String identifier,
+      displayName,
+      givenName,
+      middleName,
+      prefix,
+      suffix,
+      familyName,
+      company,
+      jobTitle,
+      note;
   final List<Item> _emails;
   final List<Item> _phones;
   final List<Item> _socialProfiles;
@@ -143,10 +152,17 @@ class Contact {
           jobTitle: dyn[kjobTitle] as String,
           emails: [for (final m in _iterableKey(dyn, kemails)) Item.fromMap(m)],
           phones: [for (final m in _iterableKey(dyn, kphones)) Item.fromMap(m)],
-          socialProfiles: [for (final m in _iterableKey(dyn, ksocialProfiles)) Item.fromMap(m)],
+          socialProfiles: [
+            for (final m in _iterableKey(dyn, ksocialProfiles)) Item.fromMap(m)
+          ],
           urls: [for (final m in _iterableKey(dyn, kurls)) Item.fromMap(m)],
-          dates: [for (final m in _iterableKey(dyn, kdates)) ContactDate.fromMap(m)],
-          postalAddresses: [for (final m in _iterableKey(dyn, kpostalAddresses)) PostalAddress.fromMap(m)],
+          dates: [
+            for (final m in _iterableKey(dyn, kdates)) ContactDate.fromMap(m)
+          ],
+          postalAddresses: [
+            for (final m in _iterableKey(dyn, kpostalAddresses))
+              PostalAddress.fromMap(m)
+          ],
           avatar: dyn[kavatar] as Uint8List,
           note: dyn[knote] as String,
         );
@@ -168,11 +184,13 @@ class Contact {
       jobTitle: this.jobTitle ?? other.jobTitle,
       note: this.note ?? other.note,
       emails: {...?this.emails, ...?other.emails}.toList(),
-      socialProfiles: {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
+      socialProfiles:
+          {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
       dates: {...?this.dates, ...?other.dates}.toList(),
       urls: {...?this.urls, ...?other.urls}.toList(),
       phones: {...?this.phones, ...?other.phones}.toList(),
-      postalAddresses: {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
+      postalAddresses:
+          {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
       avatar: this.avatar ?? other.avatar);
 
   /// Removes duplicates from the collections.  Duplicates are defined as having the exact same value
@@ -195,17 +213,19 @@ class Contact {
         this.prefix == other.prefix &&
         this.suffix == other.suffix &&
         DeepCollectionEquality.unordered().equals(this.phones, other.phones) &&
-        DeepCollectionEquality.unordered().equals(this.socialProfiles, other.socialProfiles) &&
+        DeepCollectionEquality.unordered()
+            .equals(this.socialProfiles, other.socialProfiles) &&
         DeepCollectionEquality.unordered().equals(this.urls, other.urls) &&
         DeepCollectionEquality.unordered().equals(this.dates, other.dates) &&
         DeepCollectionEquality.unordered().equals(this.emails, other.emails) &&
-        DeepCollectionEquality.unordered().equals(this.postalAddresses, other.postalAddresses);
+        DeepCollectionEquality.unordered()
+            .equals(this.postalAddresses, other.postalAddresses);
   }
 
   @override
   int get hashCode {
-    return hashValues(
-        identifier, company, displayName, givenName, familyName, jobTitle, middleName, note, prefix, suffix);
+    return hashValues(identifier, company, displayName, givenName, familyName,
+        jobTitle, middleName, note, prefix, suffix);
   }
 }
 
@@ -217,7 +237,9 @@ class ContactDate {
 
   factory ContactDate.fromMap(final dyn) {
     if (dyn is! Map<dynamic, dynamic>) return null;
-    return ContactDate(label: dyn[klabel] as String, date: DateComponents.fromJson(dyn[kdate]));
+    return ContactDate(
+        label: dyn[klabel] as String,
+        date: DateComponents.fromJson(dyn[kdate]));
   }
 
   @override
@@ -227,7 +249,8 @@ class ContactDate {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is ContactDate && label == other.label && date == other.date;
+      identical(this, other) ||
+      other is ContactDate && label == other.label && date == other.date;
 
   @override
   int get hashCode => hashValues(label, date);
@@ -235,7 +258,13 @@ class ContactDate {
 
 // ignore: must_be_immutable
 class PostalAddress extends Equatable {
-  PostalAddress({this.label, this.street, this.city, this.postcode, this.region, this.country});
+  PostalAddress(
+      {this.label,
+      this.street,
+      this.city,
+      this.postcode,
+      this.region,
+      this.country});
 
   String label, street, city, postcode, region, country;
 
@@ -319,12 +348,24 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     ksuffix: contact.suffix,
     kcompany: contact.company,
     kjobTitle: contact.jobTitle,
-    kemails: [for (final item in contact.emails.where(notNull())) _itemToMap(item)],
-    kphones: [for (final item in contact.phones.where(notNull())) _itemToMap(item)],
-    kdates: [for (final item in contact.dates.where(notNull())) _contactDateToMap(item)],
-    ksocialProfiles: [for (final item in contact.socialProfiles.where(notNull())) _itemToMap(item)],
+    kemails: [
+      for (final item in contact.emails.where(notNull())) _itemToMap(item)
+    ],
+    kphones: [
+      for (final item in contact.phones.where(notNull())) _itemToMap(item)
+    ],
+    kdates: [
+      for (final item in contact.dates.where(notNull())) _contactDateToMap(item)
+    ],
+    ksocialProfiles: [
+      for (final item in contact.socialProfiles.where(notNull()))
+        _itemToMap(item)
+    ],
     kurls: [for (final item in contact.urls.where(notNull())) _itemToMap(item)],
-    kpostalAddresses: [for (final address in contact.postalAddresses.where(notNull())) _addressToMap(address)],
+    kpostalAddresses: [
+      for (final address in contact.postalAddresses.where(notNull()))
+        _addressToMap(address)
+    ],
     kavatar: contact.avatar,
     knote: contact.note
   };

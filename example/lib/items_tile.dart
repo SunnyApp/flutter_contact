@@ -81,7 +81,9 @@ class DatesTile extends StatelessWidget {
                   });
 
               if (item != null && !_items.contains(item)) {
-                _items.add(ContactDate(label: item.label, date: DateComponents.fromJson(item.value)));
+                _items.add(ContactDate(
+                    label: item.label,
+                    date: DateComponents.fromJson(item.value)));
                 await Contacts.updateContact(contact);
                 onChange?.call();
               }

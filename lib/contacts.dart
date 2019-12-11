@@ -34,7 +34,8 @@ abstract class ContactsContract {
       bool withHiResPhoto = true,
       ContactSortOrder sortBy = const ContactSortOrder.lastName()});
 
-  Future<int> getTotalContacts({String query, bool phoneQuery, Iterable<String> ids});
+  Future<int> getTotalContacts(
+      {String query, bool phoneQuery, Iterable<String> ids});
 
   PagingList<Contact> listContacts({
     List<String> ids,
@@ -48,7 +49,8 @@ abstract class ContactsContract {
 
   void configureLogs({Level level, Logging onLog});
 
-  Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true});
+  Future<Contact> getContact(String identifier,
+      {bool withThumbnails = true, bool withHiResPhoto = true});
 
   Future<Uint8List> getContactImage(String identifier);
 
@@ -72,8 +74,13 @@ const kquery = 'query';
 const kphoneQuery = 'phoneQuery';
 const kids = 'ids';
 
-PageGenerator<Contact> _defaultPageGenerator(String query, bool phoneQuery, Iterable<String> ids, bool withThumbnails,
-        bool withHiResPhoto, ContactSortOrder sortBy) =>
+PageGenerator<Contact> _defaultPageGenerator(
+        String query,
+        bool phoneQuery,
+        Iterable<String> ids,
+        bool withThumbnails,
+        bool withHiResPhoto,
+        ContactSortOrder sortBy) =>
     (int limit, int offset) async {
       final List page = await _channel.invokeMethod('getContacts', {
         kquery: query,
@@ -102,7 +109,8 @@ class _Contacts extends ContactsContract {
     ContactSortOrder sortBy = const ContactSortOrder.lastName(),
   }) {
     final stream = PagingStream<Contact>(
-      pageGenerator: _defaultPageGenerator(query, phoneQuery, ids, withThumbnails, withHiResPhoto, sortBy),
+      pageGenerator: _defaultPageGenerator(
+          query, phoneQuery, ids, withThumbnails, withHiResPhoto, sortBy),
       bufferSize: bufferSize,
     );
     return stream;
@@ -111,7 +119,8 @@ class _Contacts extends ContactsContract {
   @override
   Future<Uint8List> getContactImage(String identifier) async {
     if (identifier == null) return null;
-    final data = await _channel.invokeMethod('getContactImage', {'identifier': identifier});
+    final data = await _channel
+        .invokeMethod('getContactImage', {'identifier': identifier});
     return data as Uint8List;
   }
 
@@ -138,7 +147,8 @@ class _Contacts extends ContactsContract {
       int bufferSize = 20,
       ContactSortOrder sortBy = const ContactSortOrder.lastName()}) {
     final list = PagingList<Contact>(
-      pageGenerator: _defaultPageGenerator(query, phoneQuery, ids, withThumbnails, withHiResPhoto, sortBy),
+      pageGenerator: _defaultPageGenerator(
+          query, phoneQuery, ids, withThumbnails, withHiResPhoto, sortBy),
       bufferSize: bufferSize,
       length: getTotalContacts(query: query, phoneQuery: phoneQuery, ids: ids),
     );
@@ -153,8 +163,10 @@ class _Contacts extends ContactsContract {
 
   /// Retrieves a single contact by identifier
   @override
-  Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true}) async {
-    final fromChannel = await _channel.invokeMethod('getContact', <String, dynamic>{
+  Future<Contact> getContact(String identifier,
+      {bool withThumbnails = true, bool withHiResPhoto = true}) async {
+    final fromChannel =
+        await _channel.invokeMethod('getContact', <String, dynamic>{
       kidentifier: identifier,
       kwithThumbnails: withThumbnails,
       kphotoHighResolution: withHiResPhoto,
@@ -172,7 +184,8 @@ class _Contacts extends ContactsContract {
 
   /// Deletes the [contact] if it has a valid identifier
   @override
-  Future<bool> deleteContact(Contact contact) => _channel.invokeMethod('deleteContact', contact.toMap());
+  Future<bool> deleteContact(Contact contact) =>
+      _channel.invokeMethod('deleteContact', contact.toMap());
 
   /// Updates the [contact] if it has a valid identifier
   @override
