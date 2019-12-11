@@ -43,3 +43,7 @@ for Android eventually
 ## 0.4.7+9
 
 * Fixing issue with fetching full-res images
+
+## 0.4.7+10
+
+* Adding sort order

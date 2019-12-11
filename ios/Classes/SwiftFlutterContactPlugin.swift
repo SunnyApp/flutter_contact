@@ -75,7 +75,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
                                                                      phoneQuery: call.getBool("phoneQuery"),
                                                                      limit: call.arg("limit"),
                                                                      offset: call.arg("offset"),
-                                                                     ids: call.argx("ids") ?? [String]())
+                                                                     ids: call.argx("ids") ?? [String](),
+                                                                     sortBy: call.getString("sortBy"))
                     result(contacts.map{$0.toDictionary()})
                     
                 case "getTotalContacts":
@@ -157,7 +158,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
     
     func getContacts(query : String?, withThumbnails: Bool, photoHighResolution: Bool, forCount: Bool,
-                     phoneQuery: Bool, limit: Int, offset: Int, ids: [String]) throws -> [CNContact] {
+                     phoneQuery: Bool, limit: Int, offset: Int, ids: [String], sortBy: String? = nil) throws -> [CNContact] {
         
         var contacts : [CNContact] = []
         
@@ -178,6 +179,16 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         // Set the predicate if there is a query
         if query != nil && !phoneQuery {
             fetchRequest.predicate = CNContact.predicateForContacts(matchingName: query!)
+        }
+        
+        
+        switch (sortBy ?? "lastName") {
+        case "firstName":
+            fetchRequest.sortOrder = CNContactSortOrder.givenName
+        case "lastName":
+            fetchRequest.sortOrder = CNContactSortOrder.familyName
+        default:
+            fetchRequest.sortOrder = CNContactSortOrder.userDefault
         }
         
         // Fetch contacts
@@ -267,7 +278,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         guard let identifier = dictionary["identifier"] as? String else {
             throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact")
         }
-       
+        
         let keys = [CNContactIdentifierKey as NSString]
         let store = CNContactStore()
         if let contact = try store.unifiedContact(withIdentifier: identifier, keysToFetch: keys).mutableCopy() as? CNMutableContact{
@@ -297,7 +308,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         guard let contact = result else {
             throw PluginError.runtimeError(code: "recordNotFound", message: "Contact not found with this id")
         }
-    
+        
         return contact.getAvatarData()
     }
     
