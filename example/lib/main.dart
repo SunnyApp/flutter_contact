@@ -54,7 +54,7 @@ class _ContactListPageState extends State<ContactListPage> {
       var groups = await Contacts.getGroups();
       if (_contacts == null) {
         final contacts = Contacts.listContacts(withHiResPhoto: false);
-        final length = await contacts.length;
+        await contacts.length;
         _contacts = contacts;
       } else {
         _contacts.reload();

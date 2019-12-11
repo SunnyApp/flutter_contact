@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
@@ -20,11 +22,19 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
   Contact _contact;
   bool _avatarZoomed = false;
   double _avatarSize = 150.0;
+  Uint8List _avatarData;
 
   @override
   void initState() {
     super.initState();
     _contact = widget._contact;
+    Future.value(_contact.getOrFetchAvatar()).then((_) {
+      setState(() {
+        if (mounted) {
+          _avatarData = _;
+        }
+      });
+    });
   }
 
   _toggleAvatarSize(BuildContext context) {
@@ -81,7 +91,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
                     width: _avatarSize,
                     height: _avatarSize,
                     decoration: BoxDecoration(
-                      image: DecorationImage(fit: BoxFit.cover, image: MemoryImage(widget._contact.avatar)),
+                      image: DecorationImage(fit: BoxFit.cover, image: MemoryImage(_avatarData ?? [])),
                     ),
                   ),
                   duration: Duration(milliseconds: 300),

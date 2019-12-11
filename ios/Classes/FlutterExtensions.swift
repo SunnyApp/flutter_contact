@@ -329,6 +329,19 @@ extension CNContact {
         return result
     }
     
+    func getAvatarData() -> Data? {
+        if self.isKeyAvailable(CNContactImageDataKey) {
+            if let imageData = self.imageData {
+                return imageData
+            } else {
+                if self.isKeyAvailable(CNContactThumbnailImageDataKey) {
+                    return self.thumbnailImageData
+                }
+            }
+        }
+        
+        return nil
+    }
 }
 
 @available(iOS 9.0, *)

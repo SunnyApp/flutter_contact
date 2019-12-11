@@ -228,6 +228,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         // Fetch contacts
         try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop) -> Void in
             result = contact
+            stop.initialize(to: true)
         })
         
         return result
@@ -277,17 +278,27 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHa
         } else {
             return false
         }
-        
     }
     
     func getContactImage(identifier: String) throws -> Data? {
         let imageKeys = [CNContactThumbnailImageDataKey as NSString, CNContactImageDataKey as NSString]
-        let contact =  try CNContactStore().unifiedContact(withIdentifier: identifier, keysToFetch: imageKeys)
-        if(contact.imageDataAvailable) {
-            return contact.imageData ?? contact.thumbnailImageData
-        } else {
-            return nil
+        let fetchRequest = CNContactFetchRequest(keysToFetch: imageKeys as [CNKeyDescriptor])
+        
+        // Query by identifier
+        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [identifier])
+        
+        var result: CNContact? = nil
+        // Fetch contacts
+        try CNContactStore().enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop) -> Void in
+            result = contact
+            stop.initialize(to: true)
+        })
+        
+        guard let contact = result else {
+            throw PluginError.runtimeError(code: "recordNotFound", message: "Contact not found with this id")
         }
+    
+        return contact.getAvatarData()
     }
     
     @available(iOS 9.0, *)

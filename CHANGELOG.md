@@ -39,3 +39,7 @@ for Android eventually
 * Improved performance of count
 * Beefed up example screen to handle search and other features.
 * Known issue: this build doesn't work for Android
+
+## 0.4.7+9
+
+* Fixing issue with fetching full-res images
