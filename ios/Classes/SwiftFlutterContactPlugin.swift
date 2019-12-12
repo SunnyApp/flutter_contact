@@ -6,42 +6,13 @@ import Contacts
 
 
 @available(iOS 9.0, *)
-public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
-    
-    var eventSink : FlutterEventSink!
-    var syncToken: Data?
-    
-    
-    public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        self.eventSink = events
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(addressBookDidChange),
-            name: NSNotification.Name.CNContactStoreDidChange,
-            object: nil)
-        
-        return nil
-    }
-    
-    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        NotificationCenter.default.removeObserver(self)
-        eventSink = nil
-        return nil
-    }
+public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "github.com/sunnyapp/flutter_contact", binaryMessenger: registrar.messenger())
-        let events = FlutterEventChannel(name: "github.com/sunnyapp/flutter_contact_events", binaryMessenger: registrar.messenger())
         let instance = SwiftFlutterContactPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
-        events.setStreamHandler(instance)
-    }
-    
-    @objc func addressBookDidChange(notification: NSNotification){
-        if let eventSink = self.eventSink {
-            eventSink(["event": "contacts-changed"])
-        }
+        instance.registerEvents(registrar: registrar)
     }
     
     let contactFetchKeys:[Any] = [CNContactFormatter.descriptorForRequiredKeys(for: .fullName),
