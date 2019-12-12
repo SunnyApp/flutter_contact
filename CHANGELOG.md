@@ -1,3 +1,8 @@
+## 0.4.13
+
+* Fixing contact events on ios
+
+
 ## 0.4.10
 
 * Improving docs
