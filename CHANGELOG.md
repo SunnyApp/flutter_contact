@@ -1,3 +1,7 @@
+## 0.4.14
+
+* Fixing bug with paging iterable that attempted to publish after the stream was closed
+
 ## 0.4.13
 
 * Fixing contact events on ios

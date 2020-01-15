@@ -221,7 +221,6 @@ class ContactListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Built ${contact.identifier}");
     return ListTile(
       onTap: () async {
         // Test loading the contact by id

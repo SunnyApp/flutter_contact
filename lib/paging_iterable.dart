@@ -115,11 +115,11 @@ class PagingStream<T> extends Stream<T> {
       _isPaused = false;
 
       while (await moveNext()) {
-        _controller.add(_currPage.current);
-        if (_isPaused == true) return;
         if (_controller.isClosed) {
           return;
         }
+        _controller.add(_currPage.current);
+        if (_isPaused == true) return;
       }
 
       if (!_controller.isClosed) {
