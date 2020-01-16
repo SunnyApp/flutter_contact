@@ -87,6 +87,11 @@ fastlane/README.md
 **/ios/Runner/GeneratedPluginRegistrant.*
 **/ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
 
+coverage/
+lib/generated/
+res/
+
+
 .direnv
 .aliases.sh
 
@@ -96,4 +101,3 @@ fastlane/README.md
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-coverage
