@@ -1,3 +1,7 @@
+## 0.4.15
+
+* Fixing bug with non-completing futures on Android
+
 ## 0.4.14
 
 * Fixing bug with paging iterable that attempted to publish after the stream was closed

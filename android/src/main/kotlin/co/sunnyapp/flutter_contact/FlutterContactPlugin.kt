@@ -67,15 +67,15 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
               ?.map { it.toMap() }
               ?: emptyList()
         }
-        "addContact" -> {
+        "addContact" -> asyncTask(result) {
           val c = Contact.fromMap(call.arguments as Map<String, *>)
           this.addContact(c)
         }
-        "deleteContact" -> {
+        "deleteContact" -> asyncTask(result) {
           val ct = Contact.fromMap(call.arguments as Map<String, *>)
           this.deleteContact(ct)
         }
-        "updateContact" -> {
+        "updateContact" -> asyncTask(result)  {
           val ct1 = Contact.fromMap(call.arguments as Map<String, *>)
           this.updateContact(ct1)
         }
