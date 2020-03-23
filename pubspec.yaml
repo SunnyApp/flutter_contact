@@ -12,10 +12,10 @@ dependencies:
     sdk: flutter
   uuid: ^2.0.4
 
-  logging: ^0.11.3+2
+  logging: ^0.11.4
 
   # Simple equality cases
-  equatable: ^1.0.1
+  equatable: ^1.0.3
 
   # Collection equality
   collection: ^1.14.11
@@ -27,7 +27,7 @@ dependencies:
   pedantic: ^1.8.0+1
 
   # Formatting/parsing of dates
-  intl: ^0.16.0
+  intl: ^0.16.1
 
 dev_dependencies:
   flutter_test:
