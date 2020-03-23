@@ -26,11 +26,15 @@ import java.util.*
 const val flutterContactsChannelName = "github.com/sunnyapp/flutter_contact"
 const val flutterContactsEventName = "github.com/sunnyapp/flutter_contact_events"
 
-class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
+class FlutterContactPlugin(private val registrar: Registrar) : MethodCallHandler,
     EventChannel.StreamHandler, ResolverExtensions {
 
+  private val contactForms = FlutterContactForms(this, registrar)
+
   override val resolver: ContentResolver
-    get() = context.contentResolver
+    get() = registrar.context().contentResolver
+
+  private val context: Context get() = registrar.context()
 
   @RequiresApi(Build.VERSION_CODES.O)
   override fun onMethodCall(call: MethodCall, result: Result) {
@@ -79,14 +83,26 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
           val ct1 = Contact.fromMap(call.arguments as Map<String, *>)
           this.updateContact(ct1)
         }
+        "openContactEditForm" -> {
+          when(val contactId = call.argument<String?>("identifier")) {
+            null-> result.error(ErrorCodes.INVALID_PARAMETER, "Missing parameter: identifier", null)
+            else-> {
+              val id = ContactId(contactId)
+              contactForms.openContactEditForm(result, id)
+            }
+          }
+        }
+        "openContactInsertForm" -> {
+          val contactFromArgs = Contact.fromMap(call.arguments as? Map<String, *> ?: emptyMap<String, Any?>())
+          contactForms.openContactInsertForm(result, contactFromArgs)
+        }
         else -> result.notImplemented()
       }
 
     } catch (e: Exception) {
-      result.error("unknown-error", "Unknown error", "$e")
+      result.error("unknownError", "Unknown error", "$e")
     }
   }
-
   @TargetApi(Build.VERSION_CODES.ECLAIR)
   private fun getContacts(query: String?, withThumbnails: Boolean, photoHighResolution: Boolean,
                           sortBy: String? = null,
@@ -113,21 +129,31 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
   }
 
 
-  private fun getContact(identifier: ContactId, withThumbnails: Boolean,
-                         photoHighResolution: Boolean
-  ): Struct {
-    val contactList = context.contentResolver.findContactById(identifier.value)
-        ?.toContactList(1, 0)
-    val contact = contactList
-        ?.firstOrNull()
-        ?: methodError("getContact", "notFound",
-            "Expected a single result for contact ${identifier.value}, " +
-                "but instead found ${contactList?.size ?: 0}")
-
-    if (withThumbnails || photoHighResolution) {
-      contact.setAvatarDataForContactIfAvailable(photoHighResolution)
-    }
+  fun getContact(identifier: ContactId, withThumbnails: Boolean,
+                         photoHighResolution: Boolean): Struct {
+   val contact = getContactRecord(identifier, withThumbnails, photoHighResolution)
     return contact.toMap()
+  }
+
+  fun getContactRecord(identifier: ContactId, withThumbnails: Boolean,
+                 photoHighResolution: Boolean): Contact {
+    val findContactById: Cursor? = context.contentResolver.findContactById(identifier.value)
+    try {
+      val contactList = findContactById
+              ?.toContactList(1, 0)
+      val contact = contactList
+              ?.firstOrNull()
+              ?: methodError("getContact", "notFound",
+                      "Expected a single result for contact ${identifier.value}, " +
+                              "but instead found ${contactList?.size ?: 0}")
+
+      if (withThumbnails || photoHighResolution) {
+        contact.setAvatarDataForContactIfAvailable(photoHighResolution)
+      }
+      return contact
+    } finally {
+      findContactById?.close()
+    }
   }
 
 
@@ -361,7 +387,7 @@ class FlutterContactPlugin(private val context: Context) : MethodCallHandler,
     fun registerWith(registrar: Registrar) {
       val channel = MethodChannel(registrar.messenger(), flutterContactsChannelName)
       val events = EventChannel(registrar.messenger(), flutterContactsEventName)
-      val plugin = FlutterContactPlugin(registrar.context())
+      val plugin = FlutterContactPlugin(registrar)
       channel.setMethodCallHandler(plugin)
       events.setStreamHandler(plugin)
     }
@@ -419,8 +445,14 @@ class ContactsContentObserver(private val sink: EventChannel.EventSink, handler:
   fun close() {
     sink.endOfStream()
   }
+}
 
-
+object ErrorCodes {
+  const val FORM_OPERATION_CANCELED = "formOperationCancelled"
+  const val FORM_COULD_NOT_BE_OPENED = "formCouldNotBeOpened"
+  const val NOT_FOUND = "notFound"
+  const val UNKNOWN_ERROR = "unknownError"
+  const val INVALID_PARAMETER = "invalidParameter"
 }
 
 fun ContentResolver.listAllGroups(): Cursor? {

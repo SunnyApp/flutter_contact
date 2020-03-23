@@ -11,6 +11,8 @@ import 'package:flutter_contact_example/main_search.dart';
 import 'package:logging/logging.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+export 'package:sunny_dart/sunny_dart.dart';
+
 void main() => runApp(ContactsExampleApp());
 
 class ContactsExampleApp extends StatelessWidget {
@@ -34,6 +36,7 @@ class _ContactListPageState extends State<ContactListPage> {
 
   PagingList<Contact> _contacts;
 
+  bool useNativeForms = true;
   bool _isPermissionInvalid = false;
   SearchDelegate _delegate;
   StreamSubscription _eventSub;
@@ -43,7 +46,7 @@ class _ContactListPageState extends State<ContactListPage> {
     super.initState();
     Contacts.configureLogs(level: Level.FINER);
     refreshContacts();
-    _delegate = ContactSearchDelegate();
+    _delegate = ContactSearchDelegate(() => useNativeForms);
   }
 
   @override
@@ -52,17 +55,19 @@ class _ContactListPageState extends State<ContactListPage> {
     super.dispose();
   }
 
-  refreshContacts() async {
+  Future refreshContacts() async {
     PermissionStatus permissionStatus = await _getContactPermission();
     if (permissionStatus == PermissionStatus.granted) {
       var groups = await Contacts.getGroups();
-      if (_contacts == null) {
-        final contacts = Contacts.listContacts(withHiResPhoto: false, withThumbnails: true);
-        await contacts.length;
-        _contacts = contacts;
-      } else {
-        _contacts.reload();
-      }
+
+      final contacts = Contacts.listContacts(
+        sortBy: ContactSortOrder.firstName(),
+        withHiResPhoto: false,
+        withThumbnails: true,
+      );
+      await contacts.length;
+      _contacts = contacts;
+
       setState(() {
         _groups = groups.toList();
       });
@@ -74,9 +79,19 @@ class _ContactListPageState extends State<ContactListPage> {
     }
   }
 
+  toggleNativeForms() async {
+    setState(() {
+      if (useNativeForms == true) {
+        useNativeForms = false;
+      } else {
+        useNativeForms = true;
+      }
+    });
+  }
+
   Future<PermissionStatus> _getContactPermission() async {
     PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.contacts);
-    if (permission != PermissionStatus.granted && permission != PermissionStatus.denied) {
+    if (permission != PermissionStatus.granted && permission != PermissionStatus.neverAskAgain) {
       Map<PermissionGroup, PermissionStatus> permissionStatus =
           await PermissionHandler().requestPermissions([PermissionGroup.contacts]);
       return permissionStatus[PermissionGroup.contacts] ?? PermissionStatus.unknown;
@@ -121,6 +136,11 @@ class _ContactListPageState extends State<ContactListPage> {
         ),
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.perm_device_information),
+            color: useNativeForms ? Colors.white : Colors.grey,
+            onPressed: toggleNativeForms,
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: refreshContacts,
           ),
@@ -134,10 +154,22 @@ class _ContactListPageState extends State<ContactListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () {
-          Navigator.of(context).pushNamed("/add").then((_) {
-            refreshContacts();
-          });
+        onPressed: () async {
+          if (useNativeForms) {
+            try {
+              final insertResult = await Contacts.openContactInsertForm();
+              if (insertResult != null) {
+                await refreshContacts();
+                setState(() {});
+              }
+            } catch (e) {
+              print(e);
+            }
+          } else {
+            Navigator.of(context).pushNamed("/add").then((_) {
+              refreshContacts();
+            });
+          }
         },
       ),
       body: SafeArea(
@@ -151,7 +183,12 @@ class _ContactListPageState extends State<ContactListPage> {
                     itemBuilder: (context, idx, contact) {
                       return ContactListTile(
                         key: IndexKey("contact-tile", index),
+                        useNativeForms: useNativeForms,
                         contact: contact,
+                        onRecordUpdated: (contact) async {
+                          await refreshContacts();
+                          setState(() {});
+                        },
                         groups: () => _groupsForContact(contact.identifier),
                       );
                     },
@@ -203,21 +240,30 @@ class IndexKey extends ValueKey {
 class ContactListTile extends StatelessWidget {
   final Contact contact;
   final Provider<Iterable<Group>> groups;
-
-  ContactListTile({Key key, this.contact, this.groups}) : super(key: key);
+  final bool useNativeForms;
+  final ValueChanged<Contact> onRecordUpdated;
+  ContactListTile({Key key, this.contact, this.groups, @required this.useNativeForms, @required this.onRecordUpdated})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       onTap: () async {
-        // Test loading the contact by id
-        final loadedContact = await Contacts.getContact(
-          contact.identifier,
-          withThumbnails: true,
-          withHiResPhoto: true,
-        );
-        await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (BuildContext context) => ContactDetailsPage(loadedContact, groups())));
+        if (useNativeForms) {
+          final result = await Contacts.openContactEditForm(contact.identifier);
+          if (result != null) {
+            onRecordUpdated?.call(result);
+          }
+        } else {
+          // Test loading the contact by id
+          final loadedContact = await Contacts.getContact(
+            contact.identifier,
+            withThumbnails: true,
+            withHiResPhoto: true,
+          );
+          await Navigator.of(context)
+              .push(MaterialPageRoute(builder: (BuildContext context) => ContactDetailsPage(loadedContact, groups())));
+        }
       },
       leading: (contact.avatar != null && contact.avatar.isNotEmpty)
           ? CircleAvatar(backgroundImage: MemoryImage(contact.avatar))

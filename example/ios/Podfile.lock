@@ -12,7 +12,7 @@ PODS:
     - Flutter
     - libPhoneNumber-iOS
   - libPhoneNumber-iOS (0.9.15)
-  - permission_handler (4.0.0):
+  - "permission_handler (4.4.0+hotfix.2)":
     - Flutter
 
 DEPENDENCIES:
@@ -52,7 +52,7 @@ SPEC CHECKSUMS:
   flutter_native_timezone: e72ff1900460ff57cfd331d1758050c9269f3e99
   libphonenumber: bd14d5abfc5939ab0b0767234e2d8e2593af258e
   libPhoneNumber-iOS: 0a32a9525cf8744fe02c5206eb30d571e38f7d75
-  permission_handler: 0fb88b8a3c23e31e5de45b8f1bb8b7de28cf8941
+  permission_handler: d5d46b2ca93671e8dcf870b949e304c7ddb65ad0
 
 PODFILE CHECKSUM: 1b66dae606f75376c5f2135a8290850eeb09ae83
 

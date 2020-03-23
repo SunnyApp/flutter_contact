@@ -62,6 +62,12 @@ abstract class ContactsContract {
 
   Future<Iterable<Group>> getGroups();
 
+  /// Opens a native edit form for the contact with [identifier]
+  Future<Contact> openContactEditForm(String identifier);
+
+  /// Opens a native insert form with [data] preloaded
+  Future<Contact> openContactInsertForm(Contact data);
+
   Stream<ContactEvent> get contactEvents;
 }
 
@@ -80,7 +86,7 @@ PageGenerator<Contact> _defaultPageGenerator(
       final List page = await _channel.invokeMethod('getContacts', {
         kquery: query,
         klimit: limit,
-        ksortBy: sortBy?._value ?? ContactSortOrder.lastName()?._value,
+        ksortBy: sortBy?._value ?? ContactSortOrder.firstName()?._value,
         koffset: offset,
         kphoneQuery: phoneQuery,
         kwithThumbnails: withThumbnails,
@@ -175,7 +181,33 @@ class ContactService implements ContactsContract {
   @override
   Future<Contact> updateContact(Contact contact) async {
     final map = await _channel.invokeMethod('updateContact', contact.toMap());
-    return Contact.fromMap(map);
+    return Contact.fromMap(map ?? {});
+  }
+
+  @override
+  Future<Contact> openContactInsertForm([Contact data]) async {
+    final map = await _channel.invokeMethod('openContactInsertForm', data?.toMap());
+    if (map["success"] == true) {
+      final contact = Contact.of(map["contact"] ?? <String, dynamic>{});
+      _log.info("Saved contact: ${contact.identifier}");
+      return contact;
+    } else {
+      _log.info("Contact form was not saved: ${map["code"] ?? 'unknown'}");
+      return null;
+    }
+  }
+
+  @override
+  Future<Contact> openContactEditForm(String identifier) async {
+    final map = await _channel.invokeMethod('openContactEditForm', {"identifier": identifier});
+    if (map["success"] == true) {
+      final contact = Contact.of(map["contact"] ?? <String, dynamic>{});
+      _log.info("Saved contact: ${contact.identifier}");
+      return contact;
+    } else {
+      _log.info("Contact form was not saved: ${map["code"] ?? 'unknown'}");
+      return null;
+    }
   }
 
   /// Updates the [contact] if it has a valid identifier
