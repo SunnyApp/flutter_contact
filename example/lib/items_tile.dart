@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact_example/update_item_page.dart';
+import 'package:sunny_dart/time.dart';
 
 class ItemsTile extends StatelessWidget {
   ItemsTile(this.contact, this._title, this._items, this.onChange);
@@ -81,9 +82,7 @@ class DatesTile extends StatelessWidget {
                   });
 
               if (item != null && !_items.contains(item)) {
-                _items.add(ContactDate(
-                    label: item.label,
-                    date: DateComponents.fromJson(item.value)));
+                _items.add(ContactDate(label: item.label, date: DateComponents.fromJson(item.value)));
                 await Contacts.updateContact(contact);
                 onChange?.call();
               }

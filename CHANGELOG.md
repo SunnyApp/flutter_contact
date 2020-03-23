@@ -1,3 +1,7 @@
+## 0.5.1
+
+* Introduce sunny_dart dependency, updating minor version for slight changes. 
+
 ## 0.4.15
 
 * Fixing bug with non-completing futures on Android

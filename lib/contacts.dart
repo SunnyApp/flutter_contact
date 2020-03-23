@@ -5,15 +5,16 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/paging_iterable.dart';
 import 'package:logging/logging.dart';
+import 'package:logging_config/logging_config.dart';
 
 import 'contact.dart';
 import 'contact_events.dart';
 import 'group.dart';
-import 'logging.dart';
+
+export 'package:sunny_dart/time.dart';
 
 export 'contact.dart';
 export 'contact_events.dart';
-export 'date_components.dart';
 export 'group.dart';
 export 'paging_iterable.dart';
 
@@ -47,10 +48,9 @@ abstract class ContactsContract {
     ContactSortOrder sortBy = const ContactSortOrder.lastName(),
   });
 
-  void configureLogs({Level level, Logging onLog});
+  void configureLogs({Level level, LoggingHandler onLog});
 
-  Future<Contact> getContact(String identifier,
-      {bool withThumbnails = true, bool withHiResPhoto = true});
+  Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true});
 
   Future<Uint8List> getContactImage(String identifier);
 
@@ -74,8 +74,8 @@ const kquery = 'query';
 const kphoneQuery = 'phoneQuery';
 const kids = 'ids';
 
-PageGenerator<Contact> _defaultPageGenerator(String query, bool phoneQuery,
-        bool withThumbnails, bool withHiResPhoto, ContactSortOrder sortBy) =>
+PageGenerator<Contact> _defaultPageGenerator(
+        String query, bool phoneQuery, bool withThumbnails, bool withHiResPhoto, ContactSortOrder sortBy) =>
     (int limit, int offset) async {
       final List page = await _channel.invokeMethod('getContacts', {
         kquery: query,
@@ -102,8 +102,7 @@ class ContactService implements ContactsContract {
     ContactSortOrder sortBy = const ContactSortOrder.lastName(),
   }) {
     final stream = PagingStream<Contact>(
-      pageGenerator: _defaultPageGenerator(
-          query, phoneQuery, withThumbnails, withHiResPhoto, sortBy),
+      pageGenerator: _defaultPageGenerator(query, phoneQuery, withThumbnails, withHiResPhoto, sortBy),
       bufferSize: bufferSize,
     );
     return stream;
@@ -112,8 +111,7 @@ class ContactService implements ContactsContract {
   @override
   Future<Uint8List> getContactImage(String identifier) async {
     if (identifier == null) return null;
-    final data = await _channel
-        .invokeMethod('getContactImage', {'identifier': identifier});
+    final data = await _channel.invokeMethod('getContactImage', {'identifier': identifier});
     return data as Uint8List;
   }
 
@@ -137,8 +135,7 @@ class ContactService implements ContactsContract {
       int bufferSize = 20,
       ContactSortOrder sortBy = const ContactSortOrder.lastName()}) {
     final list = PagingList<Contact>(
-      pageGenerator: _defaultPageGenerator(
-          query, phoneQuery, withThumbnails, withHiResPhoto, sortBy),
+      pageGenerator: _defaultPageGenerator(query, phoneQuery, withThumbnails, withHiResPhoto, sortBy),
       bufferSize: bufferSize,
       length: getTotalContacts(query: query, phoneQuery: phoneQuery),
     );
@@ -147,16 +144,14 @@ class ContactService implements ContactsContract {
 
   /// Configures logging.  FlutterPhoneState uses the [logging] plugin.
   @override
-  void configureLogs({Level level, Logging onLog}) {
-    configureLogging(logger: _log, level: level, onLog: onLog);
+  void configureLogs({Level level, LoggingHandler onLog}) {
+    configureLogging(LogConfig(logLevels: {"contactsService": level}, handler: onLog ?? LoggingHandler.dev()));
   }
 
   /// Retrieves a single contact by identifier
   @override
-  Future<Contact> getContact(String identifier,
-      {bool withThumbnails = true, bool withHiResPhoto = true}) async {
-    final fromChannel =
-        await _channel.invokeMethod('getContact', <String, dynamic>{
+  Future<Contact> getContact(String identifier, {bool withThumbnails = true, bool withHiResPhoto = true}) async {
+    final fromChannel = await _channel.invokeMethod('getContact', <String, dynamic>{
       _kidentifier: identifier,
       _kwithThumbnails: withThumbnails,
       _kphotoHighResolution: withHiResPhoto,
@@ -174,8 +169,7 @@ class ContactService implements ContactsContract {
 
   /// Deletes the [contact] if it has a valid identifier
   @override
-  Future<bool> deleteContact(Contact contact) =>
-      _channel.invokeMethod('deleteContact', contact.toMap());
+  Future<bool> deleteContact(Contact contact) => _channel.invokeMethod('deleteContact', contact.toMap());
 
   /// Updates the [contact] if it has a valid identifier
   @override

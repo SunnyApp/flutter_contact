@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:flutter_contact/date_components.dart';
+import 'package:sunny_dart/time.dart';
 
 class Contact {
   Contact(
@@ -34,16 +34,7 @@ class Contact {
         _dates = [...?dates],
         _postalAddresses = [...?postalAddresses];
 
-  String identifier,
-      displayName,
-      givenName,
-      middleName,
-      prefix,
-      suffix,
-      familyName,
-      company,
-      jobTitle,
-      note;
+  String identifier, displayName, givenName, middleName, prefix, suffix, familyName, company, jobTitle, note;
   final List<Item> _emails;
   final List<Item> _phones;
   final List<Item> _socialProfiles;
@@ -126,23 +117,12 @@ class Contact {
           suffix: dyn[_ksuffix] as String,
           company: dyn[_kcompany] as String,
           jobTitle: dyn[_kjobTitle] as String,
-          emails: [
-            for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)
-          ],
-          phones: [
-            for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)
-          ],
-          socialProfiles: [
-            for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
-          ],
+          emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)],
+          phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)],
+          socialProfiles: [for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)],
           urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)],
-          dates: [
-            for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-          ],
-          postalAddresses: [
-            for (final m in _iterableKey(dyn, _kpostalAddresses))
-              PostalAddress.fromMap(m)
-          ],
+          dates: [for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)],
+          postalAddresses: [for (final m in _iterableKey(dyn, _kpostalAddresses)) PostalAddress.fromMap(m)],
           avatar: dyn[_kavatar] as Uint8List,
           note: dyn[_knote] as String,
         );
@@ -165,13 +145,11 @@ class Contact {
       jobTitle: this.jobTitle ?? other.jobTitle,
       note: this.note ?? other.note,
       emails: {...?this.emails, ...?other.emails}.toList(),
-      socialProfiles:
-          {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
+      socialProfiles: {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
       dates: {...?this.dates, ...?other.dates}.toList(),
       urls: {...?this.urls, ...?other.urls}.toList(),
       phones: {...?this.phones, ...?other.phones}.toList(),
-      postalAddresses:
-          {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
+      postalAddresses: {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
       avatar: this.avatar ?? other.avatar);
 
   /// Removes duplicates from the collections.  Duplicates are defined as having the exact same value
@@ -195,19 +173,17 @@ class Contact {
         this.suffix == other.suffix &&
         this.lastModified == other.lastModified &&
         DeepCollectionEquality.unordered().equals(this.phones, other.phones) &&
-        DeepCollectionEquality.unordered()
-            .equals(this.socialProfiles, other.socialProfiles) &&
+        DeepCollectionEquality.unordered().equals(this.socialProfiles, other.socialProfiles) &&
         DeepCollectionEquality.unordered().equals(this.urls, other.urls) &&
         DeepCollectionEquality.unordered().equals(this.dates, other.dates) &&
         DeepCollectionEquality.unordered().equals(this.emails, other.emails) &&
-        DeepCollectionEquality.unordered()
-            .equals(this.postalAddresses, other.postalAddresses);
+        DeepCollectionEquality.unordered().equals(this.postalAddresses, other.postalAddresses);
   }
 
   @override
   int get hashCode {
-    return hashValues(identifier, company, displayName, lastModified, givenName,
-        familyName, jobTitle, middleName, note, prefix, suffix);
+    return hashValues(identifier, company, displayName, lastModified, givenName, familyName, jobTitle, middleName, note,
+        prefix, suffix);
   }
 }
 
@@ -219,9 +195,7 @@ class ContactDate {
 
   factory ContactDate.fromMap(final dyn) {
     if (dyn is! Map<dynamic, dynamic>) return null;
-    return ContactDate(
-        label: dyn[_klabel] as String,
-        date: DateComponents.fromJson(dyn[_kdate]));
+    return ContactDate(label: dyn[_klabel] as String, date: DateComponents.fromJson(dyn[_kdate]));
   }
 
   @override
@@ -231,8 +205,7 @@ class ContactDate {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ContactDate && label == other.label && date == other.date;
+      identical(this, other) || other is ContactDate && label == other.label && date == other.date;
 
   @override
   int get hashCode => hashValues(label, date);
@@ -240,13 +213,7 @@ class ContactDate {
 
 // ignore: must_be_immutable
 class PostalAddress extends Equatable {
-  PostalAddress(
-      {this.label,
-      this.street,
-      this.city,
-      this.postcode,
-      this.region,
-      this.country});
+  PostalAddress({this.label, this.street, this.city, this.postcode, this.region, this.country});
 
   String label, street, city, postcode, region, country;
 
@@ -331,26 +298,12 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     _ksuffix: contact.suffix,
     _kcompany: contact.company,
     _kjobTitle: contact.jobTitle,
-    _kemails: [
-      for (final item in contact.emails.where(notNull())) _itemToMap(item)
-    ],
-    _kphones: [
-      for (final item in contact.phones.where(notNull())) _itemToMap(item)
-    ],
-    _kdates: [
-      for (final item in contact.dates.where(notNull())) _contactDateToMap(item)
-    ],
-    _ksocialProfiles: [
-      for (final item in contact.socialProfiles.where(notNull()))
-        _itemToMap(item)
-    ],
-    _kurls: [
-      for (final item in contact.urls.where(notNull())) _itemToMap(item)
-    ],
-    _kpostalAddresses: [
-      for (final address in contact.postalAddresses.where(notNull()))
-        _addressToMap(address)
-    ],
+    _kemails: [for (final item in contact.emails.where(notNull())) _itemToMap(item)],
+    _kphones: [for (final item in contact.phones.where(notNull())) _itemToMap(item)],
+    _kdates: [for (final item in contact.dates.where(notNull())) _contactDateToMap(item)],
+    _ksocialProfiles: [for (final item in contact.socialProfiles.where(notNull())) _itemToMap(item)],
+    _kurls: [for (final item in contact.urls.where(notNull())) _itemToMap(item)],
+    _kpostalAddresses: [for (final address in contact.postalAddresses.where(notNull())) _addressToMap(address)],
     _kavatar: contact.avatar,
     _knote: contact.note
   };

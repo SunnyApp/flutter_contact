@@ -10,7 +10,7 @@ To use this plugin, add `flutter_contact` as a [dependency in your `pubspec.yaml
 For example:  
 ```yaml  
 dependencies:  
-    flutter_contact: ^0.4.7+10
+    flutter_contact: ^0.4.15
 ```  
   
 ## Permissions  
