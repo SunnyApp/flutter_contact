@@ -105,6 +105,16 @@ class Contact {
         .toUpperCase();
   }
 
+  factory Contact.of(final dyn) {
+    if (dyn == null) {
+      return null;
+    } else if (dyn is Contact) {
+      return dyn;
+    } else {
+      return Contact.fromMap(dyn);
+    }
+  }
+
   Contact.fromMap(final dyn)
       : this(
           identifier: dyn[_kidentifier] as String,

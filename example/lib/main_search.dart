@@ -4,6 +4,10 @@ import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact_example/main.dart';
 
 class ContactSearchDelegate extends SearchDelegate<Contact> {
+  final bool Function() useNativeForms;
+
+  ContactSearchDelegate(this.useNativeForms);
+
   @override
   List<Widget> buildActions(BuildContext context) {
     return [];
@@ -28,15 +32,12 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    if (query.isNotEmpty != true)
-      return Center(heightFactor: 8, child: Text("Search for contacts"));
-    final results =
-        Contacts.listContacts(query: this.query, withHiResPhoto: false);
+    if (query.isNotEmpty != true) return Center(heightFactor: 8, child: Text("Search for contacts"));
+    final results = Contacts.listContacts(query: this.query, withHiResPhoto: false);
     return FutureBuilder<int>(
       builder: (BuildContext context, snapshot) {
         final length = snapshot.data;
-        if (length == null)
-          return const Center(child: CircularProgressIndicator());
+        if (length == null) return const Center(child: CircularProgressIndicator());
         if (length != null && length == 0) {
           return const ListTile(title: Text("No results found"));
         }
@@ -51,8 +52,12 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
               name: "search-results",
               itemBuilder: (context, idx, contact) {
                 return ContactListTile(
+                  useNativeForms: useNativeForms(),
                   key: IndexKey("search-tile", item),
                   contact: contact,
+                  onRecordUpdated: (contact) {
+                    this.buildResults(context);
+                  },
                   groups: () => [],
                 );
               },

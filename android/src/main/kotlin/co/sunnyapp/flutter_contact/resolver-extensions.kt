@@ -40,9 +40,9 @@ fun ContentResolver.queryContacts(query: String? = null, sortBy: String? = null,
 
   val sortOrder = if (!forCount) null else when (sortBy) {
     null -> null
-    "firstName" -> ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME + " ASC"
+    "firstName" -> ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + " ASC"
     "lastName" -> ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME + " ASC"
-    else -> ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME + " ASC"
+    else -> ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + " ASC"
   }
 
   return query(ContactsContract.Data.CONTENT_URI, projections, selection, selectionArgs, sortOrder)
@@ -142,6 +142,9 @@ fun Cursor?.toContactList(limit: Int, offset: Int): List<Contact> {
       }
     }
 
+  }
+  if(!isClosed) {
+    close();
   }
   return contactsById.values.toList()
 }
@@ -265,6 +268,9 @@ interface ResolverExtensions {
       }
     }
 
+    if(!isClosed) {
+      close()
+    }
     resolver.queryContacts()
         .toContactList(100, 0)
         .forEach { contact ->
