@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
 
 class UpdateItemPage extends StatefulWidget {
-  UpdateItemPage({@required this.type, this.item});
+  const UpdateItemPage({@required this.type, this.item});
 
   final String type;
   final Item item;

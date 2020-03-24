@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
 
 class UpdateContactsPage extends StatefulWidget {
-  UpdateContactsPage({@required this.contact});
+  const UpdateContactsPage({@required this.contact});
   final Contact contact;
   @override
   _UpdateContactsPageState createState() => _UpdateContactsPageState();
@@ -71,14 +71,12 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                onSaved: (v) => contact.phones = [Item(label: "mobile", value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                onSaved: (v) => contact.emails = [Item(label: "work", value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(

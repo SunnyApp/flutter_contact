@@ -9,7 +9,7 @@ import 'package:flutter_contact_example/update_contact_page.dart';
 import 'items_tile.dart';
 
 class ContactDetailsPage extends StatefulWidget {
-  ContactDetailsPage(this._contact, this._groups);
+  const ContactDetailsPage(this._contact, this._groups);
 
   final Contact _contact;
   final Iterable<Group> _groups;
@@ -37,7 +37,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
     });
   }
 
-  _toggleAvatarSize(BuildContext context) {
+  void _toggleAvatarSize(BuildContext context) {
     setState(() {
       if (!_avatarZoomed) {
         _avatarSize = MediaQuery.of(context).size.width;
@@ -91,9 +91,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
                     width: _avatarSize,
                     height: _avatarSize,
                     decoration: BoxDecoration(
-                      image: DecorationImage(
-                          fit: BoxFit.cover,
-                          image: MemoryImage(_avatarData ?? Uint8List(0))),
+                      image: DecorationImage(fit: BoxFit.cover, image: MemoryImage(_avatarData ?? Uint8List(0))),
                     ),
                   ),
                   duration: Duration(milliseconds: 300),
@@ -132,14 +130,11 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
               trailing: Text(widget._contact.note ?? ""),
             ),
             AddressesTile(widget._contact.postalAddresses),
-            ItemsTile(
-                widget._contact, "Phones", widget._contact.phones, onChange),
-            ItemsTile(widget._contact, "Social Profiles",
-                widget._contact.socialProfiles, onChange),
+            ItemsTile(widget._contact, "Phones", widget._contact.phones, onChange),
+            ItemsTile(widget._contact, "Social Profiles", widget._contact.socialProfiles, onChange),
             DatesTile(widget._contact, widget._contact.dates, onChange),
             ItemsTile(widget._contact, "URLs", widget._contact.urls, onChange),
-            ItemsTile(
-                widget._contact, "Emails", widget._contact.emails, onChange),
+            ItemsTile(widget._contact, "Emails", widget._contact.emails, onChange),
             GroupsTile(groups: widget._groups)
           ],
         ),
@@ -147,7 +142,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
     );
   }
 
-  onChange() async {
+  Future onChange() async {
     final refreshed = await Contacts.getContact(_contact.identifier);
     setState(() {
       this._contact = refreshed;

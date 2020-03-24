@@ -16,15 +16,22 @@ var flutterResult: FlutterResult? = nil
 extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
     
     
-    func openContactInsertForm(result: @escaping FlutterResult, contact:CNContact?=nil) ->  [String:Any]? {
+    func openContactInsertForm(result: @escaping FlutterResult, contact: CNContact?=nil) ->  [String:Any]? {
         flutterResult = result
         let contact = contact ?? CNMutableContact.init()
-        let controller = CNContactViewController.init(forNewContact:contact)
-        controller.delegate = self
+    
         DispatchQueue.main.async {
-            let navigation = UINavigationController .init(rootViewController: controller)
-            let viewController : UIViewController? = UIApplication.shared.delegate?.window??.rootViewController
-            viewController?.present(navigation, animated:true, completion: nil)
+            let vc = CNContactViewController.init(forNewContact: contact)
+            vc.delegate = self
+            vc.navigationItem.backBarButtonItem = UIBarButtonItem.init(title: "Cancel", style: UIBarButtonItem.Style.plain,
+                                                                                   target: self, action: #selector(self.cancelContactForm))
+            vc.view.layoutIfNeeded()
+            let navigation = UINavigationController .init(rootViewController: vc)
+            var rvc = UIApplication.shared.keyWindow?.rootViewController
+            while let nextView = rvc?.presentedViewController {
+                rvc = nextView
+            }
+            rvc?.present(navigation, animated:true, completion: nil)
         }
         return nil
     }
@@ -32,16 +39,20 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
         flutterResult = result
     
         do {
-            
-            guard let cnContact = try self.getContact(identifier: identifier, withThumbnails: false, photoHighResolution: false, forEditForm: true) else {
+            guard let cnContact = try self.getContact(identifier: identifier,
+                                                      withThumbnails: false,
+                                                      photoHighResolution: false,
+                                                      forEditForm: true) else {
                 throw PluginError.runtimeError(code: ErrorCodes.notFound.description, message: "contact not found")
             }
             
             let viewController = CNContactViewController(for: cnContact)
-            viewController.navigationItem.backBarButtonItem = UIBarButtonItem.init(title: "Cancel", style: UIBarButtonItem.Style.plain,
-                                                                                   target: self, action: #selector(cancelContactForm))
             viewController.delegate = self
             DispatchQueue.main.async {
+                
+                viewController.navigationItem.backBarButtonItem = UIBarButtonItem.init(title: "Cancel", style: UIBarButtonItem.Style.plain,
+                                                                                       target: self, action: #selector(self.cancelContactForm))
+                viewController.view.layoutIfNeeded()
                 let navigation = UINavigationController .init(rootViewController: viewController)
                 var currentViewController = UIApplication.shared.keyWindow?.rootViewController
                 while let nextView = currentViewController?.presentedViewController {
@@ -79,9 +90,10 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
     }
     
     func preLoadContactView() {
-        DispatchQueue.main.asyncAfter(deadline: .now()+5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             NSLog("Preloading CNContactViewController")
-            let _ = CNContactViewController.init(forNewContact: nil)
+            let controller = CNContactViewController.init(forNewContact: nil)
+            controller.view.layoutIfNeeded()
         }
     }
     

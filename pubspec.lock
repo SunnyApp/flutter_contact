@@ -281,7 +281,7 @@ packages:
       name: sunny_dart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.2"
+    version: "0.5.5"
   term_glyph:
     dependency: transitive
     description:

@@ -20,9 +20,7 @@ class ContactsExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: ContactListPage(),
-      routes: <String, WidgetBuilder>{
-        '/add': (BuildContext context) => AddContactPage()
-      },
+      routes: <String, WidgetBuilder>{'/add': (BuildContext context) => AddContactPage()},
     );
   }
 }
@@ -34,7 +32,7 @@ class ContactListPage extends StatefulWidget {
 
 class _ContactListPageState extends State<ContactListPage> {
   Iterable<Group> _groups;
-  List<ContactEvent> _events = [];
+  final List<ContactEvent> _events = [];
 
   PagingList<Contact> _contacts;
 
@@ -44,7 +42,7 @@ class _ContactListPageState extends State<ContactListPage> {
   StreamSubscription _eventSub;
 
   @override
-  initState() {
+  void initState() {
     super.initState();
     Contacts.configureLogs(level: Level.FINER);
     refreshContacts();
@@ -52,7 +50,7 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   @override
-  dispose() {
+  void dispose() {
     _eventSub.cancel();
     super.dispose();
   }
@@ -81,7 +79,7 @@ class _ContactListPageState extends State<ContactListPage> {
     }
   }
 
-  toggleNativeForms() async {
+  Future toggleNativeForms() async {
     setState(() {
       if (useNativeForms == true) {
         useNativeForms = false;
@@ -92,38 +90,29 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   Future<PermissionStatus> _getContactPermission() async {
-    PermissionStatus permission = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.contacts);
-    if (permission != PermissionStatus.granted &&
-        permission != PermissionStatus.neverAskAgain) {
+    PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.contacts);
+    if (permission != PermissionStatus.granted && permission != PermissionStatus.neverAskAgain) {
       Map<PermissionGroup, PermissionStatus> permissionStatus =
-          await PermissionHandler()
-              .requestPermissions([PermissionGroup.contacts]);
-      return permissionStatus[PermissionGroup.contacts] ??
-          PermissionStatus.unknown;
+          await PermissionHandler().requestPermissions([PermissionGroup.contacts]);
+      return permissionStatus[PermissionGroup.contacts] ?? PermissionStatus.unknown;
     } else {
-      if (_eventSub == null) {
-        _eventSub = Contacts.contactEvents.listen(
-            (event) {
-              setState(() {
-                _events.add(event);
-              });
-            },
-            cancelOnError: true,
-            onError: (err) {
-              print("Error in contact event subscription: $err");
+      _eventSub ??= Contacts.contactEvents.listen(
+          (event) {
+            setState(() {
+              _events.add(event);
             });
-      }
+          },
+          cancelOnError: true,
+          onError: (err) {
+            print("Error in contact event subscription: $err");
+          });
       return permission;
     }
   }
 
   void _handleInvalidPermissions(PermissionStatus permissionStatus) {
     if (permissionStatus == PermissionStatus.denied) {
-      throw PlatformException(
-          code: "PERMISSION_DENIED",
-          message: "Access to location data denied",
-          details: null);
+      throw PlatformException(code: "PERMISSION_DENIED", message: "Access to location data denied", details: null);
     } else if (permissionStatus == PermissionStatus.denied) {
       throw PlatformException(
         code: "PERMISSION_DISABLED",
@@ -175,7 +164,7 @@ class _ContactListPageState extends State<ContactListPage> {
               print(e);
             }
           } else {
-            Navigator.of(context).pushNamed("/add").then((_) {
+            await Navigator.of(context).pushNamed("/add").then((_) {
               refreshContacts();
             });
           }
@@ -218,9 +207,9 @@ class _ContactListPageState extends State<ContactListPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    subtitle: Text(
-                        "This demo should request permissions when it starts. If you're seeing this message, "
-                        "you may need to reset your permission settings"),
+                    subtitle:
+                        Text("This demo should request permissions when it starts. If you're seeing this message, "
+                            "you may need to reset your permission settings"),
                   ))
                 : const Center(
                     child: CircularProgressIndicator(),
@@ -229,11 +218,8 @@ class _ContactListPageState extends State<ContactListPage> {
     );
   }
 
-  _viewEvents() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => ContactEventsPage(events: _events)));
+  void _viewEvents() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ContactEventsPage(events: _events)));
   }
 
   Iterable<Group> _groupsForContact(String contactId) {
@@ -246,7 +232,7 @@ typedef Provider<T> = T Function();
 class IndexKey extends ValueKey {
   final String list;
   final int index;
-  IndexKey(this.list, this.index) : super("$list-$index");
+  const IndexKey(this.list, this.index) : super("$list-$index");
 }
 
 class ContactListTile extends StatelessWidget {
@@ -254,12 +240,8 @@ class ContactListTile extends StatelessWidget {
   final Provider<Iterable<Group>> groups;
   final bool useNativeForms;
   final ValueChanged<Contact> onRecordUpdated;
-  ContactListTile(
-      {Key key,
-      this.contact,
-      this.groups,
-      @required this.useNativeForms,
-      @required this.onRecordUpdated})
+  const ContactListTile(
+      {Key key, this.contact, this.groups, @required this.useNativeForms, @required this.onRecordUpdated})
       : super(key: key);
 
   @override
@@ -278,9 +260,8 @@ class ContactListTile extends StatelessWidget {
             withThumbnails: true,
             withHiResPhoto: true,
           );
-          await Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) =>
-                  ContactDetailsPage(loadedContact, groups())));
+          await Navigator.of(context)
+              .push(MaterialPageRoute(builder: (BuildContext context) => ContactDetailsPage(loadedContact, groups())));
         }
       },
       leading: (contact.avatar != null && contact.avatar.isNotEmpty)
@@ -292,7 +273,7 @@ class ContactListTile extends StatelessWidget {
 }
 
 class GroupDetailsPage extends StatelessWidget {
-  GroupDetailsPage({@required this.group});
+  const GroupDetailsPage({@required this.group});
 
   final Group group;
 
@@ -313,19 +294,18 @@ class GroupDetailsPage extends StatelessWidget {
                       title: Text(c.displayName ?? "")))
                   .toList(),
             ),
-            future: Contacts.streamContacts()
-                .where((contact) => group.contacts.contains(contact.identifier))
-                .toList(),
+            future: Contacts.streamContacts().where((contact) => group.contacts.contains(contact.identifier)).toList(),
           ),
         ));
   }
 }
 
 class AddressesTile extends StatelessWidget {
-  AddressesTile(this._addresses);
+  const AddressesTile(this._addresses);
 
   final Iterable<PostalAddress> _addresses;
 
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +348,7 @@ class AddressesTile extends StatelessWidget {
 }
 
 class GroupsTile extends StatelessWidget {
-  GroupsTile({@required this.groups});
+  const GroupsTile({@required this.groups});
 
   final Iterable<Group> groups;
 
@@ -451,14 +431,12 @@ class _AddContactPageState extends State<AddContactPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                onSaved: (v) => contact.phones = [Item(label: "mobile", value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                onSaved: (v) => contact.emails = [Item(label: "work", value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -501,8 +479,7 @@ class _AddContactPageState extends State<AddContactPage> {
   }
 }
 
-typedef ItemBuilder<T> = Widget Function(
-    BuildContext context, int index, T item);
+typedef ItemBuilder<T> = Widget Function(BuildContext context, int index, T item);
 
 class PagingListIndexBuilder<T> extends StatelessWidget {
   final int index;
@@ -510,11 +487,7 @@ class PagingListIndexBuilder<T> extends StatelessWidget {
   final ItemBuilder<T> itemBuilder;
   final String name;
 
-  PagingListIndexBuilder(
-      {@required this.index,
-      @required this.list,
-      @required this.itemBuilder,
-      @required this.name})
+  PagingListIndexBuilder({@required this.index, @required this.list, @required this.itemBuilder, @required this.name})
       : super(key: Key("list-builder-$name-$index"));
 
   @override

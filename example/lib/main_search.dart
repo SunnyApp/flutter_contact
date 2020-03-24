@@ -20,10 +20,11 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
 
   @override
   Widget buildResults(BuildContext context) {
-    if (query.isNotEmpty != true)
+    if (query.isNotEmpty != true) {
       return ListTile(
         subtitle: Text("Enter a search term"),
       );
+    }
     return const SizedBox(
       width: 0,
       height: 0,
@@ -32,15 +33,16 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    if (query.isNotEmpty != true)
+    if (query.isNotEmpty != true) {
       return Center(heightFactor: 8, child: Text("Search for contacts"));
-    final results =
-        Contacts.listContacts(query: this.query, withHiResPhoto: false);
+    }
+    final results = Contacts.listContacts(query: this.query, withHiResPhoto: false);
     return FutureBuilder<int>(
       builder: (BuildContext context, snapshot) {
         final length = snapshot.data;
-        if (length == null)
+        if (length == null) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (length != null && length == 0) {
           return const ListTile(title: Text("No results found"));
         }

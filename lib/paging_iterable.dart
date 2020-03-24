@@ -14,11 +14,7 @@ class PagingList<T> {
   Iterator<T> _currIter;
   final PageGenerator<T> pageGenerator;
 
-  PagingList(
-      {this.pageGenerator,
-      this.bufferSize = 20,
-      @required final FutureOr<int> length})
-      : _length = length {
+  PagingList({this.pageGenerator, this.bufferSize = 20, @required final FutureOr<int> length}) : _length = length {
     if (length is Future<int>) {
       length.then((_resolved) {
         _length = _resolved;
@@ -107,7 +103,7 @@ class PagingStream<T> extends Stream<T> {
   bool _isPaused = true;
   StreamController<T> _controller;
 
-  _resume() async {
+  Future<void> _resume() async {
     try {
       if (_isPaused == false) return;
       if (_controller.isClosed) return;
@@ -123,11 +119,11 @@ class PagingStream<T> extends Stream<T> {
       }
 
       if (!_controller.isClosed) {
-        _controller.close();
+        await _controller.close();
       }
     } catch (e, stack) {
       _controller.addError(e, stack);
-      _controller.close();
+      await _controller.close();
     }
   }
 
@@ -147,8 +143,7 @@ class PagingStream<T> extends Stream<T> {
     }
   }
 
-  PagingStream({@required this.pageGenerator, this.bufferSize = 20})
-      : assert(pageGenerator != null);
+  PagingStream({@required this.pageGenerator, this.bufferSize = 20}) : assert(pageGenerator != null);
 
   @override
   StreamSubscription<T> listen(void Function(T event) onData,

@@ -117,7 +117,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.5.1+1"
+    version: "0.5.2"
   flutter_native_timezone:
     dependency: transitive
     description:
@@ -316,7 +316,7 @@ packages:
       name: sunny_dart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.2"
+    version: "0.5.5"
   term_glyph:
     dependency: transitive
     description:

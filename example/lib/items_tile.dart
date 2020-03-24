@@ -4,7 +4,7 @@ import 'package:flutter_contact_example/update_item_page.dart';
 import 'package:sunny_dart/time.dart';
 
 class ItemsTile extends StatelessWidget {
-  ItemsTile(this.contact, this._title, this._items, this.onChange);
+  const ItemsTile(this.contact, this._title, this._items, this.onChange);
 
   final List<Item> _items;
   final String _title;
@@ -59,7 +59,7 @@ class ItemsTile extends StatelessWidget {
 }
 
 class DatesTile extends StatelessWidget {
-  DatesTile(this.contact, this._items, this.onChange);
+  const DatesTile(this.contact, this._items, this.onChange);
 
   final List<ContactDate> _items;
   final Contact contact;
@@ -82,9 +82,7 @@ class DatesTile extends StatelessWidget {
                   });
 
               if (item != null && !_items.contains(item)) {
-                _items.add(ContactDate(
-                    label: item.label,
-                    date: DateComponents.fromJson(item.value)));
+                _items.add(ContactDate(label: item.label, date: DateComponents.fromJson(item.value)));
                 await Contacts.updateContact(contact);
                 onChange?.call();
               }

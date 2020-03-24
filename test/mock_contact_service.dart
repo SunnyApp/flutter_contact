@@ -35,7 +35,7 @@ class ContactsMocks {
         return handle(call.arguments);
       };
 
-  addLog(MethodCall log) => _log.add(log);
+  void addLog(MethodCall log) => _log.add(log);
 
   Future<dynamic> _getContacts(args) async {
     final offset = args["offset"] as int ?? 0;
@@ -53,7 +53,7 @@ class ContactsMocks {
     return null;
   }
 
-  operator [](String key) {
+  RawMethodHandler operator [](String key) {
     return _mockMethods[key];
   }
 
@@ -105,7 +105,7 @@ class ContactsMocks {
   }
 }
 
-invokedMethod(String methodName) => InvokedMethod(methodName);
+InvokedMethod invokedMethod(String methodName) => InvokedMethod(methodName);
 
 class InvokedMethod extends Matcher {
   final String methodName;
