@@ -38,8 +38,8 @@ class ContactsMocks {
   addLog(MethodCall log) => _log.add(log);
 
   Future<dynamic> _getContacts(args) async {
-    final offset = args["offset"] ?? 0;
-    final limit = args["limit"] ?? 50;
+    final offset = args["offset"] as int ?? 0;
+    final limit = args["limit"] as int ?? 50;
     final allItems = [..._data.values];
     if (allItems.length > offset) {
       return allItems.sublist(offset, min(allItems.length, offset + limit));

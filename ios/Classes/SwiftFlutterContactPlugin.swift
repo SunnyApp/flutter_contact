@@ -3,6 +3,7 @@ import Foundation
 import Flutter
 import UIKit
 import Contacts
+import ContactsUI
 
 
 @available(iOS 9.0, *)
@@ -13,6 +14,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         let instance = SwiftFlutterContactPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
         instance.registerEvents(registrar: registrar)
+        instance.preLoadContactView()
     }
     
     let contactFetchKeys:[Any] = [CNContactFormatter.descriptorForRequiredKeys(for: .fullName),
@@ -82,9 +84,24 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                     let imageData = try self.getContactImage(identifier: call.arg("identifier"))
                     if let imageData = imageData {
                         result(FlutterStandardTypedData(bytes: imageData))
-                    }else {
+                    } else {
                         result(nil)
                     }
+                case "openContactEditForm":
+                    // Check to make sure dictionary has an identifier
+                    let identifier:String = try call.arg("identifier")
+                    let _ = try self.openContactEditForm(result: result, identifier: identifier)
+                    
+                case "openContactInsertForm":
+                    // Check to make sure dictionary has an identifier
+                    let contactData:[String:Any?]? = call.arguments as? [String:Any?]
+                    var contact:CNContact? = nil
+                    if let contactData = contactData {
+                        let mutable = CNMutableContact()
+                        mutable.takeFromDictionary(contactData)
+                        contact = mutable
+                    }
+                    let _ = self.openContactInsertForm(result: result, contact: contact)
                     
                 default:
                     result(FlutterMethodNotImplemented)
@@ -187,7 +204,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         return contacts
     }
     
-    func getContact(identifier : String, withThumbnails: Bool, photoHighResolution: Bool) throws -> CNContact? {
+    func getContact(identifier : String, withThumbnails: Bool, photoHighResolution: Bool, forEditForm: Bool = false) throws -> CNContact? {
         
         var result : CNContact? = nil
         
@@ -200,6 +217,10 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             if(photoHighResolution){
                 keys.append(CNContactImageDataKey)
             }
+        }
+        
+        if (forEditForm) {
+            keys.append(CNContactViewController.descriptorForRequiredKeys())
         }
         
         let fetchRequest = CNContactFetchRequest(keysToFetch: keys as! [CNKeyDescriptor])
@@ -342,6 +363,16 @@ extension Date {
     }
 }
 
-
-
-
+enum ErrorCodes: String, CustomStringConvertible {
+    case formOperationCancelled = "formOperationCancelled"
+    case formCouldNotBeOpened = "formCouldNotBeOpened"
+    case notFound = "notFound"
+    case unknownError = "unknownError"
+    case invalidParameter = "invalidParameter"
+    
+    var description: String {
+        get {
+            return self.rawValue
+        }
+    }
+}

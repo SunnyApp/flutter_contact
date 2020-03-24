@@ -46,7 +46,7 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
             if (item == 0) {
               return ListTile(title: Text("Result: $length"));
             }
-            return PagingListIndexBuilder(
+            return PagingListIndexBuilder<Contact>(
               index: item - 1,
               list: results,
               name: "search-results",
@@ -67,7 +67,7 @@ class ContactSearchDelegate extends SearchDelegate<Contact> {
           itemExtent: 60,
         );
       },
-      future: results.length,
+      future: Future.value(results.length),
     );
   }
 }

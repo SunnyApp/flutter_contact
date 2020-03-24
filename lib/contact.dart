@@ -142,7 +142,7 @@ class Contact {
   }
 
   /// The [+] operator fills in this contact's empty fields with the fields from [other]
-  operator +(Contact other) => Contact(
+  Contact operator +(Contact other) => Contact(
       identifier: this.identifier ?? other.identifier,
       displayName: this.displayName ?? other.displayName,
       givenName: this.givenName ?? other.givenName,
@@ -205,7 +205,7 @@ class ContactDate {
 
   factory ContactDate.fromMap(final dyn) {
     if (dyn is! Map<dynamic, dynamic>) return null;
-    return ContactDate(label: dyn[_klabel] as String, date: DateComponents.fromJson(dyn[_kdate]));
+    return ContactDate(label: dyn[_klabel] as String, date: DateComponents.from(dyn[_kdate]));
   }
 
   @override
@@ -331,7 +331,7 @@ Map _addressToMap(PostalAddress address) => {
 
 Map _contactDateToMap(ContactDate date) => {
       _klabel: date.label,
-      _kdate: date.date?.toJson() ?? {},
+      _kdate: date.date?.toMap() ?? {},
     };
 
 typedef PhoneNumberSanitizer = String Function(String);
@@ -363,7 +363,7 @@ bool _isNumeric(String str) {
 DateTime parseDateTime(final dyn) {
   if (dyn is DateTime) return dyn;
   if (dyn == null) return null;
-  return DateTime.tryParse(dyn);
+  return DateTime.tryParse(dyn.toString());
 }
 
 const _kgivenName = "givenName";
@@ -392,3 +392,5 @@ const _kcity = "city";
 const _kpostcode = "postcode";
 const _kregion = "region";
 const _kcountry = "country";
+
+extension _DateComponentsExt on DateComponents {}

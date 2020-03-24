@@ -38,7 +38,7 @@ class _ContactListPageState extends State<ContactListPage> {
 
   bool useNativeForms = true;
   bool _isPermissionInvalid = false;
-  SearchDelegate _delegate;
+  SearchDelegate<Contact> _delegate;
   StreamSubscription _eventSub;
 
   @override
@@ -177,7 +177,7 @@ class _ContactListPageState extends State<ContactListPage> {
             ? ListView.builder(
                 primary: true,
                 itemBuilder: (context, index) {
-                  return PagingListIndexBuilder(
+                  return PagingListIndexBuilder<Contact>(
                     name: "contact-list",
                     index: index,
                     itemBuilder: (context, idx, contact) {

@@ -14,11 +14,7 @@ class PagingList<T> {
   Iterator<T> _currIter;
   final PageGenerator<T> pageGenerator;
 
-  PagingList(
-      {this.pageGenerator,
-      this.bufferSize = 20,
-      @required final FutureOr<int> length})
-      : _length = length {
+  PagingList({this.pageGenerator, this.bufferSize = 20, @required final FutureOr<int> length}) : _length = length {
     if (length is Future<int>) {
       length.then((_resolved) {
         _length = _resolved;
@@ -44,7 +40,7 @@ class PagingList<T> {
   }
 
   FutureOr<int> get length => _length;
-  int get lengthOrEmpty => _length is Future<int> ? 0 : _length;
+  int get lengthOrEmpty => _length is Future<int> ? 0 : _length as int;
 
   Future<List<T>> get currentPage {
     if (_pageFuture != null) return _pageFuture;
@@ -83,7 +79,7 @@ class PagingList<T> {
       });
     } else {
       _pageFuture = null;
-      _pageList = nextPage;
+      _pageList = nextPage as List<T>;
       _currIter = _pageList.iterator;
       return _currIter.moveNext() == true;
     }
@@ -142,13 +138,12 @@ class PagingStream<T> extends Stream<T> {
         return _currPage.moveNext();
       });
     } else {
-      _currPage = (nextPage as List).iterator;
+      _currPage = (nextPage as List<T>).iterator;
       return _currPage?.moveNext() == true;
     }
   }
 
-  PagingStream({@required this.pageGenerator, this.bufferSize = 20})
-      : assert(pageGenerator != null);
+  PagingStream({@required this.pageGenerator, this.bufferSize = 20}) : assert(pageGenerator != null);
 
   @override
   StreamSubscription<T> listen(void Function(T event) onData,

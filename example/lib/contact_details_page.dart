@@ -91,9 +91,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
                     width: _avatarSize,
                     height: _avatarSize,
                     decoration: BoxDecoration(
-                      image: DecorationImage(
-                          fit: BoxFit.cover,
-                          image: MemoryImage(_avatarData ?? [])),
+                      image: DecorationImage(fit: BoxFit.cover, image: MemoryImage(_avatarData ?? Uint8List(0))),
                     ),
                   ),
                   duration: Duration(milliseconds: 300),
@@ -132,14 +130,11 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
               trailing: Text(widget._contact.note ?? ""),
             ),
             AddressesTile(widget._contact.postalAddresses),
-            ItemsTile(
-                widget._contact, "Phones", widget._contact.phones, onChange),
-            ItemsTile(widget._contact, "Social Profiles",
-                widget._contact.socialProfiles, onChange),
+            ItemsTile(widget._contact, "Phones", widget._contact.phones, onChange),
+            ItemsTile(widget._contact, "Social Profiles", widget._contact.socialProfiles, onChange),
             DatesTile(widget._contact, widget._contact.dates, onChange),
             ItemsTile(widget._contact, "URLs", widget._contact.urls, onChange),
-            ItemsTile(
-                widget._contact, "Emails", widget._contact.emails, onChange),
+            ItemsTile(widget._contact, "Emails", widget._contact.emails, onChange),
             GroupsTile(groups: widget._groups)
           ],
         ),
