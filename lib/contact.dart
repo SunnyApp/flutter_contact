@@ -228,7 +228,7 @@ class ContactDate {
   ContactDate({this.label, this.date});
 
   factory ContactDate.fromMap(final dyn) {
-    if (dyn is! Map<dynamic, dynamic>) return null;
+    if (dyn is! Map<dynamic, dynamic> || dyn[_kdate] == null) return null;
     return ContactDate(
         label: dyn[_klabel] as String, date: DateComponents.from(dyn[_kdate]));
   }
