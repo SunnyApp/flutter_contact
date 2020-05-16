@@ -5,6 +5,7 @@
 Pod::Spec.new do |s|
   s.name             = 'flutter_contact'
   s.version          = '0.0.1'
+  s.swift_version    = '4.2'
   s.summary          = 'A plugin for managing contacts across platforms.'
   s.description      = <<-DESC
 A new flutter plugin project.
