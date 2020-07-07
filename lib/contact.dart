@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:sunny_dart/time.dart';
+import 'package:sunny_dart/helpers/hash_codes.dart';
+import 'package:sunny_dart/time/date_components.dart';
 
 class Contact {
   Contact(
@@ -216,7 +216,7 @@ class Contact {
 
   @override
   int get hashCode {
-    return hashValues(identifier, company, displayName, lastModified, givenName,
+    return hashOf(identifier, company, displayName, lastModified, givenName,
         familyName, jobTitle, middleName, note, prefix, suffix);
   }
 }
@@ -244,7 +244,7 @@ class ContactDate {
       other is ContactDate && label == other.label && date == other.date;
 
   @override
-  int get hashCode => hashValues(label, date);
+  int get hashCode => hashOf(label, date);
 }
 
 // ignore: must_be_immutable
