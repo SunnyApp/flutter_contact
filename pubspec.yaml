@@ -25,7 +25,10 @@ dependencies:
   quiver: ^2.0.5
 
   # Low-level utilities
-  sunny_dart: ^0.5.6
+  sunny_dart: # ^0.5.6
+    git:
+      url: git://github.com/mrharcombe/sunny_dart.git
+      ref: master
 
   # Formatting/parsing of dates
   intl: ^0.16.1
@@ -34,9 +37,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-dependency_overrides:
-  sunny_dart:
-    path: ../sunny_dart
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
