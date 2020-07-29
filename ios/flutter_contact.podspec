@@ -21,5 +21,5 @@ A new flutter plugin project.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
   
   s.ios.deployment_target = '8.0'
-  s.swift_version = '4.0'
+  s.swift_version = '4.2'
 end
