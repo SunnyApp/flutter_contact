@@ -58,7 +58,7 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
                 while let nextView = currentViewController?.presentedViewController {
                     currentViewController = nextView
                 }
-                let activityIndicatorView = UIActivityIndicatorView.init(style: UIActivityIndicatorView.Style.gray)
+                let activityIndicatorView = UIActivityIndicatorView.init(activityIndicatorStyle: UIActivityIndicatorView.Style.gray)
                 activityIndicatorView.frame = (UIApplication.shared.keyWindow?.frame)!
                 activityIndicatorView.startAnimating()
                 activityIndicatorView.backgroundColor = UIColor.white
