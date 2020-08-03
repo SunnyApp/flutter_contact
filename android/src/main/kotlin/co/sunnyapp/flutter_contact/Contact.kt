@@ -7,7 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.provider.ContactsContract
 import androidx.annotation.RequiresApi
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.util.Date
 
 typealias StructList = List<Struct>
 typealias Struct = Map<String, Any>
@@ -30,7 +31,7 @@ data class Contact(
         var suffix: String? = null,
         var company: String? = null,
         var jobTitle: String? = null,
-        var lastModified: OffsetDateTime? = null,
+        var lastModified: Date ? = null,
         var note: String? = null,
         val emails: MutableList<Item> = mutableListOf(),
         val groups: MutableSet<String> = linkedSetOf(),
@@ -68,7 +69,6 @@ data class Contact(
 
   companion object {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun fromMap(map: Map<String, *>): Contact {
       val contact = Contact(
           identifier = (map["identifier"] as String?)?.let{ContactId(it)},
@@ -96,8 +96,7 @@ data class Contact(
   }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-fun String.toDate(): OffsetDateTime = OffsetDateTime.parse(this)
+fun String.toDate(): Date = Date.from(Instant.parse(this))
 fun MutableList<ContactDate>.toContactDateMap() = map { it.toMap() }
 fun MutableList<Item>.toItemMap() = map { it.toMap() }
 fun MutableList<PostalAddress>.toAddressMap() = map { it.toMap() }

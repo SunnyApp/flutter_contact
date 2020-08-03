@@ -10,7 +10,8 @@ import android.provider.ContactsContract
 import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.util.Date
 
 @SuppressLint("Recycle")
 fun ContentResolver.queryContacts(query: String? = null, sortBy: String? = null,
@@ -101,7 +102,7 @@ fun Cursor?.toContactList(limit: Int, offset: Int): List<Contact> {
 
       ContactsContract.Data.CONTACT_LAST_UPDATED_TIMESTAMP -> {
         cursor.string(ContactsContract.Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
-          contact.lastModified = OffsetDateTime.parse(it)
+          contact.lastModified = Date.from(Instant.parse(it))
         }
       }
 
