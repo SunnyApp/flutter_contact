@@ -1,6 +1,12 @@
 ## 0.5.3
 
-* Merged several PRs from the community.
+Merged several PRs from the community.  Thanks to:
+
+ * MrHarcombe
+ * tkeithblack
+ * SamiKouati
+ * worldbucks
+
 
 ## 0.5.2
 
