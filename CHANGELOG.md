@@ -1,4 +1,4 @@
-## 0.5.3
+## 0.5.4
 
 Merged several PRs from the community.  Thanks to:
 
