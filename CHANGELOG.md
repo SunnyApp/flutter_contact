@@ -1,3 +1,7 @@
+## 0.5.3
+
+* Merged several PRs from the community.
+
 ## 0.5.2
 
 * Added native forms, thanks to https://github.com/engylemure/ for the source
