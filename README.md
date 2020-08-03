@@ -41,7 +41,7 @@ but rather provides a couple ways to access all contacts.
 
 ### Stream
 ``` dart
-import 'package:flutter_contact/flutter_contact.dart';  
+import 'package:flutter_contact/contact.dart';  
 
 // By default, this will loop through all contacts using a page size of 20.
 await Contacts.streamContacts().forEach((contact) {
@@ -57,7 +57,7 @@ The second option is a paging list, which also uses an underlying page buffer,
 but doesn't have any subscriptions to manage, and has some other nice features, like
 a total count
 ``` dart
-import 'package:flutter_contact/flutter_contact.dart';
+import 'package:flutter_contact/contact.dart';
 
 final contacts = Contacts.listContacts();
 final total = await contacts.length;
@@ -75,7 +75,7 @@ while(await contacts.moveNext()) {
 
 ``` dart  
 // Import package  
-import 'package:flutter_contact/flutter_contact.dart';  
+import 'package:flutter_contact/contact.dart';  
   
 // Get all contacts on device as a stream
 Stream<Contact> contacts = await Contacts.streamContacts();  
