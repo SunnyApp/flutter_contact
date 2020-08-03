@@ -25,10 +25,10 @@ dependencies:
   quiver: ^2.1.3
 
   # Low-level utilities
-  sunny_dart: ^0.5.6
+  sunny_dart: ^0.5.7
 
   # Formatting/parsing of dates
-  intl: ^0.16.1
+  intl: ^0.16.0
 
 dev_dependencies:
   flutter_test:

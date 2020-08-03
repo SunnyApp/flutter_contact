@@ -11,7 +11,7 @@ For example:
 ```yaml  
 dependencies:  
     flutter_contact: ^0.4.15
-```  
+```  example
   
 ## Permissions  
 ### Android  
