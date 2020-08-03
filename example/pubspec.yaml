@@ -1,28 +1,25 @@
-name: flutter_phone_state_example
-description: Demonstrates how to use the flutter_phone_state plugin.
-publish_to: 'none'
-
-environment:
-  sdk: ">=2.2.2 <3.0.0"
+name: contacts_service_example
+description: Demonstrates how to use the contacts_service plugin.
 
 dependencies:
   flutter:
     sdk: flutter
 
-  intl:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
+  cupertino_icons: ^0.1.0
+  intl: ^0.16.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_phone_state:
+  permission_handler: ^2.2.0
+  flutter_contact:
     path: ../
 
 # For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+# following page: https://www.dartlang.org/tools/pub/pubspec
 
 # The following section is specific to Flutter.
 flutter:
@@ -38,10 +35,10 @@ flutter:
   #  - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/assets-and-images/#resolution-aware.
+  # https://flutter.io/assets-and-images/#resolution-aware.
 
   # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/assets-and-images/#from-packages
+  # https://flutter.io/assets-and-images/#from-packages
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
@@ -60,5 +57,5 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages
+  # For details regarding fonts from package dependencies, 
+  # see https://flutter.io/custom-fonts/#from-packages
