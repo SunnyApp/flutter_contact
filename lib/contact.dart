@@ -3,14 +3,152 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter_contact/contacts.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_contact/aggregate_contacts.dart';
+import 'package:flutter_contact/raw_contacts.dart';
+import 'package:sunny_dart/helpers.dart';
 import 'package:sunny_dart/helpers/hash_codes.dart';
 import 'package:sunny_dart/time/date_components.dart';
+
+enum ContactMode { raw, aggregate }
+
+ContactMode contactModeOf(dyn) {
+  if (dyn == null) return null;
+  switch (dyn.toString()) {
+    case 'raw':
+      return ContactMode.raw;
+    case 'aggregate':
+      return ContactMode.aggregate;
+    default:
+      return null;
+  }
+}
+
+///
+/// Because you can be dealing with linked contacts (aggregated) or individual contacts,
+/// we use this object to be able to track what sort of contact you're dealing with
+// ignore: must_be_immutable
+class ContactKeys extends Equatable {
+  ContactMode mode;
+  String identifier;
+  String rawContactId;
+  String aggregateContactId;
+  Map<String, String> otherKeys;
+
+  factory ContactKeys(
+      {@required ContactMode mode,
+      String identifier,
+      String rawContactId,
+      String aggregateContactId,
+      Map<String, String> otherKeys}) {
+    assert(mode != null || identifier == null,
+        "You must provide a mode if you provide an identifier");
+    if (mode == null) {
+      return ContactKeys._(
+          identifier: null,
+          mode: null,
+          aggregateContactId: aggregateContactId,
+          rawContactId: rawContactId,
+          otherKeys: otherKeys);
+    }
+    switch (mode) {
+      case ContactMode.raw:
+        assert(identifier == null ||
+            rawContactId == null ||
+            identifier == rawContactId);
+        return ContactKeys._(
+          mode: mode,
+          identifier: identifier ?? rawContactId,
+          rawContactId: identifier ?? rawContactId,
+          aggregateContactId: aggregateContactId,
+          otherKeys: otherKeys,
+        );
+      case ContactMode.aggregate:
+        assert(identifier == null ||
+            aggregateContactId == null ||
+            identifier == aggregateContactId);
+        return ContactKeys._(
+          mode: mode,
+          identifier: identifier ?? aggregateContactId,
+          rawContactId: rawContactId,
+          aggregateContactId: identifier ?? aggregateContactId,
+          otherKeys: otherKeys,
+        );
+
+      default:
+        return illegalState("This can't happen");
+    }
+  }
+
+  ContactKeys.empty(this.mode)
+      : assert(mode != null),
+        identifier = null,
+        aggregateContactId = null,
+        rawContactId = null,
+        otherKeys = <String, String>{};
+
+  ContactKeys._({
+    @required this.mode,
+    @required this.identifier,
+    @required this.rawContactId,
+    @required this.aggregateContactId,
+    Map<String, String> otherKeys,
+  }) : otherKeys = otherKeys ?? <String, String>{};
+
+  factory ContactKeys.of(ContactMode mode, dyn) {
+    if (dyn == null) {
+      return ContactKeys.empty(mode);
+    } else if (dyn is ContactKeys) {
+      return dyn;
+    } else if (dyn is Map) {
+      return ContactKeys.fromMap(mode, dyn);
+    } else if (dyn is String) {
+      return ContactKeys.id(mode, dyn);
+    } else {
+      return illegalState("Invalid input for ContactKeys");
+    }
+  }
+
+  factory ContactKeys.fromMap(ContactMode mode, Map map) {
+    return ContactKeys(
+      mode: mode,
+      identifier: map[_kidentifier]?.toString(),
+      rawContactId: map[_krawContactId]?.toString(),
+      aggregateContactId: map[_kaggregateContactId]?.toString(),
+      otherKeys:
+          (map[_kotherKeys] as Map<String, String>) ?? <String, String>{},
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    // ignore: unnecessary_cast
+    return {
+      'identifier': this.identifier,
+      'rawContactId': this.rawContactId,
+      'aggregateContactId': this.aggregateContactId,
+      'otherKeys': this.otherKeys,
+    } as Map<String, dynamic>;
+  }
+
+  @override
+  List<Object> get props => [mode, rawContactId, aggregateContactId, otherKeys];
+
+  /// Contact keys that is based on the logic PK for the mode
+  factory ContactKeys.id(ContactMode mode, String identifier) {
+    return ContactKeys(
+        mode: mode,
+        identifier: identifier,
+        rawContactId: null,
+        aggregateContactId: null,
+        otherKeys: <String, String>{});
+  }
+}
 
 class Contact {
   Contact(
       {this.givenName,
       this.identifier,
+      this.keys,
       this.middleName,
       this.displayName,
       this.prefix,
@@ -18,6 +156,7 @@ class Contact {
       this.familyName,
       this.company,
       this.jobTitle,
+      List<String> linkedContactIds,
       List<Item> emails,
       List<Item> phones,
       List<PostalAddress> postalAddresses,
@@ -32,7 +171,10 @@ class Contact {
         _socialProfiles = [...?socialProfiles],
         _urls = [...?urls],
         _dates = [...?dates],
+        _linkedContactIds = [...?linkedContactIds],
         _postalAddresses = [...?postalAddresses];
+
+  final ContactKeys keys;
 
   String identifier,
       displayName,
@@ -44,6 +186,8 @@ class Contact {
       company,
       jobTitle,
       note;
+
+  final List<String> _linkedContactIds;
   final List<Item> _emails;
   final List<Item> _phones;
   final List<Item> _socialProfiles;
@@ -61,7 +205,11 @@ class Contact {
   FutureOr<Uint8List> getOrFetchAvatar() {
     if (avatar != null) return avatar;
 
-    return Contacts.getContactImage(this.identifier);
+    if (keys?.aggregateContactId == keys?.rawContactId) {
+      return AggregateContacts.getContactImage(this.identifier);
+    } else {
+      return RawContacts.getContactImage(this.identifier);
+    }
   }
 
   List<Item> get emails => _emails;
@@ -92,6 +240,13 @@ class Contact {
     dates.addAll([...?value]);
   }
 
+  List<String> get linkedContactIds => _linkedContactIds;
+
+  set linkedContactIds(List<String> value) {
+    _linkedContactIds.clear();
+    _linkedContactIds.addAll([...?value]);
+  }
+
   List<Item> get urls => _urls;
 
   set urls(List<Item> value) {
@@ -114,48 +269,51 @@ class Contact {
         .toUpperCase();
   }
 
-  factory Contact.of(final dyn) {
+  factory Contact.of(final dyn, ContactMode mode) {
     if (dyn == null) {
       return null;
     } else if (dyn is Contact) {
       return dyn;
     } else {
-      return Contact.fromMap(dyn);
+      return Contact.fromMap(dyn, mode);
     }
   }
 
-  Contact.fromMap(final dyn)
-      : this(
-          identifier: dyn[_kidentifier] as String,
-          displayName: dyn[_kdisplayName] as String,
-          givenName: dyn[_kgivenName] as String,
-          middleName: dyn[_kmiddleName] as String,
-          familyName: dyn[_kfamilyName] as String,
-          prefix: dyn[_kprefix] as String,
-          lastModified: parseDateTime(dyn[_klastModified]),
-          suffix: dyn[_ksuffix] as String,
-          company: dyn[_kcompany] as String,
-          jobTitle: dyn[_kjobTitle] as String,
-          emails: [
-            for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)
-          ],
-          phones: [
-            for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)
-          ],
-          socialProfiles: [
-            for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
-          ],
-          urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)],
-          dates: [
-            for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-          ],
-          postalAddresses: [
-            for (final m in _iterableKey(dyn, _kpostalAddresses))
-              PostalAddress.fromMap(m)
-          ],
-          avatar: dyn[_kavatar] as Uint8List,
-          note: dyn[_knote] as String,
-        );
+  factory Contact.fromMap(final dyn, ContactMode mode) {
+    mode ??= contactModeOf(dyn["mode"]);
+    assert(mode != null, "You must provide a mode when creating a contact");
+    return Contact(
+      identifier: dyn[_kidentifier] as String,
+      displayName: dyn[_kdisplayName] as String,
+      givenName: dyn[_kgivenName] as String,
+      middleName: dyn[_kmiddleName] as String,
+      familyName: dyn[_kfamilyName] as String,
+      prefix: dyn[_kprefix] as String,
+      keys: ContactKeys.of(mode, dyn),
+      lastModified: parseDateTime(dyn[_klastModified]),
+      suffix: dyn[_ksuffix] as String,
+      company: dyn[_kcompany] as String,
+      jobTitle: dyn[_kjobTitle] as String,
+      linkedContactIds: <String>[
+        for (final c in _iterableKey(dyn, _klinkedContactIds)) "$c",
+      ],
+      emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)],
+      phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)],
+      socialProfiles: [
+        for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
+      ],
+      urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)],
+      dates: [
+        for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
+      ],
+      postalAddresses: [
+        for (final m in _iterableKey(dyn, _kpostalAddresses))
+          PostalAddress.fromMap(m)
+      ],
+      avatar: dyn[_kavatar] as Uint8List,
+      note: dyn[_knote] as String,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return _contactToMap(this);
@@ -163,6 +321,7 @@ class Contact {
 
   /// The [+] operator fills in this contact's empty fields with the fields from [other]
   Contact operator +(Contact other) => Contact(
+      keys: this.keys ?? other.keys,
       identifier: this.identifier ?? other.identifier,
       displayName: this.displayName ?? other.displayName,
       givenName: this.givenName ?? other.givenName,
@@ -173,6 +332,7 @@ class Contact {
       familyName: this.familyName ?? other.familyName,
       company: this.company ?? other.company,
       jobTitle: this.jobTitle ?? other.jobTitle,
+      linkedContactIds: this.linkedContactIds + other.linkedContactIds,
       note: this.note ?? other.note,
       emails: {...?this.emails, ...?other.emails}.toList(),
       socialProfiles:
@@ -193,6 +353,7 @@ class Contact {
   @override
   bool operator ==(Object other) {
     return other is Contact &&
+        this.keys == other.keys &&
         this.identifier == other.identifier &&
         this.company == other.company &&
         this.displayName == other.displayName &&
@@ -216,8 +377,8 @@ class Contact {
 
   @override
   int get hashCode {
-    return hashOf(identifier, company, displayName, lastModified, givenName,
-        familyName, jobTitle, middleName, note, prefix, suffix);
+    return hashOf(identifier, keys, company, displayName, lastModified,
+        givenName, familyName, jobTitle, middleName, note, prefix, suffix);
   }
 }
 
@@ -305,6 +466,7 @@ class Item extends Equatable {
 // ignore: must_be_immutable
 class PhoneNumber extends Item {
   final String _unformattedNumber;
+
   PhoneNumber({String label, String number})
       : _unformattedNumber = _sanitizer(number),
         super(label: label, value: number);
@@ -315,6 +477,7 @@ class PhoneNumber extends Item {
   }
 
   static PhoneNumberSanitizer _sanitizer = defaultPhoneNumberSanitizer;
+
   static set sanitizer(PhoneNumberSanitizer sanitizer) {
     assert(sanitizer != null);
     _sanitizer = sanitizer;
@@ -336,6 +499,9 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     _kmiddleName: contact.middleName,
     _kfamilyName: contact.familyName,
     _klastModified: contact.lastModified?.toIso8601String(),
+    _kaggregateContactId: contact.aggregateContactId,
+    _krawContactId: contact.rawContactId,
+    _kotherKeys: contact.otherKeys,
     _kprefix: contact.prefix,
     _ksuffix: contact.suffix,
     _kcompany: contact.company,
@@ -366,6 +532,7 @@ Map<String, dynamic> _contactToMap(Contact contact) {
 }
 
 bool Function(T item) notNull<T>() => (item) => item != null;
+
 Map _addressToMap(PostalAddress address) => {
       _klabel: address.label,
       _kstreet: address.street,
@@ -420,8 +587,12 @@ const _kprefix = "prefix";
 const _ksuffix = "suffix";
 const _kfamilyName = "familyName";
 const _kcompany = "company";
+const _kaggregateContactId = "aggregateContactId";
+const _krawContactId = "rawContactId";
+const _kotherKeys = "otherKeys";
 const _kjobTitle = "jobTitle";
 const _kemails = "emails";
+const _klinkedContactIds = "linkedContactIds";
 const _kphones = "phones";
 const _kpostalAddresses = "postalAddresses";
 const _ksocialProfiles = "socialProfiles";
@@ -440,3 +611,39 @@ const _kregion = "region";
 const _kcountry = "country";
 
 extension _DateComponentsExt on DateComponents {}
+
+extension ContactKeyAccessExt on Contact {
+  ContactMode get mode {
+    return keys?.mode;
+  }
+
+  bool get isAggregate {
+    return keys?.mode == ContactMode.aggregate;
+  }
+
+  String get aggregateContactId {
+    return keys?.aggregateContactId;
+  }
+
+  String get rawContactId {
+    return keys?.rawContactId;
+  }
+
+  Map<String, String> get otherKeys {
+    return keys?.otherKeys ?? const {};
+  }
+
+  String getKey(String name) {
+    switch (name) {
+      case _kaggregateContactId:
+        return keys?.aggregateContactId;
+      case _krawContactId:
+        return keys?.rawContactId;
+      case _kidentifier:
+        return identifier;
+      default:
+        if (keys?.otherKeys == null) return null;
+        return keys.otherKeys[name];
+    }
+  }
+}

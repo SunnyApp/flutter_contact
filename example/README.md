@@ -1,6 +1,6 @@
-# contacts_service_example
+# flutter_contact_example
 
-Demonstrates how to use the contacts_service plugin.
+Demonstrates how to use the flutter_contact plugin.
 
 ## Getting Started
 

@@ -18,14 +18,10 @@ data class DateComponents(val month: Int? = 0, val year: Int? = 0, val day: Int?
  * such as an email or a phone
  */
 data class ContactDate(val label: String?, val date: DateComponents) {
-
     companion object {
-
         fun fromMap(map: Map<String, *>): ContactDate {
             return ContactDate(map["label"] as? String?, DateComponents.fromMap(map["date"] as Map<String, Int>))
         }
-
-
     }
 }
 

@@ -1,4 +1,4 @@
-package co.sunnyapp.flutter_phone_state_example
+package co.sunnyapp.flutter_contact_example
 
 import android.os.Bundle
 import io.flutter.app.FlutterActivity

@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contact_example/contacts_list_page.dart';
+import 'package:logging/logging.dart';
+import 'package:logging_config/logging_config.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:contacts_service_example/contacts_list_page.dart';
-import 'package:contacts_service_example/contacts_picker_page.dart';
-
-void main() => runApp(ContactsExampleApp());
-
-// iOS only: Localized labels language setting is equal to CFBundleDevelopmentRegion value (Info.plist) of the iOS project
-// Set iOSLocalizedLabels=false if you always want english labels whatever is the CFBundleDevelopmentRegion value.
-const iOSLocalizedLabels = false;
+void main() {
+  configureLogging(LogConfig.root(Level.INFO));
+  runApp(ContactsExampleApp());
+}
 
 class ContactsExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomePage(),
+      home: ContactListPage(),
       routes: <String, WidgetBuilder>{
         '/add': (BuildContext context) => AddContactPage(),
         '/contactsList': (BuildContext context) => ContactListPage(),
-        '/nativeContactPicker': (BuildContext context) => ContactPickerPage(),
       },
     );
   }
@@ -38,37 +36,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _askPermissions() async {
-    PermissionStatus permissionStatus = await _getContactPermission();
+    final permissionStatus = await _getContactPermission();
     if (permissionStatus != PermissionStatus.granted) {
       _handleInvalidPermissions(permissionStatus);
     }
   }
 
   Future<PermissionStatus> _getContactPermission() async {
-    PermissionStatus permission = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.contacts);
-    if (permission != PermissionStatus.granted &&
-        permission != PermissionStatus.disabled) {
-      Map<PermissionGroup, PermissionStatus> permissionStatus =
-          await PermissionHandler()
-              .requestPermissions([PermissionGroup.contacts]);
-      return permissionStatus[PermissionGroup.contacts] ??
-          PermissionStatus.unknown;
+    final status = await Permission.contacts.status;
+    if (!status.isGranted && !status.isPermanentlyDenied) {
+      final result = await Permission.contacts.request();
+      return result ?? PermissionStatus.undetermined;
     } else {
-      return permission;
+      return status;
     }
   }
 
   void _handleInvalidPermissions(PermissionStatus permissionStatus) {
     if (permissionStatus == PermissionStatus.denied) {
       throw PlatformException(
-          code: "PERMISSION_DENIED",
-          message: "Access to location data denied",
+          code: 'PERMISSION_DENIED',
+          message: 'Access to location data denied',
           details: null);
-    } else if (permissionStatus == PermissionStatus.disabled) {
+    } else if (permissionStatus == PermissionStatus.restricted) {
       throw PlatformException(
-          code: "PERMISSION_DISABLED",
-          message: "Location data is not available on device",
+          code: 'PERMISSION_DISABLED',
+          message: 'Location data is not available on device',
           details: null);
     }
   }

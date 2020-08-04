@@ -1,4 +1,4 @@
-# contacts_service  
+# flutter_contact  
 [![pub package](https://img.shields.io/pub/v/flutter_contact.svg)](https://pub.dartlang.org/packages/flutter_contact)
 [![Coverage Status](https://coveralls.io/repos/github/SunnyApp/flutter_contact/badge.svg?branch=master)](https://coveralls.io/github/SunnyApp/flutter_contact?branch=master)
 
@@ -107,6 +107,6 @@ final Uint8List avatarData = await contact.getOrFetchAvatar();
 ## Credits
 
 This plugin was originally a fork of the 
-https://pub.dev/packages/contacts_service plugin, but has effectively been mostly rewritten (in 
+https://pub.dev/packages/flutter_contact plugin, but has effectively been mostly rewritten (in 
 part because it was ported to kotlin)
 

@@ -70,6 +70,10 @@ fun Cursor.string(index: String): String? {
     return getString(getColumnIndex(index))
 }
 
+fun Cursor.long(index: String): Long? {
+    return getLong(getColumnIndex(index))
+}
+
 fun Cursor.int(index: String): Int? {
     return getInt(getColumnIndex(index))
 }

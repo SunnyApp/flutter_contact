@@ -14,7 +14,7 @@ PODS:
     - Flutter
     - libPhoneNumber-iOS
   - libPhoneNumber-iOS (0.9.15)
-  - permission_handler (2.2.0):
+  - "permission_handler (5.0.1+1)":
     - Flutter
 
 DEPENDENCIES:
@@ -25,7 +25,7 @@ DEPENDENCIES:
   - flutter_native_timezone (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/flutter_native_timezone-1.0.4/ios`)
   - get_ip (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/get_ip-0.4.0/ios`)
   - libphonenumber (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/libphonenumber-1.0.1/ios`)
-  - permission_handler (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-2.2.0/ios`)
+  - "permission_handler (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-5.0.1+1/ios`)"
 
 SPEC REPOS:
   trunk:
@@ -47,7 +47,7 @@ EXTERNAL SOURCES:
   libphonenumber:
     :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/libphonenumber-1.0.1/ios"
   permission_handler:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-2.2.0/ios"
+    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-5.0.1+1/ios"
 
 SPEC CHECKSUMS:
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
@@ -58,7 +58,7 @@ SPEC CHECKSUMS:
   get_ip: c063133e0a399ae4089048c90d6a232cb2344846
   libphonenumber: bd14d5abfc5939ab0b0767234e2d8e2593af258e
   libPhoneNumber-iOS: 0a32a9525cf8744fe02c5206eb30d571e38f7d75
-  permission_handler: 0fc6d6641c09e4bfd5541dd39b0f44c7e369aa6b
+  permission_handler: eac8e15b4a1a3fba55b761d19f3f4e6b005d15b6
 
 PODFILE CHECKSUM: b3f98f39b16cc0a18e5ea9ecbe5cfbc88c2ad26a
 

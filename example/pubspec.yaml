@@ -1,5 +1,5 @@
-name: contacts_service_example
-description: Demonstrates how to use the contacts_service plugin.
+name: flutter_contact_example
+description: Demonstrates how to use the flutter_contact plugin
 
 dependencies:
   flutter:
@@ -7,14 +7,17 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.0
+  cupertino_icons: ^0.1.3
   intl: ^0.16.0
+  logging: ^0.11.4
+  logging_config: ^0.4.7
+  permission_handler: ^5.0.1+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  permission_handler: ^2.2.0
+
   flutter_contact:
     path: ../
 

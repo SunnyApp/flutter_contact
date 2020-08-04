@@ -1,6 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/contacts.dart';
+import 'package:logging/logging.dart';
+import 'package:logging_config/logging_config.dart';
+
+final _log = Logger('flutter_contact');
 
 class ContactListPage extends StatefulWidget {
   @override
@@ -8,40 +13,56 @@ class ContactListPage extends StatefulWidget {
 }
 
 class _ContactListPageState extends State<ContactListPage> {
+  ContactService _contactService;
   List<Contact> _contacts;
-
+  bool _loading;
   @override
   void initState() {
     super.initState();
+    configureLogging(LogConfig.root(Level.INFO, handler: LoggingHandler.dev()));
+    _contactService = AggregateContacts;
     refreshContacts();
+    _loading = false;
   }
 
-  Future<void> refreshContacts() async {
+  Future<void> refreshContacts([bool showIndicator = true]) async {
+    if (showIndicator) {
+      setState(() {
+        _loading = true;
+      });
+    }
     // Load without thumbnails initially.
-    final PagingList<Contact> contacts =
-        Contacts.listContacts(withThumbnails: true, withHiResPhoto: false);
+    final contacts = _contactService.listContacts(
+        withThumbnails: true,
+        withHiResPhoto: false,
+        sortBy: ContactSortOrder.firstName());
     final tmp = <Contact>[];
     while (await contacts.moveNext()) {
       tmp.add(await contacts.current);
     }
     setState(() {
+      if (showIndicator) {
+        _loading = false;
+      }
       _contacts = tmp;
     });
   }
 
   Future updateContact() async {
-    Contact ninja = _contacts
+    final ninja = _contacts
         .toList()
-        .firstWhere((contact) => contact.familyName.startsWith("Ninja"));
+        .firstWhere((contact) => contact.familyName.startsWith('Ninja'));
     ninja.avatar = null;
-    await Contacts.updateContact(ninja);
+    await _contactService.updateContact(ninja);
 
     await refreshContacts();
   }
 
-  _openContactForm() async {
-    var contact = await Contacts.openContactInsertForm();
-    await refreshContacts();
+  Future _openContactForm() async {
+    final contact = await Contacts.openContactInsertForm();
+    if (contact != null) {
+      await refreshContacts();
+    }
   }
 
   @override
@@ -55,63 +76,101 @@ class _ContactListPageState extends State<ContactListPage> {
           IconButton(
             icon: Icon(Icons.create),
             onPressed: _openContactForm,
+          ),
+          IconButton(
+            icon: _contactService.isAggregate
+                ? Icon(Icons.people)
+                : Icon(Icons.person),
+            onPressed: () {
+              setState(() {
+                if (_contactService.isAggregate) {
+                  _contactService = RawContacts;
+                } else {
+                  _contactService = AggregateContacts;
+                }
+              });
+              refreshContacts(true);
+            },
           )
         ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          Navigator.of(context).pushNamed("/add").then((_) {
-            refreshContacts();
+          Navigator.of(context).pushNamed('/add').then((_) {
+            refreshContacts(false);
           });
         },
       ),
-      body: SafeArea(
-        child: _contacts != null
-            ? ListView.builder(
-                itemCount: _contacts?.length ?? 0,
-                itemBuilder: (BuildContext context, int index) {
-                  Contact c = _contacts?.elementAt(index);
-                  return ListTile(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (BuildContext context) => ContactDetailsPage(
-                                c,
-                                onContactDeviceSave:
-                                    contactOnDeviceHasBeenUpdated,
-                              )));
-                    },
-                    leading: (c.avatar != null && c.avatar.length > 0)
-                        ? CircleAvatar(backgroundImage: MemoryImage(c.avatar))
-                        : CircleAvatar(child: Text(c.initials())),
-                    title: Text(c.displayName ?? ""),
-                  );
-                },
-              )
-            : Center(
-                child: CircularProgressIndicator(),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await refreshContacts();
+        },
+        child: CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: _loading == true
+                    ? Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : const SizedBox(),
               ),
+            ),
+            ...?_contacts?.map((contact) {
+              return SliverToBoxAdapter(
+                child: ListTile(
+                  onTap: () async {
+                    final res = await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (BuildContext context) {
+                      return PersonDetailsPage(
+                        contact,
+                        onContactDeviceSave: contactOnDeviceHasBeenUpdated,
+                        contactService: _contactService,
+                      );
+                    }));
+                    if (res != null) {
+                      await refreshContacts();
+                    }
+                  },
+                  leading: (contact.avatar != null && contact.avatar.isNotEmpty)
+                      ? CircleAvatar(
+                          backgroundImage: MemoryImage(contact.avatar))
+                      : CircleAvatar(child: Text(contact.initials())),
+                  title: Text(contact.displayName ?? ''),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
 
   void contactOnDeviceHasBeenUpdated(Contact contact) {
     if (contact == null) return;
-    this.setState(() {
+    setState(() {
       var id = _contacts.indexWhere((c) => c.identifier == contact.identifier);
       _contacts[id] = contact;
     });
   }
 }
 
-class ContactDetailsPage extends StatelessWidget {
-  ContactDetailsPage(this._contact, {this.onContactDeviceSave});
+class PersonDetailsPage extends StatelessWidget {
+  PersonDetailsPage(this._contact,
+      {this.onContactDeviceSave, @required this.contactService});
 
   final Contact _contact;
   final Function(Contact) onContactDeviceSave;
+  final ContactService contactService;
 
-  _openExistingContactOnDevice(BuildContext context) async {
-    var contact = await Contacts.openContactEditForm(_contact.identifier);
+  Future _openExistingContactOnDevice(BuildContext context) async {
+    var contact = await contactService.openContactEditForm(_contact.identifier);
     if (onContactDeviceSave != null) {
       onContactDeviceSave(contact);
     }
@@ -122,15 +181,16 @@ class ContactDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_contact.displayName ?? ""),
+        title: Text(_contact.displayName ?? ''),
         actions: <Widget>[
-//          IconButton(
-//            icon: Icon(Icons.share),
-//            onPressed: () => shareVCFCard(context, contact: _contact),
-//          ),
           IconButton(
             icon: Icon(Icons.delete),
-            onPressed: () => Contacts.deleteContact(_contact),
+            onPressed: () async {
+              final res = await contactService.deleteContact(_contact);
+              if (res) {
+                Navigator.pop(context, true);
+              }
+            },
           ),
           IconButton(
             icon: Icon(Icons.update),
@@ -151,24 +211,32 @@ class ContactDetailsPage extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             ListTile(
-              title: Text("Name"),
-              trailing: Text(_contact.givenName ?? ""),
+              title: Text('Contact Id'),
+              trailing: Text(_contact.identifier ?? 'Unknown'),
             ),
             ListTile(
-              title: Text("Middle name"),
-              trailing: Text(_contact.middleName ?? ""),
+              title: Text('Linked Contact Id'),
+              trailing: Text(_contact.aggregateContactId ?? 'Unknown'),
             ),
             ListTile(
-              title: Text("Family name"),
-              trailing: Text(_contact.familyName ?? ""),
+              title: Text('Name'),
+              trailing: Text(_contact.givenName ?? ''),
             ),
             ListTile(
-              title: Text("Prefix"),
-              trailing: Text(_contact.prefix ?? ""),
+              title: Text('Middle name'),
+              trailing: Text(_contact.middleName ?? ''),
             ),
             ListTile(
-              title: Text("Suffix"),
-              trailing: Text(_contact.suffix ?? ""),
+              title: Text('Family name'),
+              trailing: Text(_contact.familyName ?? ''),
+            ),
+            ListTile(
+              title: Text('Prefix'),
+              trailing: Text(_contact.prefix ?? ''),
+            ),
+            ListTile(
+              title: Text('Suffix'),
+              trailing: Text(_contact.suffix ?? ''),
             ),
             for (final d in (_contact.dates ?? <ContactDate>[]))
               ListTile(
@@ -176,16 +244,16 @@ class ContactDetailsPage extends StatelessWidget {
                 trailing: Text(d.date.format()),
               ),
             ListTile(
-              title: Text("Company"),
-              trailing: Text(_contact.company ?? ""),
+              title: Text('Company'),
+              trailing: Text(_contact.company ?? ''),
             ),
             ListTile(
-              title: Text("Job"),
-              trailing: Text(_contact.jobTitle ?? ""),
+              title: Text('Job'),
+              trailing: Text(_contact.jobTitle ?? ''),
             ),
             AddressesTile(_contact.postalAddresses),
-            ItemsTile("Phones", _contact.phones),
-            ItemsTile("Emails", _contact.emails)
+            ItemsTile('Phones', _contact.phones),
+            ItemsTile('Emails', _contact.emails)
           ],
         ),
       ),
@@ -198,11 +266,12 @@ class AddressesTile extends StatelessWidget {
 
   final Iterable<PostalAddress> _addresses;
 
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        ListTile(title: Text("Addresses")),
+        ListTile(title: Text('Addresses')),
         Column(
           children: _addresses
               .map((a) => Padding(
@@ -210,24 +279,24 @@ class AddressesTile extends StatelessWidget {
                     child: Column(
                       children: <Widget>[
                         ListTile(
-                          title: Text("Street"),
-                          trailing: Text(a.street ?? ""),
+                          title: Text('Street'),
+                          trailing: Text(a.street ?? ''),
                         ),
                         ListTile(
-                          title: Text("Postcode"),
-                          trailing: Text(a.postcode ?? ""),
+                          title: Text('Postcode'),
+                          trailing: Text(a.postcode ?? ''),
                         ),
                         ListTile(
-                          title: Text("City"),
-                          trailing: Text(a.city ?? ""),
+                          title: Text('City'),
+                          trailing: Text(a.city ?? ''),
                         ),
                         ListTile(
-                          title: Text("Region"),
-                          trailing: Text(a.region ?? ""),
+                          title: Text('Region'),
+                          trailing: Text(a.region ?? ''),
                         ),
                         ListTile(
-                          title: Text("Country"),
-                          trailing: Text(a.country ?? ""),
+                          title: Text('Country'),
+                          trailing: Text(a.country ?? ''),
                         ),
                       ],
                     ),
@@ -257,8 +326,8 @@ class ItemsTile extends StatelessWidget {
                 (i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: ListTile(
-                    title: Text(i.label ?? ""),
-                    trailing: Text(i.value ?? ""),
+                    title: Text(i.label ?? ''),
+                    trailing: Text(i.value ?? ''),
                   ),
                 ),
               )
@@ -276,14 +345,14 @@ class AddContactPage extends StatefulWidget {
 
 class _AddContactPageState extends State<AddContactPage> {
   Contact contact = Contact();
-  PostalAddress address = PostalAddress(label: "Home");
+  PostalAddress address = PostalAddress(label: 'Home');
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add a contact"),
+        title: Text('Add a contact'),
         actions: <Widget>[
           FlatButton(
             onPressed: () {
@@ -325,13 +394,13 @@ class _AddContactPageState extends State<AddContactPage> {
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
                 onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                    contact.phones = [Item(label: 'mobile', value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
                 onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                    contact.emails = [Item(label: 'work', value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -381,7 +450,7 @@ class UpdateContactsPage extends StatefulWidget {
 
 class _UpdateContactsPageState extends State<UpdateContactsPage> {
   Contact contact;
-  PostalAddress address = PostalAddress(label: "Home");
+  PostalAddress address = PostalAddress(label: 'Home');
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -394,7 +463,7 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Update Contact"),
+        title: Text('Update Contact'),
         actions: <Widget>[
           IconButton(
             icon: Icon(
@@ -418,74 +487,74 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
           child: ListView(
             children: <Widget>[
               TextFormField(
-                initialValue: contact.givenName ?? "",
+                initialValue: contact.givenName ?? '',
                 decoration: const InputDecoration(labelText: 'First name'),
                 onSaved: (v) => contact.givenName = v,
               ),
               TextFormField(
-                initialValue: contact.middleName ?? "",
+                initialValue: contact.middleName ?? '',
                 decoration: const InputDecoration(labelText: 'Middle name'),
                 onSaved: (v) => contact.middleName = v,
               ),
               TextFormField(
-                initialValue: contact.familyName ?? "",
+                initialValue: contact.familyName ?? '',
                 decoration: const InputDecoration(labelText: 'Last name'),
                 onSaved: (v) => contact.familyName = v,
               ),
               TextFormField(
-                initialValue: contact.prefix ?? "",
+                initialValue: contact.prefix ?? '',
                 decoration: const InputDecoration(labelText: 'Prefix'),
                 onSaved: (v) => contact.prefix = v,
               ),
               TextFormField(
-                initialValue: contact.suffix ?? "",
+                initialValue: contact.suffix ?? '',
                 decoration: const InputDecoration(labelText: 'Suffix'),
                 onSaved: (v) => contact.suffix = v,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
                 onSaved: (v) =>
-                    contact.phones = [Item(label: "mobile", value: v)],
+                    contact.phones = [Item(label: 'mobile', value: v)],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
                 onSaved: (v) =>
-                    contact.emails = [Item(label: "work", value: v)],
+                    contact.emails = [Item(label: 'work', value: v)],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
-                initialValue: contact.company ?? "",
+                initialValue: contact.company ?? '',
                 decoration: const InputDecoration(labelText: 'Company'),
                 onSaved: (v) => contact.company = v,
               ),
               TextFormField(
-                initialValue: contact.jobTitle ?? "",
+                initialValue: contact.jobTitle ?? '',
                 decoration: const InputDecoration(labelText: 'Job'),
                 onSaved: (v) => contact.jobTitle = v,
               ),
               TextFormField(
-                initialValue: address.street ?? "",
+                initialValue: address.street ?? '',
                 decoration: const InputDecoration(labelText: 'Street'),
                 onSaved: (v) => address.street = v,
               ),
               TextFormField(
-                initialValue: address.city ?? "",
+                initialValue: address.city ?? '',
                 decoration: const InputDecoration(labelText: 'City'),
                 onSaved: (v) => address.city = v,
               ),
               TextFormField(
-                initialValue: address.region ?? "",
+                initialValue: address.region ?? '',
                 decoration: const InputDecoration(labelText: 'Region'),
                 onSaved: (v) => address.region = v,
               ),
               TextFormField(
-                initialValue: address.postcode ?? "",
+                initialValue: address.postcode ?? '',
                 decoration: const InputDecoration(labelText: 'Postal code'),
                 onSaved: (v) => address.postcode = v,
               ),
               TextFormField(
-                initialValue: address.country ?? "",
+                initialValue: address.country ?? '',
                 decoration: const InputDecoration(labelText: 'Country'),
                 onSaved: (v) => address.country = v,
               ),
@@ -499,6 +568,6 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
 
 extension DateComponentsFormat on DateComponents {
   String format() {
-    return [this.year, this.month, this.day].where((d) => d != null).join("-");
+    return [year, month, day].where((d) => d != null).join('-');
   }
 }
