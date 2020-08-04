@@ -3,14 +3,7 @@
 package co.sunnyapp.flutter_contact
 
 
-import android.annotation.TargetApi
-import android.content.ContentProviderOperation
-import android.content.ContentResolver
-import android.content.Context
-import android.database.Cursor
 import android.os.Build
-import android.os.Handler
-import android.provider.ContactsContract
 import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -18,17 +11,20 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
-import java.util.*
 
 
-const val flutterRawContactsChannelName = "github.com/sunnyapp/flutter_raw_contact"
-const val flutterRawContactsEventName = "github.com/sunnyapp/flutter_raw_contact_events"
+const val flutterContactsChannelName = "github.com/sunnyapp/flutter_unified_contact"
+const val flutterContactsEventName = "github.com/sunnyapp/flutter_unified_contact_events"
 
-class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
-        MethodCallHandler, EventChannel.StreamHandler {
+/**
+ * The variant that operates on Aggregate contacts vs raw contacts
+ */
+class FlutterAggregateContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
+        MethodCallHandler {
 
-    override val mode = ContactMode.RAW
     override val contactForms = FlutterContactForms(this, registrar)
+
+    override val mode = ContactMode.UNIFIED
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -54,7 +50,7 @@ class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContac
                 }
                 "getContact" -> asyncTask(result) {
                     this.getContact(
-                            identifier = ContactKeys(call.argument<String>("identifier")!!),
+                            identifier = contactKeyOf(mode, call.argument("identifier")) ?: badParameter("getContact", "identifier"),
                             withThumbnails = call.argument<Any?>("withThumbnails") == true,
                             photoHighResolution = call.argument<Any?>("photoHighResolution") == true)
                 }
@@ -102,11 +98,13 @@ class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContac
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), flutterRawContactsChannelName)
-            val events = EventChannel(registrar.messenger(), flutterRawContactsEventName)
-            val plugin = FlutterRawContactPlugin(registrar)
+            val channel = MethodChannel(registrar.messenger(), flutterContactsChannelName)
+            val events = EventChannel(registrar.messenger(), flutterContactsEventName)
+            val plugin = FlutterAggregateContactPlugin(registrar)
             channel.setMethodCallHandler(plugin)
             events.setStreamHandler(plugin)
+
         }
     }
 }
+

@@ -18,12 +18,12 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
         val success = when (requestCode) {
             REQUEST_OPEN_EXISTING_CONTACT, REQUEST_OPEN_CONTACT_FORM -> when (val uri = intent?.data) {
                 null -> {
-                    result?.success(mapOf<String, Any>("success" to false, "code" to ErrorCodes.FORM_OPERATION_CANCELED))
+                    result?.success(mapOf("success" to false, "code" to ErrorCodes.FORM_OPERATION_CANCELED))
                     false
                 }
                 else -> when (val contactIdString = uri.lastPathSegment) {
                     null -> {
-                        result?.success(mapOf<String, Any>("success" to false, "code" to ErrorCodes.FORM_OPERATION_CANCELED))
+                        result?.success(mapOf("success" to false, "code" to ErrorCodes.FORM_OPERATION_CANCELED))
                         false
                     }
                     else -> {

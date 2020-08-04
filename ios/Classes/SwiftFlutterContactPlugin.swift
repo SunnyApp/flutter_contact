@@ -9,12 +9,28 @@ import ContactsUI
 @available(iOS 9.0, *)
 public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     
+    var mode: ContactMode!
+    
+    public init(mode:ContactMode) {
+        super.init()
+        var mode = mode
+        mode.plugin = self
+        self.mode = mode
+    }
+    
+    public static func registerMode(mode: ContactMode, registrar: FlutterPluginRegistrar) {
+        
+        let plugin = SwiftFlutterContactPlugin(mode: mode)
+        let channel = FlutterMethodChannel(name: mode.channelName, binaryMessenger: registrar.messenger())
+        
+        registrar.addMethodCallDelegate(plugin, channel: channel)
+        plugin.registerEvents(registrar: registrar)
+        plugin.preLoadContactView()
+    }
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "github.com/sunnyapp/flutter_contact", binaryMessenger: registrar.messenger())
-        let instance = SwiftFlutterContactPlugin()
-        registrar.addMethodCallDelegate(instance, channel: channel)
-        instance.registerEvents(registrar: registrar)
-        instance.preLoadContactView()
+        registerMode(mode: SingleMode(), registrar: registrar)
+        registerMode(mode: UnifiedMode(), registrar: registrar)
     }
     
     let contactFetchKeys:[Any] = [CNContactFormatter.descriptorForRequiredKeys(for: .fullName),
@@ -41,10 +57,11 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             do {
                 switch call.method {
                 case "getContacts":
-                    let contacts: [CNContact] = try self.getContacts(query: call.getString("query"),
+                    let contacts: [UnifiedContact] = try self.getContacts(query: call.getString("query"),
                                                                      withThumbnails: call.getBool("withThumbnails"),
                                                                      photoHighResolution: call.getBool("photoHighResolution"),
                                                                      forCount: false,
+                                                                     withUnifyInfo: call.getBool("withUnifyInfo"),
                                                                      phoneQuery: call.getBool("phoneQuery"),
                                                                      limit: call.arg("limit"),
                                                                      offset: call.arg("offset"),
@@ -53,35 +70,41 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                     result(contacts.map{$0.toDictionary()})
                     
                 case "getTotalContacts":
-                    let contacts: [CNContact] = try self.getContacts(query: call.getString("query"),
+                    let contacts: [UnifiedContact] = try self.getContacts(query: call.getString("query"),
                                                                      withThumbnails: false,
                                                                      photoHighResolution: false,
                                                                      forCount: true,
+                                                                     withUnifyInfo: false,
                                                                      phoneQuery: call.getBool("phoneQuery"),
                                                                      limit: 1000,
                                                                      offset: 0,
                                                                      ids: call.argx("ids") ?? [String]())
                     result(contacts.count)
                 case "getContact":
-                    let contact: CNContact? = try self.getContact(identifier: call.getString("identifier")!,
-                                                                  withThumbnails: call.getBool("withThumbnails"),
-                                                                  photoHighResolution: call.getBool("photoHighResolution"))
+                    let key = try self.contactKeyOf(call.args["identifier"]!)
+                    let contact = try self.getContact(key: key,
+                                                      withThumbnails: call.getBool("withThumbnails"),
+                                                      photoHighResolution: call.getBool("photoHighResolution"),
+                                                      withUnifyInfo: call.getBool("withUnifyInfo"))
                     result(contact?.toDictionary())
+                case "getUnifySummary":
+                    result(try self.calculateLinkedContacts())
                 case "getGroups":
                     result(try self.getGroups())
                 case "addContact":
                     let contact = CNMutableContact()
                     contact.takeFromDictionary(call.args)
                     let saved = try self.addContact(contact: contact)
-                    result(saved.toDictionary())
+                    result(saved.toDictionary(self.mode))
                 case "deleteContact":
                     let deleted = try self.deleteContact(call.args)
                     result(deleted)
                 case "updateContact":
                     let contact = try self.updateContact(call.args)
-                    result(contact.toDictionary())
+                    result(contact.toDictionary(self.mode))
                 case "getContactImage":
-                    let imageData = try self.getContactImage(identifier: call.arg("identifier"))
+                    let key = try self.contactKeyOf(call.args["identifier"]!)
+                    let imageData = try self.getContactImage(key: key)
                     if let imageData = imageData {
                         result(FlutterStandardTypedData(bytes: imageData))
                     } else {
@@ -89,8 +112,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                     }
                 case "openContactEditForm":
                     // Check to make sure dictionary has an identifier
-                    let identifier:String = try call.arg("identifier")
-                    let _ = try self.openContactEditForm(result: result, identifier: identifier)
+                    let key = try self.contactKeyOf(call.args["identifier"]!)
+                    let _ = try self.openContactEditForm(result: result, key: key)
                     
                 case "openContactInsertForm":
                     // Check to make sure dictionary has an identifier
@@ -114,14 +137,57 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                         message: message,
                         details: nil))
                 }
-            } catch _ as NSError {
+            } catch let genError as NSError {
                 result(FlutterError(
                     code: "unknown",
                     message: "unknown error",
-                    details: nil))
+                    details: "\(genError.code)"))
             }
         }
         
+    }
+    
+    func calculateLinkedContacts(_ forId: String? = nil) throws -> [String: [String]] {
+        // First get all raw contact ids, then iterate over unified records and map them
+        var result = [String: [String]]()
+        var rawContactIds = Set([String]())
+        let fetchRequest = CNContactFetchRequest(keysToFetch: [CNKeyDescriptor]())
+        fetchRequest.unifyResults = false
+        if let forId = forId  {
+            fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [forId])
+        }
+        let store = CNContactStore()
+        try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop ) -> Void in
+            rawContactIds.insert(contact.identifier)
+        })
+        
+        fetchRequest.unifyResults = true
+        // Now, fetch all unified contacts and link them with the others
+        //fetchRequest.unifyResults = true
+        try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop ) -> Void in
+            var linked = [String]()
+            if rawContactIds.contains(contact.identifier) {
+                linked.append(contact.identifier)
+            }
+            rawContactIds.forEach {
+                if contact.isUnifiedWithContact(withIdentifier: $0) {
+                    linked.append($0)
+                }
+            }
+            result[contact.identifier] = linked
+        })
+        return result
+    }
+    
+    func calculateUnifiedContactId(_ singleContactId: String) throws -> String {
+        // First get all raw contact ids, then iterate over unified records and map them
+        let fetchRequest = CNContactFetchRequest(keysToFetch: [CNKeyDescriptor]())
+        fetchRequest.unifyResults = false
+        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [singleContactId])
+        
+        let store = CNContactStore()
+        let result = try store.unifiedContact(withIdentifier: singleContactId, keysToFetch: [CNKeyDescriptor]())
+        return result.identifier
     }
     
     func getGroups() throws ->[[String:Any?]] {
@@ -145,8 +211,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         
     }
     
-    func getContacts(query : String?, withThumbnails: Bool, photoHighResolution: Bool, forCount: Bool,
-                     phoneQuery: Bool, limit: Int, offset: Int, ids: [String], sortBy: String? = nil) throws -> [CNContact] {
+    func getContacts(query : String?, withThumbnails: Bool, photoHighResolution: Bool, forCount: Bool, withUnifyInfo: Bool,
+                     phoneQuery: Bool, limit: Int, offset: Int, ids: [String], sortBy: String? = nil) throws -> [UnifiedContact] {
         
         var contacts : [CNContact] = []
         
@@ -169,12 +235,27 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             fetchRequest.predicate = CNContact.predicateForContacts(matchingName: query!)
         }
         
+        fetchRequest.unifyResults = self.mode.unifyResults
+        
+        var linkedContactIds: [String: [String]] = [String: [String]]()
+        if withUnifyInfo {
+            linkedContactIds = try calculateLinkedContacts()
+        }
+        var backRefs = [String: String]()
+        linkedContactIds.forEach { (unifiedId, linkedIds) in
+            linkedIds.forEach { singleId in
+                backRefs[singleId] = unifiedId
+            }
+        }
         
         switch (sortBy ?? "lastName") {
         case "firstName":
             fetchRequest.sortOrder = CNContactSortOrder.givenName
         case "lastName":
             fetchRequest.sortOrder = CNContactSortOrder.familyName
+        case "displayName":
+            fetchRequest.sortOrder = CNContactSortOrder.userDefault
+            
         default:
             fetchRequest.sortOrder = CNContactSortOrder.userDefault
         }
@@ -201,10 +282,15 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             }
             
         })
-        return contacts
+        
+        return contacts.map {contact in
+            contact.toUnifyInfo(self.mode,
+                                linkedContactIds: linkedContactIds[contact.identifier],
+                                unifiedContactId: backRefs[contact.identifier])
+        }
     }
     
-    func getContact(identifier : String, withThumbnails: Bool, photoHighResolution: Bool, forEditForm: Bool = false) throws -> CNContact? {
+    func getContact(key: ContactKey, withThumbnails: Bool, photoHighResolution: Bool, withUnifyInfo: Bool = false, forEditForm: Bool = false) throws -> UnifiedContact? {
         
         var result : CNContact? = nil
         
@@ -224,9 +310,10 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         }
         
         let fetchRequest = CNContactFetchRequest(keysToFetch: keys as! [CNKeyDescriptor])
+        fetchRequest.unifyResults = self.mode.unifyResults
         
         // Query by identifier
-        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [identifier])
+        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [key.identifier])
         
         // Fetch contacts
         try store.enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop) -> Void in
@@ -234,7 +321,15 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             stop.initialize(to: true)
         })
         
-        return result
+        guard let found = result else {
+            return nil
+        }
+        if(withUnifyInfo) {
+            return try self.mode.calculateUnifyInfo(found)
+        } else {
+            return found.toUnifyInfo(self.mode)
+        }
+        
     }
     
     
@@ -260,6 +355,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     func addContact(contact : CNMutableContact) throws -> CNMutableContact  {
         let store = CNContactStore()
         let saveRequest = CNSaveRequest()
+        
         saveRequest.add(contact, toContainerWithIdentifier: nil)
         try store.execute(saveRequest)
         return contact
@@ -267,13 +363,10 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     
     @available(iOS 9.0, *)
     func deleteContact(_ dictionary: [String:Any?]) throws -> Bool {
-        guard let identifier = dictionary["identifier"] as? String else {
-            throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact")
-        }
-        
+        let key = try contactKeyOf(dictionary["identifier"]!)
         let keys = [CNContactIdentifierKey as NSString]
         let store = CNContactStore()
-        if let contact = try store.unifiedContact(withIdentifier: identifier, keysToFetch: keys).mutableCopy() as? CNMutableContact{
+        if let contact = try self.mode.getContact(store: store, key: key, fetch: keys).mutableCopy() as? CNMutableContact {
             let request = CNSaveRequest()
             request.delete(contact)
             try store.execute(request)
@@ -281,25 +374,17 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         } else {
             return false
         }
+        
     }
     
-    func getContactImage(identifier: String) throws -> Data? {
+    func getContactImage(key: ContactKey) throws -> Data? {
         let imageKeys = [CNContactThumbnailImageDataKey as NSString, CNContactImageDataKey as NSString]
         let fetchRequest = CNContactFetchRequest(keysToFetch: imageKeys as [CNKeyDescriptor])
-        
+        fetchRequest.unifyResults = self.mode.unifyResults
         // Query by identifier
-        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [identifier])
+        fetchRequest.predicate = CNContact.predicateForContacts(withIdentifiers: [key.identifier])
         
-        var result: CNContact? = nil
-        // Fetch contacts
-        try CNContactStore().enumerateContacts(with: fetchRequest, usingBlock: { (contact, stop) -> Void in
-            result = contact
-            stop.initialize(to: true)
-        })
-        
-        guard let contact = result else {
-            throw PluginError.runtimeError(code: "recordNotFound", message: "Contact not found with this id")
-        }
+        let contact = try self.mode.getContact(store: CNContactStore(), key: key, fetch: imageKeys)
         
         return contact.getAvatarData()
     }
@@ -307,10 +392,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     @available(iOS 9.0, *)
     func updateContact(_ dictionary : [String:Any?]) throws -> CNMutableContact {
         
-        // Check to make sure dictionary has an identifier
-        guard let identifier = dictionary["identifier"] as? String else {
-            throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact");
-        }
+        let key = try contactKeyOf(dictionary["identifier"]!)
         
         let store = CNContactStore()
         var keys = contactFetchKeys
@@ -318,8 +400,7 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         keys.append(CNContactDatesKey)
         
         // Check if the contact exists
-        if let contact = try store.unifiedContact(withIdentifier: identifier, keysToFetch: keys as! [CNKeyDescriptor]).mutableCopy() as? CNMutableContact {
-            
+        if let contact = try self.mode.getContact(store: store, key: key, fetch: keys as! [CNKeyDescriptor]).mutableCopy() as? CNMutableContact {
             contact.takeFromDictionary(dictionary)
             
             // Attempt to update the contact
@@ -329,6 +410,34 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
             return contact
         } else {
             throw PluginError.runtimeError(code: "contact.notFound", message: "Couldn't find contact")
+        }
+    }
+    
+    func contactKeyOf(_ key: Any?) throws -> ContactKey {
+        guard let key = tryContactKeyOf(key) else {
+            throw PluginError.runtimeError(code: "invalid.input", message: "No identifier for contact")
+        }
+        return key
+    }
+    
+    func tryContactKeyOf(_ key: Any?) -> ContactKey? {
+        if let key = key as? ContactKey {
+            return key
+        } else if let key = key as? String {
+            return self.mode.key(key)
+        } else if let key = key as? [String: Any?] {
+            var singleContactId: String? = key["singleContactId"] as? String
+            var unifiedContactId: String? = key["unifiedContactId"] as? String
+            if let id = key["identifier"] as? String {
+                if self.mode is UnifiedMode {
+                    unifiedContactId = id
+                } else {
+                    singleContactId = id
+                }
+            }
+            return ContactKey(mode: self.mode, unifiedContactId: unifiedContactId, singleContactId: singleContactId)
+        } else {
+            return nil
         }
     }
 }
@@ -374,5 +483,123 @@ enum ErrorCodes: String, CustomStringConvertible {
         get {
             return self.rawValue
         }
+    }
+}
+
+@available(iOS 9.0, *)
+public protocol ContactMode {
+    var name: String {get}
+    var plugin: SwiftFlutterContactPlugin! {get set}
+    var channelName: String {get}
+    var eventsName:String {get}
+    var unifyResults:Bool {get}
+    func getContact(store: CNContactStore, key: ContactKey, fetch: [CNKeyDescriptor]) throws -> CNContact
+    func key(_ identifier: String)->ContactKey
+    func calculateUnifyInfo(_ forContact: CNContact) throws -> UnifiedContact
+}
+
+@available(iOS 9.0, *)
+class UnifiedMode: ContactMode {
+    
+    let name = "unified"
+    var plugin: SwiftFlutterContactPlugin!
+    
+    func key(_ identifier: String) -> ContactKey {
+        return ContactKey(mode: self, unifiedContactId: identifier, singleContactId: nil)
+    }
+    
+    func calculateUnifyInfo(_ forContact: CNContact) throws-> UnifiedContact {
+        let res = try plugin.calculateLinkedContacts(forContact.identifier)
+        return forContact.toUnifyInfo(self, linkedContactIds: res[forContact.identifier] ?? [String]())
+    }
+    
+    func getContact(store: CNContactStore, key: ContactKey, fetch: [CNKeyDescriptor]) throws-> CNContact {
+        return try store.unifiedContact(withIdentifier: key.identifier, keysToFetch: fetch)
+    }
+    
+    var channelName: String = "github.com/sunnyapp/flutter_unified_contact"
+    
+    var eventsName: String = "github.com/sunnyapp/flutter_unified_contact_events"
+    var unifyResults: Bool = true
+}
+
+@available(iOS 9.0, *)
+class SingleMode: ContactMode {
+    var plugin: SwiftFlutterContactPlugin!
+    
+    let name = "single"
+    var channelName: String = "github.com/sunnyapp/flutter_single_contact"
+    
+    var eventsName: String = "github.com/sunnyapp/flutter_single_contact_events"
+    var unifyResults: Bool = false
+    func key(_ identifier: String) -> ContactKey {
+        return ContactKey(mode: self, unifiedContactId: nil, singleContactId: identifier)
+    }
+    
+    func calculateUnifyInfo(_ forContact: CNContact) throws-> UnifiedContact {
+        let res = try plugin.calculateLinkedContacts(forContact.identifier)
+        return forContact.toUnifyInfo(self, linkedContactIds: res[forContact.identifier] ?? [String]())
+    }
+    
+    func getContact(store: CNContactStore, key: ContactKey, fetch: [CNKeyDescriptor]) throws -> CNContact {
+        _ = CNContact.predicateForContactsInContainer(withIdentifier: key.identifier)
+        let request = CNContactFetchRequest(keysToFetch: fetch)
+        request.unifyResults = false
+        request.predicate = CNContact.predicateForContacts(withIdentifiers: [key.identifier])
+        var found: CNContact? = nil
+        try store.enumerateContacts(with: request) {
+            (contact, stop) in
+            found = contact
+            stop.initialize(to: true)
+        }
+        guard let result = found else {
+            throw PluginError.runtimeError(code: "invalid.id", message: "Invalid identifier for contact")
+        }
+        return result
+    }
+}
+
+@available(iOS 9.0, *)
+public struct UnifiedContact {
+    let contact: CNContact
+    let mode: ContactMode
+    let unifiedContactId: String?
+    let linkedContactIds: [String]?
+    
+    func toDictionary() -> [String: Any] {
+        var base = self.contact.toDictionary(self.mode)
+        if let uid = self.unifiedContactId {
+            base["unifiedContactId"] = uid
+        }
+        if let lids = self.linkedContactIds {
+            base["linkedContactIds"] = lids
+        }
+        base["mode"] = mode.name
+        return base
+    }
+}
+
+@available(iOS 9.0, *)
+public struct ContactKey {
+    let mode: ContactMode
+    var identifier: String {
+        get {
+            if mode is UnifiedMode {
+                return unifiedContactId!
+            }
+            else {
+                return singleContactId!
+            }
+            
+        }
+    }
+    let unifiedContactId: String?
+    let singleContactId: String?
+}
+
+@available(iOS 9.0, *)
+extension CNContact {
+    func toUnifyInfo(_ mode: ContactMode, linkedContactIds: [String]? = nil, unifiedContactId: String? = nil)-> UnifiedContact {
+        return UnifiedContact(contact: self, mode: mode, unifiedContactId: unifiedContactId, linkedContactIds: linkedContactIds)
     }
 }

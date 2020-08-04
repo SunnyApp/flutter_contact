@@ -4,8 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_config/logging_config.dart';
-
-final _log = Logger('flutter_contact');
+import 'package:sunny_dart/sunny_dart.dart';
 
 class ContactListPage extends StatefulWidget {
   @override
@@ -20,7 +19,7 @@ class _ContactListPageState extends State<ContactListPage> {
   void initState() {
     super.initState();
     configureLogging(LogConfig.root(Level.INFO, handler: LoggingHandler.dev()));
-    _contactService = AggregateContacts;
+    _contactService = UnifiedContacts;
     refreshContacts();
     _loading = false;
   }
@@ -31,8 +30,8 @@ class _ContactListPageState extends State<ContactListPage> {
         _loading = true;
       });
     }
-    // Load without thumbnails initially.
     final contacts = _contactService.listContacts(
+        withUnifyInfo: true,
         withThumbnails: true,
         withHiResPhoto: false,
         sortBy: ContactSortOrder.firstName());
@@ -84,9 +83,9 @@ class _ContactListPageState extends State<ContactListPage> {
             onPressed: () {
               setState(() {
                 if (_contactService.isAggregate) {
-                  _contactService = RawContacts;
+                  _contactService = SingleContacts;
                 } else {
-                  _contactService = AggregateContacts;
+                  _contactService = UnifiedContacts;
                 }
               });
               refreshContacts(true);
@@ -143,6 +142,14 @@ class _ContactListPageState extends State<ContactListPage> {
                           backgroundImage: MemoryImage(contact.avatar))
                       : CircleAvatar(child: Text(contact.initials())),
                   title: Text(contact.displayName ?? ''),
+                  trailing: (contact.linkedContactIds?.length ?? 0) < 2
+                      ? null
+                      : InputChip(
+                          avatar: CircleAvatar(
+                              child:
+                                  Text('${contact.linkedContactIds.length}')),
+                          label: Text('Linked'),
+                        ),
                 ),
               );
             }),
@@ -211,12 +218,11 @@ class PersonDetailsPage extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             ListTile(
-              title: Text('Contact Id'),
-              trailing: Text(_contact.identifier ?? 'Unknown'),
+              title: Text('Contact Id: ${_contact.identifier}'),
             ),
             ListTile(
-              title: Text('Linked Contact Id'),
-              trailing: Text(_contact.aggregateContactId ?? 'Unknown'),
+              title:
+                  Text('Linked Id: ${_contact.unifiedContactId ?? 'Unknown'}'),
             ),
             ListTile(
               title: Text('Name'),
@@ -393,14 +399,16 @@ class _AddContactPageState extends State<AddContactPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: 'mobile', value: v)],
+                onSaved: (v) => contact.phones = [
+                  if (v != null && v.isNotEmpty) Item(label: 'mobile', value: v)
+                ],
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: 'work', value: v)],
+                onSaved: (v) => contact.emails = [
+                  if (v != null && v.isNotEmpty) Item(label: 'work', value: v)
+                ],
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -450,13 +458,32 @@ class UpdateContactsPage extends StatefulWidget {
 
 class _UpdateContactsPageState extends State<UpdateContactsPage> {
   Contact contact;
-  PostalAddress address = PostalAddress(label: 'Home');
+  PostalAddress address;
+  Item email;
+  Item phone;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     contact = widget.contact;
+    address = contact.postalAddresses.firstOrNull();
+    if (address == null) {
+      address = PostalAddress(label: 'home');
+      contact.postalAddresses.add(address);
+    }
+
+    email = contact.emails.firstOrNull();
+    if (email == null) {
+      email = Item(label: 'home');
+      contact.emails.add(email);
+    }
+
+    phone = contact.phones.firstOrNull();
+    if (phone == null) {
+      phone = Item(label: 'home');
+      contact.phones.add(phone);
+    }
   }
 
   @override
@@ -472,7 +499,6 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
             ),
             onPressed: () async {
               _formKey.currentState.save();
-              contact.postalAddresses = [address];
               await Contacts.updateContact(contact);
               await Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => ContactListPage()));
@@ -513,14 +539,14 @@ class _UpdateContactsPageState extends State<UpdateContactsPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                onSaved: (v) =>
-                    contact.phones = [Item(label: 'mobile', value: v)],
+                initialValue: phone.value,
+                onSaved: (v) => phone.value = v,
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                onSaved: (v) =>
-                    contact.emails = [Item(label: 'work', value: v)],
+                initialValue: email.value,
+                onSaved: (v) => email.value = v,
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(

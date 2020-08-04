@@ -20,9 +20,7 @@ const _kphotoHighResolution = "photoHighResolution";
 
 abstract class FormsContract {
   /// Opens a native edit form for the contact with [identifier].  This can be a
-  /// simple string, but you can also provide a [ContactKeys] instance to change
-  /// the behavior.
-
+  /// simple string, but you can also provide a [ContactKeys] instance
   Future<Contact> openContactEditForm(identifier);
 
   /// Opens a native insert form with [data] preloaded
@@ -36,6 +34,7 @@ abstract class ContactsContract implements FormsContract {
       int bufferSize = 20,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
+      bool withUnifyInfo = false,
       ContactSortOrder sortBy});
 
   Future<int> getTotalContacts({String query, bool phoneQuery});
@@ -46,13 +45,16 @@ abstract class ContactsContract implements FormsContract {
     int bufferSize = 20,
     bool withThumbnails = true,
     bool withHiResPhoto = true,
+    bool withUnifyInfo = false,
     ContactSortOrder sortBy,
   });
 
   void configureLogs({Level level, LoggingHandler onLog});
 
   Future<Contact> getContact(String identifier,
-      {bool withThumbnails = true, bool withHiResPhoto = true});
+      {bool withThumbnails = true,
+      bool withUnifyInfo = true,
+      bool withHiResPhoto = true});
 
   Future<Uint8List> getContactImage(String identifier);
 
@@ -68,6 +70,7 @@ abstract class ContactsContract implements FormsContract {
 }
 
 const kwithThumbnails = 'withThumbnails';
+const kwithUnifyInfo = 'withUnifyInfo';
 const kphotoHighResolution = 'photoHighResolution';
 const klimit = 'limit';
 const ksortBy = 'sortBy';
@@ -82,6 +85,7 @@ PageGenerator<Contact> _defaultPageGenerator(
         bool phoneQuery,
         bool withThumbnails,
         bool withHiResPhoto,
+        bool withUnifyInfo,
         ContactSortOrder sortBy) =>
     (int limit, int offset) async {
       final List page = await _service.channel.invokeMethod('getContacts', {
@@ -90,6 +94,7 @@ PageGenerator<Contact> _defaultPageGenerator(
         ksortBy: sortBy?._value ?? _service.defaultSort._value,
         koffset: offset,
         kphoneQuery: phoneQuery,
+        kwithUnifyInfo: withUnifyInfo,
         kwithThumbnails: withThumbnails,
         kphotoHighResolution: withHiResPhoto,
       });
@@ -157,6 +162,7 @@ class ContactService implements ContactsContract {
     bool phoneQuery,
     bool withThumbnails = true,
     bool withHiResPhoto = true,
+    bool withUnifyInfo = false,
     int bufferSize = 20,
     ContactSortOrder sortBy,
   }) {
@@ -167,6 +173,7 @@ class ContactService implements ContactsContract {
         phoneQuery,
         withThumbnails,
         withHiResPhoto,
+        withUnifyInfo,
         sortBy ?? defaultSort,
       ),
       bufferSize: bufferSize,
@@ -174,7 +181,7 @@ class ContactService implements ContactsContract {
     return stream;
   }
 
-  bool get isAggregate => mode == ContactMode.aggregate;
+  bool get isAggregate => mode == ContactMode.unified;
 
   @override
   Future<Uint8List> getContactImage(identifier) async {
@@ -202,6 +209,7 @@ class ContactService implements ContactsContract {
       bool phoneQuery,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
+      bool withUnifyInfo = false,
       int bufferSize = 20,
       ContactSortOrder sortBy}) {
     final list = PagingList<Contact>(
@@ -211,6 +219,7 @@ class ContactService implements ContactsContract {
         phoneQuery,
         withThumbnails,
         withHiResPhoto,
+        withUnifyInfo,
         sortBy ?? defaultSort,
       ),
       bufferSize: bufferSize,
@@ -230,12 +239,15 @@ class ContactService implements ContactsContract {
   /// Retrieves a single contact by identifier
   @override
   Future<Contact> getContact(identifier,
-      {bool withThumbnails = true, bool withHiResPhoto = true}) async {
+      {bool withThumbnails = true,
+      bool withHiResPhoto = true,
+      bool withUnifyInfo = true}) async {
     final _keys = ContactKeys.of(mode, identifier);
     final fromChannel =
         await channel.invokeMethod('getContact', <String, dynamic>{
       _kidentifier: _keys,
       _kwithThumbnails: withThumbnails,
+      kwithUnifyInfo: withUnifyInfo,
       _kphotoHighResolution: withHiResPhoto,
     });
     if (fromChannel == null) return null;

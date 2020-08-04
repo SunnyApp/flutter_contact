@@ -35,18 +35,18 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
         }
         return nil
     }
-    func openContactEditForm(result: @escaping FlutterResult, identifier:String) throws ->  [String:Any]? {
+    func openContactEditForm(result: @escaping FlutterResult, key: ContactKey) throws ->  [String:Any]? {
         flutterResult = result
     
         do {
-            guard let cnContact = try self.getContact(identifier: identifier,
+            guard let cnContact = try self.getContact(key: key,
                                                       withThumbnails: false,
                                                       photoHighResolution: false,
                                                       forEditForm: true) else {
                 throw PluginError.runtimeError(code: ErrorCodes.notFound.description, message: "contact not found")
             }
             
-            let viewController = CNContactViewController(for: cnContact)
+            let viewController = CNContactViewController(for: cnContact.contact)
             viewController.delegate = self
             DispatchQueue.main.async {
                 
@@ -81,7 +81,7 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
         viewController.dismiss(animated: true, completion: nil)
         if let result = flutterResult {
             if let contact = contact {
-                result(contactResult(contact: contact))
+                result(contactResult(self.mode, contact: contact))
             } else {
                 result(contactFailResult(code: ErrorCodes.formOperationCancelled.description))
             }
@@ -114,7 +114,7 @@ func contactFailResult(code: String)-> [String:Any] {
 }
 
 @available(iOS 9.0, *)
-func contactResult(contact:CNContact)-> [String:Any] {
-    return ["successful": true, "contact": contact.toDictionary()]
+func contactResult(_ mode: ContactMode, contact:CNContact)-> [String:Any] {
+    return ["successful": true, "contact": contact.toDictionary(mode)]
     
 }

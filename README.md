@@ -10,8 +10,8 @@ To use this plugin, add `flutter_contact` as a [dependency in your `pubspec.yaml
 For example:  
 ```yaml  
 dependencies:  
-    flutter_contact: ^0.4.15
-```  example
+    flutter_contact: ^0.6.1
+```
   
 ## Permissions  
 ### Android  
@@ -33,11 +33,18 @@ Set the `NSContactsUsageDescription` in your `Info.plist` file
 `flutter_contact` does not handle the process of asking and checking for permissions. To check and request user permission to access contacts, try using the following plugins: [flutter_simple_permissions](https://github.com/AppleEducate/flutter_simple_permissions)  or [permission_handler](https://pub.dartlang.org/packages/permission_handler).
   
 If you do not request user permission or have it granted, the application will fail. For testing purposes, you can manually set the permissions for your test app in Settings for your app on the device that you are using. For Android, go to "Settings" - "Apps" - select your test app - "Permissions" - then turn "on" the slider for contacts.   
-  
+ 
+## Unified vs Single contacts
+There are two main entry points into the application: `SingleContacts` and `UnifiedContacts`.  These share
+the same API and most of the underlying code, however:
+
+* `SingleContacts` will interact with the unlinked raw contacts on each platform
+* `UnifiedContacts` will interact with linked/aggregated contacts on each platform. 
+ 
 ## Memory Efficiency
 
 This plugin tries to be memory and cpu friendly.  It avoid loading your entire address book into memory, 
-but rather provides a couple ways to access all contacts.
+but rather provides some ways to iterate over contacts in a more memory friendly way:
 
 ### Stream
 ``` dart

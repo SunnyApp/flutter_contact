@@ -19,18 +19,18 @@ enum class ContactMode(val contentUri: Uri,
                        val projectionsIdsOnly: Array<String>) {
 
 
-    AGGREGATE(
+    UNIFIED(
             contentUri = Contacts.CONTENT_URI,
             contentType = Contacts.CONTENT_ITEM_TYPE,
             contactIdRef = Data.CONTACT_ID,
             lookupUri = { resolver, keys ->
                 Contacts.getLookupUri(resolver, keys.contactUri)
             },
-            nameRef = CommonDataKinds.StructuredName.DISPLAY_NAME_PRIMARY,
+            nameRef = CommonDataKinds.StructuredName.DISPLAY_NAME,
             photoRef = Contacts.Photo.CONTENT_DIRECTORY,
             projections = contactProjections,
             projectionsIdsOnly = contactProjectionsIdOnly),
-    RAW(contentUri = RawContacts.CONTENT_URI,
+    SINGLE(contentUri = RawContacts.CONTENT_URI,
             contentType = RawContacts.CONTENT_ITEM_TYPE,
             contactIdRef = Data.RAW_CONTACT_ID,
             lookupUri = { resolver, keys ->

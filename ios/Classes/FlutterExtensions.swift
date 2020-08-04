@@ -7,6 +7,7 @@
 
 import Foundation
 import Contacts
+import Flutter
 
 extension FlutterMethodCall {
     
@@ -200,12 +201,17 @@ extension NSDateComponents: DComponents {
 @available(iOS 9.0, *)
 extension CNContact {
     
-    func toDictionary() -> [String:Any]{
+    func toDictionary(_ mode: ContactMode) -> [String:Any]{
         let contact = self
         var result = [String:Any]()
         
         //Simple fields
         result["identifier"] = contact.identifier
+        if mode is UnifiedMode {
+            result["mode"] = "unified"
+        } else {
+            result["mode"] = "single"
+        }
         result["displayName"] = CNContactFormatter.string(from: contact, style: CNContactFormatterStyle.fullName)
         result["givenName"] = contact.givenName
         result["familyName"] = contact.familyName
@@ -364,8 +370,14 @@ extension CNMutableContact {
         if let phoneNumbers = dictionary["phones"] as? [[String:String]] {
             var updatedPhoneNumbers = [CNLabeledValue<CNPhoneNumber>]()
             for phone in phoneNumbers where phone["value"] != nil {
-                updatedPhoneNumbers.append(CNLabeledValue(label:phone["label"]?.toPhoneLabel() ?? "",
-                                                          value: CNPhoneNumber(stringValue: phone["value"]!)))
+                if let phoneNumber = phone["value"] {
+                    if !phoneNumber.isEmpty {
+                        updatedPhoneNumbers.append(
+                            CNLabeledValue(
+                                label:phone["label"]?.toPhoneLabel() ?? "",
+                                value: CNPhoneNumber(stringValue:phoneNumber)))
+                    }
+                }
             }
             contact.phoneNumbers = updatedPhoneNumbers
         }
@@ -375,7 +387,9 @@ extension CNMutableContact {
             var updatedEmails = [CNLabeledValue<NSString>]()
             for email in emails where nil != email["value"] {
                 let emailLabel = email["label"] ?? ""
-                updatedEmails.append(CNLabeledValue(label: emailLabel, value: email["value"]! as NSString))
+                if let emailValue = email["value"] {
+                    updatedEmails.append(CNLabeledValue(label: emailLabel, value: emailValue as NSString))
+                }
             }
             contact.emailAddresses = updatedEmails
         }

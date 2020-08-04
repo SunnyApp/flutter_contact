@@ -1,3 +1,11 @@
+## 0.6.1
+
+There shouldn't be any breaking changes, but there are significant changes to how things work under the hood  
+
+* Contacts is duplicated as UnifiedContacts and SingleContacts, to allow access to aggregated contacts, or the raw unlinked contacts
+* Parameter `withUnifyInfo` on `getContact` and `getContacts` will produce information about how contacts are linked.  It's more expensive, and therefore disabled by default on `getContacts`
+* Removed any java8 dependencies
+ 
 ## 0.5.4
 
 Merged several PRs from the community.  Thanks to:

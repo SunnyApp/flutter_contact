@@ -32,8 +32,8 @@ fun contactKeyOf(mode: ContactMode, value: Any?): ContactKeys? {
                 when (name) {
                     "id", "identifier" -> keys = keys.withIdentifier(key.toLongOrNull())
                     "lookupKey" -> keys = keys.copy(lookupKey = key?.toString())
-                    "rawContactId" -> keys = keys.copy(rawContactId = key.toLongOrNull())
-                    "aggregateContactId" -> keys = keys.copy(aggregateContactId = key.toLongOrNull())
+                    "singleContactId" -> keys = keys.copy(singleContactId = key.toLongOrNull())
+                    "unifiedContactId" -> keys = keys.copy(unifiedContactId = key.toLongOrNull())
                     else -> {
                         // Ignored
                     }
@@ -48,30 +48,30 @@ fun contactKeyOf(mode: ContactMode, value: Any?): ContactKeys? {
 
 data class ContactKeys(
         val mode: ContactMode,
-        val aggregateContactId: Long? = null,
-        val rawContactId: Long? = null,
+        val unifiedContactId: Long? = null,
+        val singleContactId: Long? = null,
         val lookupKey: String? = null) {
 
     constructor(mode: ContactMode, identifier: Long) : this(
             mode = mode,
-            aggregateContactId = if (mode == AGGREGATE) identifier else null,
-            rawContactId = if (mode == RAW) identifier else null)
+            unifiedContactId = if (mode == UNIFIED) identifier else null,
+            singleContactId = if (mode == SINGLE) identifier else null)
 
-    private val keyList = listOf(aggregateContactId, rawContactId, lookupKey)
+    private val keyList = listOf(unifiedContactId, singleContactId, lookupKey)
 
     val contactUri: Uri get() = ContentUris.withAppendedId(mode.contentUri, identifier!!)
     val photoUri: Uri get() = Uri.withAppendedPath(contactUri, mode.photoRef)
 
     val identifier
         get() = when (mode) {
-            RAW -> rawContactId
-            AGGREGATE -> aggregateContactId
+            SINGLE -> singleContactId
+            UNIFIED -> unifiedContactId
         }
 
     fun withIdentifier(identifier: Any?): ContactKeys {
         return when (mode) {
-            RAW -> copy(rawContactId = identifier.toLongOrNull())
-            AGGREGATE -> copy(aggregateContactId = identifier.toLongOrNull())
+            SINGLE -> copy(singleContactId = identifier.toLongOrNull())
+            UNIFIED -> copy(unifiedContactId = identifier.toLongOrNull())
         }
     }
 
@@ -119,7 +119,7 @@ data class Contact(
 
         val postalAddresses: MutableList<PostalAddress> = mutableListOf(),
         /// read-only
-        val linkedContactIds: List<String> = mutableListOf(),
+        val linkedContactIds: MutableList<String> = mutableListOf(),
 
         var avatar: ByteArray? = null
 ) {
@@ -135,17 +135,22 @@ data class Contact(
             keys = keys!!.withIdentifier(value)
         }
 
-    var aggregateContactId: Long?
-        get() = keys?.aggregateContactId
+    var unifiedContactId: Long?
+        get() = keys?.unifiedContactId
         set(value) {
-            keys = keys!!.copy(aggregateContactId = value)
+            keys = keys!!.copy(unifiedContactId = value)
         }
 
 
-    var rawContactId: Long?
-        get() = keys?.rawContactId
+    var singleContactId: Long?
+        get() = keys?.singleContactId
         set(value) {
-            keys = keys!!.copy(rawContactId = value)
+            if(value != null && keys?.mode == UNIFIED) {
+                if("$value" !in linkedContactIds) {
+                    linkedContactIds += "$value"
+                }
+            }
+            keys = keys!!.copy(singleContactId = value)
         }
 
     var lookupKey: String?
@@ -171,8 +176,8 @@ data class Contact(
             "phones" to phones.toItemMap(),
             "emails" to emails.toItemMap(),
             "groups" to groups.toList(),
-            "aggregateContactId" to aggregateContactId?.toString(),
-            "rawContactId" to rawContactId?.toString(),
+            "unifiedContactId" to unifiedContactId?.toString(),
+            "singleContactId" to singleContactId?.toString(),
             "otherKeys" to mapOf("lookupKey" to keys?.lookupKey).filterValuesNotNull(),
             "socialProfiles" to socialProfiles.toItemMap(),
             "urls" to urls.toItemMap(),
@@ -187,8 +192,8 @@ data class Contact(
             val contact = Contact(
                     keys = contactKeyOf(mode = mode,
                             value = mapOf(
-                                    "aggregateContactId" to map["aggregateContactId"],
-                                    "rawContactId" to map["rawContactId"],
+                                    "unifiedContactId" to map["unifiedContactId"],
+                                    "singleContactId" to map["singleContactId"],
                                     "lookupKey" to (map["otherKeys"].orEmptyMap()["lookupKey"] as String?),
                                     "identifier" to map["identifier"])),
 
@@ -202,7 +207,7 @@ data class Contact(
                     jobTitle = map["jobTitle"] as String?,
                     avatar = (map["avatar"] as? ByteArray?),
                     note = map["note"] as String?,
-                    linkedContactIds = map["linkedContactIds"].orEmptyList(),
+                    linkedContactIds = map["linkedContactIds"].orEmptyList<String>().toMutableList(),
                     groups = (map["groups"] as Iterable<String>?).orEmpty().toMutableSet(),
                     emails = (map["emails"] as? StructList?).toItemList(),
                     phones = (map["phones"] as? StructList?).toItemList(),

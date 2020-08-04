@@ -40,7 +40,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
                               phoneQuery: Boolean?, offset: Int?, limit: Int?): StructList {
 
         val contacts = resolver.queryContacts(query, sortBy)
-                ?.toContactList(limit ?: 30, offset ?: 0)
+                ?.toContactList(mode, limit ?: 30, offset ?: 0)
                 ?.onEach { contact ->
                     if (withThumbnails || photoHighResolution) {
                         contact.setAvatarDataForContactIfAvailable(photoHighResolution)
@@ -69,7 +69,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         context.contentResolver
                 .findContactById(identifier)
                 ?.use { cursor ->
-                    val contactList = cursor.toContactList(1, 0)
+                    val contactList = cursor.toContactList(mode, 1, 0)
                     val contact = contactList
                             .firstOrNull()
                             ?: methodError("getContact", "notFound",
@@ -198,35 +198,39 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
 
         // Drop all details about contact except name
         ops += ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                .withSelection(mode.contactIdRef + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE))
                 .build()
 
         ops += ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                .withSelection("${mode.contactIdRef}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+                .withSelection("${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE))
                 .build()
 
         ops += ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                .withSelection("${mode.contactIdRef}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+                .withSelection("${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE))
                 .build()
 
         ops += ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                .withSelection("${mode.contactIdRef}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+                .withSelection("${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)).build()
 
         ops += ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                .withSelection("${mode.contactIdRef}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+                .withSelection("${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE))
                 .build()
 
+        val names = listOfNotNull(contact.givenName, contact.familyName)
+        val displayName = when {
+            names.isEmpty()-> contact.displayName
+            else-> names.joinToString(" ")
+        }
         // Update data (name)
         ops += ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
-                .withSelection(mode.contactIdRef + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
                         arrayOf(contact.identifier?.toString(), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE))
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contact.displayName
-                        ?: listOfNotNull(contact.givenName, contact.familyName).joinToString(" "))
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayName)
                 .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, contact.givenName)
                 .withValue(ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME, contact.middleName)
                 .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, contact.familyName)
@@ -237,7 +241,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         // Insert data back into contact
         ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
-                .withValue(mode.contactIdRef, contact.identifier?.toString())
+                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                 .withValue(ContactsContract.CommonDataKinds.Organization.TYPE, ContactsContract.CommonDataKinds.Organization.TYPE_WORK)
                 .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, contact.company)
                 .withValue(ContactsContract.CommonDataKinds.Organization.TITLE, contact.jobTitle)
@@ -245,14 +249,14 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
 
         ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-                .withValue(mode.contactIdRef, contact.identifier?.toString())
+                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                 .withValue(ContactsContract.CommonDataKinds.Note.NOTE, contact.note)
                 .build()
 
         for (phone in contact.phones) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                     .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                    .withValue(mode.contactIdRef, contact.identifier?.toString())
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                     .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone.value)
                     .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, Item.stringToPhoneType(phone.label))
                     .build()
@@ -261,7 +265,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         for (email in contact.emails) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                     .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-                    .withValue(mode.contactIdRef, contact.identifier?.toString())
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                     .withValue(ContactsContract.CommonDataKinds.Email.ADDRESS, email.value)
                     .withValue(ContactsContract.CommonDataKinds.Email.TYPE, Item.stringToEmailType(email.label))
                     .build()
@@ -270,7 +274,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         for (address in contact.postalAddresses) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                     .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE)
-                    .withValue(mode.contactIdRef, contact.identifier?.toString())
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                     .withValue(ContactsContract.CommonDataKinds.StructuredPostal.TYPE, address.label.toPostalAddressType())
                     .withValue(ContactsContract.CommonDataKinds.StructuredPostal.STREET, address.street)
                     .withValue(ContactsContract.CommonDataKinds.StructuredPostal.CITY, address.city)
@@ -284,8 +288,9 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
 
         for (date in contact.dates) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(mode.contactIdRef, 0)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
                     .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                     .withValue(ContactsContract.CommonDataKinds.Event.TYPE, date.label?.toEventType())
                     .withValue(ContactsContract.CommonDataKinds.Event.LABEL, date.label?.toEventType())
                     .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, date.value)
@@ -294,8 +299,9 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
 
         for (url in contact.urls) {
             ops += ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(mode.contactIdRef, 0)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
                     .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.identifier?.toString())
                     .withValue(ContactsContract.CommonDataKinds.Website.TYPE, url.label)
                     .withValue(ContactsContract.CommonDataKinds.Website.URL, url.value)
                     .build()

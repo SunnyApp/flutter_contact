@@ -13,18 +13,17 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
-const val flutterContactsChannelName = "github.com/sunnyapp/flutter_contact"
-const val flutterContactsEventName = "github.com/sunnyapp/flutter_contact_events"
+const val flutterRawContactsChannelName = "github.com/sunnyapp/flutter_single_contact"
+const val flutterRawContactsEventName = "github.com/sunnyapp/flutter_single_contact_events"
 
 /**
- * The variant that operates on Aggregate contacts vs raw contacts
+ * Instance of plugin that deals with non-unified single contacts
  */
-class FlutterAggregateContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
-        MethodCallHandler {
+class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
+        MethodCallHandler, EventChannel.StreamHandler {
 
+    override val mode = ContactMode.SINGLE
     override val contactForms = FlutterContactForms(this, registrar)
-
-    override val mode = ContactMode.AGGREGATE
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -36,6 +35,7 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                             withThumbnails = call.argument<Any?>("withThumbnails") == true,
                             photoHighResolution = call.argument<Any?>("photoHighResolution") == true,
                             limit = call.argument("limit"),
+
                             offset = call.argument("offset"),
                             sortBy = call.argument("sortBy"),
                             phoneQuery = call.argument("phoneQuery"))
@@ -50,7 +50,7 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                 }
                 "getContact" -> asyncTask(result) {
                     this.getContact(
-                            identifier = contactKeyOf(mode, call.argument("identifier")) ?: badParameter("getContact", "identifier"),
+                            identifier = ContactKeys(call.argument<String>("identifier")!!),
                             withThumbnails = call.argument<Any?>("withThumbnails") == true,
                             photoHighResolution = call.argument<Any?>("photoHighResolution") == true)
                 }
@@ -77,7 +77,8 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                     when (val contactId = call.argument<Any?>("identifier")) {
                         null -> result.error(ErrorCodes.INVALID_PARAMETER, "Missing parameter: identifier", null)
                         else -> {
-                            val keys = contactKeyOf(mode, contactId) ?: badParameter("openEditForm", "identifier")
+                            val keys = contactKeyOf(mode, contactId)
+                                    ?: badParameter("openEditForm", "identifier")
                             contactForms.openContactEditForm(result, keys)
                         }
                     }
@@ -98,13 +99,11 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), flutterContactsChannelName)
-            val events = EventChannel(registrar.messenger(), flutterContactsEventName)
-            val plugin = FlutterAggregateContactPlugin(registrar)
+            val channel = MethodChannel(registrar.messenger(), flutterRawContactsChannelName)
+            val events = EventChannel(registrar.messenger(), flutterRawContactsEventName)
+            val plugin = FlutterRawContactPlugin(registrar)
             channel.setMethodCallHandler(plugin)
             events.setStreamHandler(plugin)
-
         }
     }
 }
-

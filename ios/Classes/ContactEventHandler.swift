@@ -36,7 +36,8 @@ extension SwiftFlutterContactPlugin: FlutterStreamHandler {
     }
     
     public func registerEvents(registrar: FlutterPluginRegistrar) {
-        let events = FlutterEventChannel(name: "github.com/sunnyapp/flutter_contact_events", binaryMessenger: registrar.messenger())
+        let events = FlutterEventChannel(name: self.mode.eventsName,
+                                         binaryMessenger: registrar.messenger())
         
         events.setStreamHandler(self)
     }

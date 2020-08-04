@@ -6,11 +6,8 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.database.Cursor
 import android.graphics.Bitmap
-import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.*
-import androidx.annotation.RequiresApi
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -51,11 +48,14 @@ interface ContactExtensions {
 
         val sortOrder = if (forCount) null else ContactSorting[sortBy]
 
-        return query(Data.CONTENT_URI, projections, selection, selectionArgs, sortOrder?.expression)
+        return query(Data.CONTENT_URI, projections, selection, selectionArgs,  sortOrder + ContactSorting.byUnifiedContact)
     }
 
+    /**
+     * Creates a cursor for a contact or raw_contact, ensuring to sort it correctly
+     */
     fun ContentResolver.findContactById(keys: ContactKeys): Cursor? {
-        return query(Data.CONTENT_URI, mode.projections, keys.toQuery(), keys.params, null)
+        return query(Data.CONTENT_URI, mode.projections, keys.toQuery(), keys.params, "${ContactSorting.byUnifiedContact}")
     }
 
     /**
@@ -63,7 +63,7 @@ interface ContactExtensions {
      * @param cursor
      * @return the list of contacts
      */
-    fun Cursor?.toContactList(limit: Int, offset: Int): List<Contact> {
+    fun Cursor?.toContactList(mode: ContactMode, limit: Int, offset: Int): List<Contact> {
         val cursor = this ?: return emptyList()
 
         val contactsById = mutableMapOf<String, Contact>()
@@ -77,38 +77,57 @@ interface ContactExtensions {
         }
 
         while (cursor.moveToNext() && contactsById.size <= limit) {
+
             val columnIndex = cursor.getColumnIndex(mode.contactIdRef)
             val contactId = cursor.getString(columnIndex)
 
-            if (contactId !in contactsById) {
-                contactsById[contactId] = Contact(keys = ContactKeys(contactId.toLong()))
-            }
-            val contact = contactsById[contactId]!!
+            val unifiedContactId = cursor.long(CommonDataKinds.Identity.CONTACT_ID)
+            val rawContactId = cursor.long(CommonDataKinds.Identity.RAW_CONTACT_ID)
 
-            cursor.long(CommonDataKinds.Identity.RAW_CONTACT_ID)?.also {
-                contact.rawContactId = it
+            val contact = when (val existing = contactsById[contactId]) {
+                null -> Contact(keys = ContactKeys(contactId.toLong())).also {
+                    contactsById[contactId] = it
+                }
+                else -> existing
             }
-            cursor.long(CommonDataKinds.Identity.CONTACT_ID)?.also {
-                contact.aggregateContactId = it
+
+            val isPrimary = when (mode) {
+                ContactMode.UNIFIED -> rawContactId == unifiedContactId
+                ContactMode.SINGLE -> true
             }
+
+            rawContactId?.also {
+                contact.singleContactId = it
+            }
+            unifiedContactId?.also {
+                contact.unifiedContactId = it
+            }
+
             cursor.string(CommonDataKinds.Identity.LOOKUP_KEY)?.also {
                 contact.lookupKey = it
             }
 
             val mimeType = cursor.string(Data.MIMETYPE)
-            contact.displayName = contact.displayName
-                    ?: cursor.string(CommonDataKinds.Nickname.DISPLAY_NAME)
+
+//            if (isPrimary) {
+//                contact.displayName = contact.displayName
+//                        ?: cursor.string(CommonDataKinds.Nickname.DISPLAY_NAME)
+//            }
 
             //NAMES
             when (mimeType) {
                 CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
-                    contact.givenName = cursor.string(CommonDataKinds.StructuredName.GIVEN_NAME)
-                    contact.middleName = cursor.string(CommonDataKinds.StructuredName.MIDDLE_NAME)
-                    contact.familyName = cursor.string(CommonDataKinds.StructuredName.FAMILY_NAME)
-                    contact.prefix = cursor.string(CommonDataKinds.StructuredName.PREFIX)
-                    contact.suffix = cursor.string(CommonDataKinds.StructuredName.SUFFIX)
-                    contact.displayName = cursor.string(mode.nameRef)
-                            ?: contact.displayName
+                    contact.givenName = contact.givenName
+                            ?: cursor.string(CommonDataKinds.StructuredName.GIVEN_NAME)
+                    contact.middleName = contact.middleName
+                            ?: cursor.string(CommonDataKinds.StructuredName.MIDDLE_NAME)
+                    contact.familyName = contact.familyName
+                            ?: cursor.string(CommonDataKinds.StructuredName.FAMILY_NAME)
+                    contact.prefix = contact.prefix
+                            ?: cursor.string(CommonDataKinds.StructuredName.PREFIX)
+                    contact.suffix = contact.suffix
+                            ?: cursor.string(CommonDataKinds.StructuredName.SUFFIX)
+                    contact.displayName = contact.displayName ?: cursor.string(mode.nameRef)
                 }
                 CommonDataKinds.Note.CONTENT_ITEM_TYPE -> contact.note = cursor.string(CommonDataKinds.Note.NOTE)
                 CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
@@ -119,7 +138,7 @@ interface ContactExtensions {
 
                 Data.CONTACT_LAST_UPDATED_TIMESTAMP -> {
                     cursor.string(Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
-                        contact.lastModified = it.toDate()
+                        contact.lastModified = contact.lastModified ?: it.toDate()
                     }
                 }
 
@@ -152,8 +171,10 @@ interface ContactExtensions {
                 }
 
                 CommonDataKinds.Organization.CONTENT_ITEM_TYPE -> {
-                    contact.company = cursor.string(CommonDataKinds.Organization.COMPANY)
-                    contact.jobTitle = cursor.string(CommonDataKinds.Organization.TITLE)
+                    contact.company = contact.company
+                            ?: cursor.string(CommonDataKinds.Organization.COMPANY)
+                    contact.jobTitle = contact.company
+                            ?: cursor.string(CommonDataKinds.Organization.TITLE)
                 }
                 else -> {
                     println("Ignoring mime: $mimeType")
@@ -218,7 +239,7 @@ interface ContactExtensions {
             close()
         }
         resolver.queryContacts()
-                .toContactList(100, 0)
+                .toContactList(mode, 100, 0)
                 .forEach { contact ->
                     for (groupId in contact.groups) {
                         val group = groupsById[groupId] ?: continue
@@ -234,7 +255,7 @@ interface ContactExtensions {
  */
 fun ContentResolver.openContactPhotoInputStream(key: ContactKeys, preferHighres: Boolean): InputStream? {
 
-    if (key.mode == ContactMode.AGGREGATE) return Contacts.openContactPhotoInputStream(this, key.contactUri, preferHighres)
+    if (key.mode == ContactMode.UNIFIED) return Contacts.openContactPhotoInputStream(this, key.contactUri, preferHighres)
 
     if (preferHighres) {
         try {

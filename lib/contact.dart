@@ -4,42 +4,44 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_contact/aggregate_contacts.dart';
-import 'package:flutter_contact/raw_contacts.dart';
+import 'package:flutter_contact/single_contacts.dart';
+import 'package:flutter_contact/unified_contacts.dart';
 import 'package:sunny_dart/helpers.dart';
 import 'package:sunny_dart/helpers/hash_codes.dart';
+import 'package:sunny_dart/sunny_dart.dart';
 import 'package:sunny_dart/time/date_components.dart';
 
-enum ContactMode { raw, aggregate }
+enum ContactMode { single, unified }
 
 ContactMode contactModeOf(dyn) {
   if (dyn == null) return null;
   switch (dyn.toString()) {
-    case 'raw':
-      return ContactMode.raw;
-    case 'aggregate':
-      return ContactMode.aggregate;
+    case 'single':
+      return ContactMode.single;
+    case 'unified':
+      return ContactMode.unified;
     default:
       return null;
   }
 }
 
 ///
-/// Because you can be dealing with linked contacts (aggregated) or individual contacts,
-/// we use this object to be able to track what sort of contact you're dealing with
+/// Because you can be dealing with linked contacts (unified) or individual contacts,
+/// we use this object to be able to track what sort of contact you're dealing with,
+/// and what keys can be used to find, reference, or update it.
 // ignore: must_be_immutable
 class ContactKeys extends Equatable {
   ContactMode mode;
   String identifier;
-  String rawContactId;
-  String aggregateContactId;
+  String singleContactId;
+  String unifiedContactId;
   Map<String, String> otherKeys;
 
   factory ContactKeys(
       {@required ContactMode mode,
       String identifier,
-      String rawContactId,
-      String aggregateContactId,
+      String singleContactId,
+      String unifiedContactId,
       Map<String, String> otherKeys}) {
     assert(mode != null || identifier == null,
         "You must provide a mode if you provide an identifier");
@@ -47,31 +49,31 @@ class ContactKeys extends Equatable {
       return ContactKeys._(
           identifier: null,
           mode: null,
-          aggregateContactId: aggregateContactId,
-          rawContactId: rawContactId,
+          unifiedContactId: unifiedContactId,
+          singleContactId: singleContactId,
           otherKeys: otherKeys);
     }
     switch (mode) {
-      case ContactMode.raw:
+      case ContactMode.single:
         assert(identifier == null ||
-            rawContactId == null ||
-            identifier == rawContactId);
+            singleContactId == null ||
+            identifier == singleContactId);
         return ContactKeys._(
           mode: mode,
-          identifier: identifier ?? rawContactId,
-          rawContactId: identifier ?? rawContactId,
-          aggregateContactId: aggregateContactId,
+          identifier: identifier ?? singleContactId,
+          singleContactId: identifier ?? singleContactId,
+          unifiedContactId: unifiedContactId,
           otherKeys: otherKeys,
         );
-      case ContactMode.aggregate:
+      case ContactMode.unified:
         assert(identifier == null ||
-            aggregateContactId == null ||
-            identifier == aggregateContactId);
+            unifiedContactId == null ||
+            identifier == unifiedContactId);
         return ContactKeys._(
           mode: mode,
-          identifier: identifier ?? aggregateContactId,
-          rawContactId: rawContactId,
-          aggregateContactId: identifier ?? aggregateContactId,
+          identifier: identifier ?? unifiedContactId,
+          singleContactId: singleContactId,
+          unifiedContactId: identifier ?? unifiedContactId,
           otherKeys: otherKeys,
         );
 
@@ -83,15 +85,15 @@ class ContactKeys extends Equatable {
   ContactKeys.empty(this.mode)
       : assert(mode != null),
         identifier = null,
-        aggregateContactId = null,
-        rawContactId = null,
+        unifiedContactId = null,
+        singleContactId = null,
         otherKeys = <String, String>{};
 
   ContactKeys._({
     @required this.mode,
     @required this.identifier,
-    @required this.rawContactId,
-    @required this.aggregateContactId,
+    @required this.singleContactId,
+    @required this.unifiedContactId,
     Map<String, String> otherKeys,
   }) : otherKeys = otherKeys ?? <String, String>{};
 
@@ -110,13 +112,16 @@ class ContactKeys extends Equatable {
   }
 
   factory ContactKeys.fromMap(ContactMode mode, Map map) {
+    final otherKeys = (map[_kotherKeys] ?? {}) as Map;
     return ContactKeys(
       mode: mode,
       identifier: map[_kidentifier]?.toString(),
-      rawContactId: map[_krawContactId]?.toString(),
-      aggregateContactId: map[_kaggregateContactId]?.toString(),
-      otherKeys:
-          (map[_kotherKeys] as Map<String, String>) ?? <String, String>{},
+      singleContactId: map[_ksingleContactId]?.toString(),
+      unifiedContactId: map[_kunifiedContactId]?.toString(),
+      otherKeys: {
+        for (final e in otherKeys.entries)
+          if (e.value != null) "${e.key}": "${e.value}",
+      },
     );
   }
 
@@ -124,22 +129,23 @@ class ContactKeys extends Equatable {
     // ignore: unnecessary_cast
     return {
       'identifier': this.identifier,
-      'rawContactId': this.rawContactId,
-      'aggregateContactId': this.aggregateContactId,
+      'singleContactId': this.singleContactId,
+      'unifiedContactId': this.unifiedContactId,
       'otherKeys': this.otherKeys,
     } as Map<String, dynamic>;
   }
 
   @override
-  List<Object> get props => [mode, rawContactId, aggregateContactId, otherKeys];
+  List<Object> get props =>
+      [mode, singleContactId, unifiedContactId, otherKeys];
 
   /// Contact keys that is based on the logic PK for the mode
   factory ContactKeys.id(ContactMode mode, String identifier) {
     return ContactKeys(
         mode: mode,
         identifier: identifier,
-        rawContactId: null,
-        aggregateContactId: null,
+        singleContactId: null,
+        unifiedContactId: null,
         otherKeys: <String, String>{});
   }
 }
@@ -205,10 +211,10 @@ class Contact {
   FutureOr<Uint8List> getOrFetchAvatar() {
     if (avatar != null) return avatar;
 
-    if (keys?.aggregateContactId == keys?.rawContactId) {
-      return AggregateContacts.getContactImage(this.identifier);
+    if (keys?.unifiedContactId == keys?.singleContactId) {
+      return UnifiedContacts.getContactImage(this.identifier);
     } else {
-      return RawContacts.getContactImage(this.identifier);
+      return SingleContacts.getContactImage(this.identifier);
     }
   }
 
@@ -484,7 +490,13 @@ class PhoneNumber extends Item {
   }
 }
 
-Map<String, dynamic> _itemToMap(Item i) => {"label": i.label, "value": i.value};
+extension ItemToMap on Item {
+  Map<String, dynamic> toMap() {
+    if (this == null) return null;
+    if (value.isNullOrBlank) return null;
+    return {"label": label, "value": value};
+  }
+}
 
 Iterable _iterableKey(map, String key) {
   if (map == null) return [];
@@ -499,32 +511,37 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     _kmiddleName: contact.middleName,
     _kfamilyName: contact.familyName,
     _klastModified: contact.lastModified?.toIso8601String(),
-    _kaggregateContactId: contact.aggregateContactId,
-    _krawContactId: contact.rawContactId,
+    _kunifiedContactId: contact.unifiedContactId,
+    _ksingleContactId: contact.singleContactId,
     _kotherKeys: contact.otherKeys,
     _kprefix: contact.prefix,
     _ksuffix: contact.suffix,
     _kcompany: contact.company,
     _kjobTitle: contact.jobTitle,
     _kemails: [
-      for (final item in contact.emails.where(notNull())) _itemToMap(item)
+      for (final item in contact.emails.map((i) => i.toMap()))
+        if (item != null) item,
     ],
     _kphones: [
-      for (final item in contact.phones.where(notNull())) _itemToMap(item)
+      for (final item in contact.phones.map((i) => i.toMap()))
+        if (item != null) item,
     ],
     _kdates: [
       for (final item in contact.dates.where(notNull())) _contactDateToMap(item)
     ],
     _ksocialProfiles: [
-      for (final item in contact.socialProfiles.where(notNull()))
-        _itemToMap(item)
+      for (final item in contact.socialProfiles.map((i) => i.toMap()))
+        if (item != null) item,
     ],
     _kurls: [
-      for (final item in contact.urls.where(notNull())) _itemToMap(item)
+      for (final item in contact.urls.map((i) => i.toMap()))
+        if (item != null) item,
     ],
     _kpostalAddresses: [
-      for (final address in contact.postalAddresses.where(notNull()))
-        _addressToMap(address)
+      for (final address in contact.postalAddresses
+          .map((address) => address.toMap())
+          .whereNotNull())
+        address
     ],
     _kavatar: contact.avatar,
     _knote: contact.note
@@ -533,14 +550,23 @@ Map<String, dynamic> _contactToMap(Contact contact) {
 
 bool Function(T item) notNull<T>() => (item) => item != null;
 
-Map _addressToMap(PostalAddress address) => {
+extension PostalAddressToMap on PostalAddress {
+  Map toMap() {
+    if (this == null) return null;
+    final address = this;
+    final map = {
       _klabel: address.label,
       _kstreet: address.street,
       _kcity: address.city,
       _kpostcode: address.postcode,
       _kregion: address.region,
       _kcountry: address.country
-    };
+    }.whereValues((v) => v.isNotNullOrBlank);
+
+    /// There will always be a type field, so make sure there's at least one more
+    return map.length <= 1 ? null : map;
+  }
+}
 
 Map _contactDateToMap(ContactDate date) => {
       _klabel: date.label,
@@ -587,8 +613,8 @@ const _kprefix = "prefix";
 const _ksuffix = "suffix";
 const _kfamilyName = "familyName";
 const _kcompany = "company";
-const _kaggregateContactId = "aggregateContactId";
-const _krawContactId = "rawContactId";
+const _kunifiedContactId = "unifiedContactId";
+const _ksingleContactId = "singleContactId";
 const _kotherKeys = "otherKeys";
 const _kjobTitle = "jobTitle";
 const _kemails = "emails";
@@ -618,15 +644,15 @@ extension ContactKeyAccessExt on Contact {
   }
 
   bool get isAggregate {
-    return keys?.mode == ContactMode.aggregate;
+    return keys?.mode == ContactMode.unified;
   }
 
-  String get aggregateContactId {
-    return keys?.aggregateContactId;
+  String get unifiedContactId {
+    return keys?.unifiedContactId;
   }
 
-  String get rawContactId {
-    return keys?.rawContactId;
+  String get singleContactId {
+    return keys?.singleContactId;
   }
 
   Map<String, String> get otherKeys {
@@ -635,10 +661,10 @@ extension ContactKeyAccessExt on Contact {
 
   String getKey(String name) {
     switch (name) {
-      case _kaggregateContactId:
-        return keys?.aggregateContactId;
-      case _krawContactId:
-        return keys?.rawContactId;
+      case _kunifiedContactId:
+        return keys?.unifiedContactId;
+      case _ksingleContactId:
+        return keys?.singleContactId;
       case _kidentifier:
         return identifier;
       default:

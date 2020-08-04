@@ -18,14 +18,14 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - "device_info (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/device_info-0.4.2+4/ios`)"
-  - devicelocale (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/devicelocale-0.3.1/ios`)
-  - Flutter (from `/Users/ericm/sunny/trippi_app/.direnv/flutter/1.19.0-4.3.pre/bin/cache/artifacts/engine/ios`)
-  - flutter_contact (from `/Users/ericm/sunny/plugin/flutter_contact/ios`)
-  - flutter_native_timezone (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/flutter_native_timezone-1.0.4/ios`)
-  - get_ip (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/get_ip-0.4.0/ios`)
-  - libphonenumber (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/libphonenumber-1.0.1/ios`)
-  - "permission_handler (from `/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-5.0.1+1/ios`)"
+  - device_info (from `.symlinks/plugins/device_info/ios`)
+  - devicelocale (from `.symlinks/plugins/devicelocale/ios`)
+  - Flutter (from `Flutter`)
+  - flutter_contact (from `.symlinks/plugins/flutter_contact/ios`)
+  - flutter_native_timezone (from `.symlinks/plugins/flutter_native_timezone/ios`)
+  - get_ip (from `.symlinks/plugins/get_ip/ios`)
+  - libphonenumber (from `.symlinks/plugins/libphonenumber/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
 SPEC REPOS:
   trunk:
@@ -33,21 +33,21 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   device_info:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/device_info-0.4.2+4/ios"
+    :path: ".symlinks/plugins/device_info/ios"
   devicelocale:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/devicelocale-0.3.1/ios"
+    :path: ".symlinks/plugins/devicelocale/ios"
   Flutter:
-    :path: "/Users/ericm/sunny/trippi_app/.direnv/flutter/1.19.0-4.3.pre/bin/cache/artifacts/engine/ios"
+    :path: Flutter
   flutter_contact:
-    :path: "/Users/ericm/sunny/plugin/flutter_contact/ios"
+    :path: ".symlinks/plugins/flutter_contact/ios"
   flutter_native_timezone:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/flutter_native_timezone-1.0.4/ios"
+    :path: ".symlinks/plugins/flutter_native_timezone/ios"
   get_ip:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/get_ip-0.4.0/ios"
+    :path: ".symlinks/plugins/get_ip/ios"
   libphonenumber:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/libphonenumber-1.0.1/ios"
+    :path: ".symlinks/plugins/libphonenumber/ios"
   permission_handler:
-    :path: "/Users/ericm/.pub-cache/hosted/pub.dartlang.org/permission_handler-5.0.1+1/ios"
+    :path: ".symlinks/plugins/permission_handler/ios"
 
 SPEC CHECKSUMS:
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
@@ -60,6 +60,6 @@ SPEC CHECKSUMS:
   libPhoneNumber-iOS: 0a32a9525cf8744fe02c5206eb30d571e38f7d75
   permission_handler: eac8e15b4a1a3fba55b761d19f3f4e6b005d15b6
 
-PODFILE CHECKSUM: b3f98f39b16cc0a18e5ea9ecbe5cfbc88c2ad26a
+PODFILE CHECKSUM: c34e2287a9ccaa606aeceab922830efb9a6ff69a
 
 COCOAPODS: 1.8.4
