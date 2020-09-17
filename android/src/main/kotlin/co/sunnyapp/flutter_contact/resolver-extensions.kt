@@ -173,7 +173,7 @@ interface ContactExtensions {
                 CommonDataKinds.Organization.CONTENT_ITEM_TYPE -> {
                     contact.company = contact.company
                             ?: cursor.string(CommonDataKinds.Organization.COMPANY)
-                    contact.jobTitle = contact.company
+                    contact.jobTitle = contact.jobTitle
                             ?: cursor.string(CommonDataKinds.Organization.TITLE)
                 }
                 else -> {
