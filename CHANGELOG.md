@@ -1,3 +1,6 @@
+## 0.6.3
+ * Fixed issue where company was returned instead of jobTitle (thanks to Martin Krupa)
+
 ## 0.6.2
 
 * Fixed issue fetching contact by id.  
