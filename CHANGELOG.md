@@ -1,3 +1,8 @@
+## 0.6.2
+
+* Fixed issue fetching contact by id.  
+* Added example of full-text search using full_text_search plugin to the example
+
 ## 0.6.1
 
 There shouldn't be any breaking changes, but there are significant changes to how things work under the hood  

@@ -245,7 +245,7 @@ class ContactService implements ContactsContract {
     final _keys = ContactKeys.of(mode, identifier);
     final fromChannel =
         await channel.invokeMethod('getContact', <String, dynamic>{
-      _kidentifier: _keys,
+      _kidentifier: _keys.toMap(),
       _kwithThumbnails: withThumbnails,
       kwithUnifyInfo: withUnifyInfo,
       _kphotoHighResolution: withHiResPhoto,

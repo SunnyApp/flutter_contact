@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/contacts.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:full_text_search/full_text_search.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_config/logging_config.dart';
 import 'package:sunny_dart/sunny_dart.dart';
@@ -15,6 +17,10 @@ class _ContactListPageState extends State<ContactListPage> {
   ContactService _contactService;
   List<Contact> _contacts;
   bool _loading;
+  String searchTerm;
+
+  String _searchTerm;
+
   @override
   void initState() {
     super.initState();
@@ -24,26 +30,53 @@ class _ContactListPageState extends State<ContactListPage> {
     _loading = false;
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> refreshContacts([bool showIndicator = true]) async {
     if (showIndicator) {
       setState(() {
         _loading = true;
       });
     }
-    final contacts = _contactService.listContacts(
-        withUnifyInfo: true,
-        withThumbnails: true,
-        withHiResPhoto: false,
-        sortBy: ContactSortOrder.firstName());
-    final tmp = <Contact>[];
-    while (await contacts.moveNext()) {
-      tmp.add(await contacts.current);
+    List<Contact> _newList;
+    if (_searchTerm.isNotNullOrBlank) {
+      _newList = [
+        ...await FullTextSearch<Contact>.ofStream(
+          term: _searchTerm,
+          items: _contactService.streamContacts(),
+          tokenize: (contact) {
+            return [
+              contact.givenName,
+              contact.familyName,
+              ...contact.phones
+                  .expand((number) => tokenizePhoneNumber(number.value)),
+            ].whereNotBlank();
+          },
+          ignoreCase: true,
+          isMatchAll: true,
+          isStartsWith: true,
+        ).execute().thenMap((results) => results.result)
+      ];
+    } else {
+      final contacts = _contactService.listContacts(
+          withUnifyInfo: true,
+          withThumbnails: true,
+          withHiResPhoto: false,
+          sortBy: ContactSortOrder.firstName());
+      var tmp = <Contact>[];
+      while (await contacts.moveNext()) {
+        tmp.add(await contacts.current);
+      }
+      _newList = tmp;
     }
     setState(() {
       if (showIndicator) {
         _loading = false;
       }
-      _contacts = tmp;
+      _contacts = _newList;
     });
   }
 
@@ -121,14 +154,36 @@ class _ContactListPageState extends State<ContactListPage> {
                     : const SizedBox(),
               ),
             ),
+            SliverToBoxAdapter(
+              key: Key('searchBox'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: PlatformTextField(
+                    cupertino: (context, platform) => CupertinoTextFieldData(
+                      placeholder: 'Search',
+                    ),
+                    material: (context, platform) => MaterialTextFieldData(
+                      decoration: InputDecoration(hintText: 'Search'),
+                    ),
+                    onChanged: (term) async {
+                      _searchTerm = term;
+                      await refreshContacts(false);
+                    },
+                  ),
+                ),
+              ),
+            ),
             ...?_contacts?.map((contact) {
               return SliverToBoxAdapter(
                 child: ListTile(
                   onTap: () async {
+                    final _contact =
+                        await _contactService.getContact(contact.identifier);
                     final res = await Navigator.of(context).push(
                         MaterialPageRoute(builder: (BuildContext context) {
                       return PersonDetailsPage(
-                        contact,
+                        _contact,
                         onContactDeviceSave: contactOnDeviceHasBeenUpdated,
                         contactService: _contactService,
                       );

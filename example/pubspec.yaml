@@ -11,6 +11,9 @@ dependencies:
   intl: ^0.16.0
   logging: ^0.11.4
   logging_config: ^0.4.7
+  flutter_platform_widgets: any
+  full_text_search: any
+  sunny_dart: any
   permission_handler: ^5.0.1+1
 
 dev_dependencies:
