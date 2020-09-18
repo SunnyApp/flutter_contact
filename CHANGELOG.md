@@ -1,3 +1,7 @@
+## 0.6.4
+ * Fixed issue with lastModified timestamp on Android.
+ * Improved permissions and split example project into different files
+
 ## 0.6.3
  * Fixed issue where company was returned instead of jobTitle (thanks to Martin Krupa)
 

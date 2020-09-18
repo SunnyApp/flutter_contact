@@ -2,8 +2,10 @@
 
 package co.sunnyapp.flutter_contact
 
-import android.database.Cursor
-import android.provider.ContactsContract.CommonDataKinds.*
+import android.annotation.SuppressLint
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class DateComponents(val month: Int? = 0, val year: Int? = 0, val day: Int? = 0) {
     companion object {
@@ -25,11 +27,11 @@ data class ContactDate(val label: String?, val date: DateComponents) {
     }
 }
 
-fun DateComponents.toMap():Map<String, Int> {
+fun DateComponents.toMap(): Map<String, Int> {
     val result = mutableMapOf<String, Int>()
-    if(year != null) result["year"] = year
-    if(month != null) result["month"] = month
-    if(day != null) result["day"] = day
+    if (year != null) result["year"] = year
+    if (month != null) result["month"] = month
+    if (day != null) result["day"] = day
     return result
 }
 
@@ -39,3 +41,15 @@ fun ContactDate.toMap(): Map<String, *> {
             "date" to date.toMap())
 }
 
+
+/**
+ * We are using the older java7 styles for compat with older phones
+ */
+@SuppressLint("SimpleDateFormat")
+fun Date?.toIsoString(): String? {
+    val date = this ?: return null
+    val tz: TimeZone = TimeZone.getTimeZone("UTC")
+    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'") // Quoted "Z" to indicate UTC, no timezone offset
+    df.timeZone = tz
+    return df.format(date)
+}

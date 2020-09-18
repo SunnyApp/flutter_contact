@@ -170,7 +170,7 @@ data class Contact(
             "suffix" to suffix,
             "company" to company,
             "jobTitle" to jobTitle,
-            "lastModified" to lastModified?.toString(),
+            "lastModified" to lastModified?.toIsoString(),
             "avatar" to avatar,
             "note" to note,
             "phones" to phones.toItemMap(),

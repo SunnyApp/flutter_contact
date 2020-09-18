@@ -6,11 +6,15 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.*
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.sql.Timestamp
+import java.time.Instant
+import java.util.*
 
 interface ContactExtensions {
 
@@ -114,6 +118,14 @@ interface ContactExtensions {
 //                        ?: cursor.string(CommonDataKinds.Nickname.DISPLAY_NAME)
 //            }
 
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                cursor.long(Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
+                    contact.lastModified = contact.lastModified ?: Date(it)
+                }
+            }
+
+
             //NAMES
             when (mimeType) {
                 CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
@@ -133,12 +145,6 @@ interface ContactExtensions {
                 CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
                     cursor.string(CommonDataKinds.Phone.NUMBER)?.also { phone ->
                         contact.phones += Item(label = cursor.getPhoneLabel(), value = phone)
-                    }
-                }
-
-                Data.CONTACT_LAST_UPDATED_TIMESTAMP -> {
-                    cursor.string(Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
-                        contact.lastModified = contact.lastModified ?: it.toDate()
                     }
                 }
 
