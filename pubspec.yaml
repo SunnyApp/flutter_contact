@@ -52,3 +52,4 @@ flutter:
         pluginClass: FlutterContactPlugin
       ios:
         pluginClass: FlutterContactPlugin
+
