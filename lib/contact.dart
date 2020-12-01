@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
+import 'package:collection/collection.dart'
+    hide IterableExtension, IterableNullableExtension;
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contact/single_contacts.dart';
