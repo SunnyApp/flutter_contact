@@ -31,7 +31,6 @@
 
 
 .gradle/
-gradle*
 *.cer
 
 # Swagger
@@ -89,7 +88,7 @@ fastlane/README.md
 
 coverage/
 lib/generated/
-res/
+/example/build
 
 
 .direnv
