@@ -1,0 +1,40 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+# Uncomment the line if you want fastlane to automatically update itself
+
+fastlane_require 'semantic'
+fastlane_require 'semantic/core_ext'
+require 'fastlane'
+fastlane_require 'fileutils'
+fastlane_require 'open3'
+
+p $VERBOSE
+
+lane :publish do |options|
+  ensure_git_status_clean
+  old_version = curr_semver
+  increase_version
+
+  # Whatever happened with the incrementing, this is the build number we're
+  # going with
+  version = curr_semver
+  changes = release_notes options
+  puts(changes)
+
+  pub_publish
+  finalize_version
+end
+
+lane :icons do
+  download_icons
+  build_icon_fonts
+end
