@@ -2,7 +2,6 @@
 
 package co.sunnyapp.flutter_contact
 
-import co.sunnyapp.flutter_contact.*
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.ISODateTimeFormat
 import java.util.*

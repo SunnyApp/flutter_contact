@@ -117,8 +117,14 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
                 decoration: const InputDecoration(labelText: 'Birthday'),
                 onSaved: (v) {
                   final parsed = DateComponents.from(v);
-                  contact.birthday =
-                      ContactDate.ofDate(label: 'birthday', date: parsed);
+                  if (parsed == null) {
+                    contact.birthday = null;
+                  } else {
+                    contact.birthday = ContactDate.ofDate(
+                      label: 'birthday',
+                      date: parsed,
+                    );
+                  }
                 },
               ),
               TextFormField(
@@ -166,6 +172,10 @@ extension ContactBirthdayExt on Contact {
       .firstOrNull((date) => date.label.toLowerCase() == 'birthday');
 
   set birthday(ContactDate birthday) {
+    if (birthday == null) {
+      dates
+          .removeWhere((element) => element.label?.toLowerCase() == 'birthday');
+    }
     final bd = this.birthday;
     if (bd == null) {
       dates.add(birthday);

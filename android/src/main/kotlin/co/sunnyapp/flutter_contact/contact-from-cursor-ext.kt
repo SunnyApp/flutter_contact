@@ -74,123 +74,132 @@ interface ContactExtensions {
 
         if (offset > 0) {
             val skipped = mutableSetOf<String>()
-            while (skipped.size < offset && cursor.moveToNext()) {
+            while (skipped.size <= offset && cursor.moveToNext()) {
                 val columnIndex = cursor.getColumnIndex(mode.contactIdRef)
                 skipped += cursor.getString(columnIndex)
             }
+
+            /// We overshoot because one record could involve multiple rows.
+            if(skipped.size > offset) {
+                skipped.remove(skipped.last())
+            }
         }
 
-        while (cursor.moveToNext() && contactsById.size <= limit) {
+        try {
+            while (cursor.moveToNext() && contactsById.size <= limit) {
+                val columnIndex = cursor.getColumnIndex(mode.contactIdRef)
+                val contactId = cursor.getString(columnIndex)
 
-            val columnIndex = cursor.getColumnIndex(mode.contactIdRef)
-            val contactId = cursor.getString(columnIndex)
+                val unifiedContactId = cursor.long(CommonDataKinds.Identity.CONTACT_ID)
+                val rawContactId = cursor.long(CommonDataKinds.Identity.RAW_CONTACT_ID)
 
-            val unifiedContactId = cursor.long(CommonDataKinds.Identity.CONTACT_ID)
-            val rawContactId = cursor.long(CommonDataKinds.Identity.RAW_CONTACT_ID)
-
-            val contact = when (val existing = contactsById[contactId]) {
-                null -> Contact(keys = ContactKeys(contactId.toLong())).also {
-                    contactsById[contactId] = it
+                val contact = when (val existing = contactsById[contactId]) {
+                    null -> Contact(keys = ContactKeys(contactId.toLong())).also {
+                            contactsById[contactId] = it
+                        }
+                    else -> existing
                 }
-                else -> existing
-            }
 
-            val isPrimary = when (mode) {
-                ContactMode.UNIFIED -> rawContactId == unifiedContactId
-                ContactMode.SINGLE -> true
-            }
-
-            rawContactId?.also {
-                contact.singleContactId = it
-            }
-            unifiedContactId?.also {
-                contact.unifiedContactId = it
-            }
-
-            cursor.string(CommonDataKinds.Identity.LOOKUP_KEY)?.also {
-                contact.lookupKey = it
-            }
-
-            val mimeType = cursor.string(Data.MIMETYPE)
-
-//            if (isPrimary) {
-//                contact.displayName = contact.displayName
-//                        ?: cursor.string(CommonDataKinds.Nickname.DISPLAY_NAME)
-//            }
-
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                cursor.long(Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
-                    contact.lastModified = contact.lastModified ?: Date(it)
+                val isPrimary = when (mode) {
+                    ContactMode.UNIFIED -> rawContactId == unifiedContactId
+                    ContactMode.SINGLE -> true
                 }
-            }
 
-
-            //NAMES
-            when (mimeType) {
-                CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
-                    contact.givenName = contact.givenName
-                            ?: cursor.string(CommonDataKinds.StructuredName.GIVEN_NAME)
-                    contact.middleName = contact.middleName
-                            ?: cursor.string(CommonDataKinds.StructuredName.MIDDLE_NAME)
-                    contact.familyName = contact.familyName
-                            ?: cursor.string(CommonDataKinds.StructuredName.FAMILY_NAME)
-                    contact.prefix = contact.prefix
-                            ?: cursor.string(CommonDataKinds.StructuredName.PREFIX)
-                    contact.suffix = contact.suffix
-                            ?: cursor.string(CommonDataKinds.StructuredName.SUFFIX)
-                    contact.displayName = contact.displayName ?: cursor.string(mode.nameRef)
+                rawContactId?.also {
+                    contact.singleContactId = it
                 }
-                CommonDataKinds.Note.CONTENT_ITEM_TYPE -> contact.note = cursor.string(CommonDataKinds.Note.NOTE)
-                CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
-                    cursor.string(CommonDataKinds.Phone.NUMBER)?.also { phone ->
-                        contact.phones += Item(label = cursor.getPhoneLabel(), value = phone)
+                unifiedContactId?.also {
+                    contact.unifiedContactId = it
+                }
+
+                cursor.string(CommonDataKinds.Identity.LOOKUP_KEY)?.also {
+                    contact.lookupKey = it
+                }
+
+                val mimeType = cursor.string(Data.MIMETYPE)
+
+                //            if (isPrimary) {
+                //                contact.displayName = contact.displayName
+                //                        ?: cursor.string(CommonDataKinds.Nickname.DISPLAY_NAME)
+                //            }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    cursor.long(Data.CONTACT_LAST_UPDATED_TIMESTAMP)?.also {
+                        contact.lastModified = contact.lastModified ?: Date(it)
                     }
                 }
 
-                CommonDataKinds.Email.CONTENT_ITEM_TYPE -> {
-                    cursor.string(CommonDataKinds.Email.ADDRESS)?.also { email ->
-                        contact.emails += Item(label = cursor.getEmailLabel(), value = email)
+                //NAMES
+                when (mimeType) {
+                    CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
+                        contact.givenName = contact.givenName
+                                ?: cursor.string(CommonDataKinds.StructuredName.GIVEN_NAME)
+                        contact.middleName = contact.middleName
+                                ?: cursor.string(CommonDataKinds.StructuredName.MIDDLE_NAME)
+                        contact.familyName = contact.familyName
+                                ?: cursor.string(CommonDataKinds.StructuredName.FAMILY_NAME)
+                        contact.prefix = contact.prefix
+                                ?: cursor.string(CommonDataKinds.StructuredName.PREFIX)
+                        contact.suffix = contact.suffix
+                                ?: cursor.string(CommonDataKinds.StructuredName.SUFFIX)
+                        contact.displayName = contact.displayName ?: cursor.string(mode.nameRef)
                     }
-                }
-                CommonDataKinds.Event.CONTENT_ITEM_TYPE -> {
-                    cursor.string(CommonDataKinds.Event.START_DATE)?.also { eventDate ->
-                        val tryParse = DateComponents.tryParse(eventDate)
-                        contact.dates += ContactDate(label = cursor.getEventLabel(), date = tryParse, value = eventDate)
+                    CommonDataKinds.Note.CONTENT_ITEM_TYPE -> contact.note = cursor.string(CommonDataKinds.Note.NOTE)
+                    CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
+                        cursor.string(CommonDataKinds.Phone.NUMBER)?.also { phone ->
+                            contact.phones += Item(label = cursor.getPhoneLabel(), value = phone)
+                        }
                     }
-                }
 
-                CommonDataKinds.Website.CONTENT_ITEM_TYPE -> {
-                    cursor.string(CommonDataKinds.Website.URL)?.also { url ->
-                        contact.urls += Item(label = cursor.getWebsiteLabel(), value = url)
+                    CommonDataKinds.Email.CONTENT_ITEM_TYPE -> {
+                        cursor.string(CommonDataKinds.Email.ADDRESS)?.also { email ->
+                            contact.emails += Item(label = cursor.getEmailLabel(), value = email)
+                        }
                     }
-                }
-
-                CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE -> {
-                    cursor.string(CommonDataKinds.GroupMembership.GROUP_SOURCE_ID)?.also { groupId ->
-                        contact.groups += groupId
+                    CommonDataKinds.Event.CONTENT_ITEM_TYPE -> {
+                        cursor.string(CommonDataKinds.Event.START_DATE)?.also { eventDate ->
+                            val tryParse = DateComponents.tryParse(eventDate)
+                            contact.dates += ContactDate(label = cursor.getEventLabel(), date = tryParse, value = eventDate)
+                        }
                     }
-                }
 
-                CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE -> {
-                    val address = PostalAddress(cursor)
-                    contact.postalAddresses += address
-                }
+                    CommonDataKinds.Website.CONTENT_ITEM_TYPE -> {
+                        cursor.string(CommonDataKinds.Website.URL)?.also { url ->
+                            contact.urls += Item(label = cursor.getWebsiteLabel(), value = url)
+                        }
+                    }
 
-                CommonDataKinds.Organization.CONTENT_ITEM_TYPE -> {
-                    contact.company = contact.company
-                            ?: cursor.string(CommonDataKinds.Organization.COMPANY)
-                    contact.jobTitle = contact.jobTitle
-                            ?: cursor.string(CommonDataKinds.Organization.TITLE)
-                }
-                else -> {
-                    println("Ignoring mime: $mimeType")
+                    CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE -> {
+                        cursor.string(CommonDataKinds.GroupMembership.GROUP_SOURCE_ID)?.also { groupId ->
+                            contact.groups += groupId
+                        }
+                    }
+
+                    CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE -> {
+                        val address = PostalAddress(cursor)
+                        contact.postalAddresses += address
+                    }
+
+                    CommonDataKinds.Organization.CONTENT_ITEM_TYPE -> {
+                        contact.company = contact.company
+                                ?: cursor.string(CommonDataKinds.Organization.COMPANY)
+                        contact.jobTitle = contact.jobTitle
+                                ?: cursor.string(CommonDataKinds.Organization.TITLE)
+                    }
+                    else -> {
+                        println("Ignoring mime: $mimeType")
+                    }
                 }
             }
-
+        } finally {
+            if (!isClosed) {
+                close();
+            }
         }
-        if (!isClosed) {
-            close();
+
+        /// One logical record involves multiple rows, so we load up to one extra, and then drop it
+        if (contactsById.size > limit) {
+            contactsById.remove(contactsById.entries.last().key)
         }
         return contactsById.values.toList()
     }
