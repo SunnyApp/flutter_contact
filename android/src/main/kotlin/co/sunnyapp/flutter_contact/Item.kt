@@ -1,3 +1,5 @@
+@file:Suppress("MoveVariableDeclarationIntoWhen")
+
 package co.sunnyapp.flutter_contact
 
 import android.database.Cursor
@@ -12,9 +14,7 @@ data class Item(val label: String?, val value: String?) {
 
   companion object {
 
-    fun fromMap(map: Map<String, *>): Item {
-      return Item(map["label"] as? String?, map["value"] as? String?)
-    }
+
 
     fun stringToPhoneType(label: String?): Int {
       if (label != null) {
@@ -45,12 +45,6 @@ data class Item(val label: String?, val value: String?) {
       return Email.TYPE_OTHER
     }
   }
-}
-
-fun Item.toMap(): Map<String, String?> {
-  return mutableMapOf(
-      "label" to label,
-      "value" to value)
 }
 
 fun Cursor.getPhoneLabel(): String {

@@ -27,14 +27,7 @@ data class PostalAddress(
 
     companion object {
 
-        fun fromMap(map: Map<String, *>): PostalAddress {
-            return PostalAddress(map["label"] as? String?,
-                    map["street"] as? String?,
-                    map["city"] as? String?,
-                    map["postcode"] as? String?,
-                    map["region"] as? String?,
-                    map["country"] as? String?)
-        }
+
     }
 }
 
@@ -91,13 +84,6 @@ fun Cursor.getLabel(): String {
     return "other"
 }
 
-fun PostalAddress.toMap() = mapOf(
-        "label" to label,
-        "street" to street,
-        "city" to city,
-        "postcode" to postcode,
-        "region" to region,
-        "country" to country)
 
 @SuppressLint("DefaultLocale")
 fun String?.toUrlType(): Int {

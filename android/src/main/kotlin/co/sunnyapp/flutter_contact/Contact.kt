@@ -8,11 +8,9 @@ import android.provider.ContactsContract
 import co.sunnyapp.flutter_contact.ContactMode.*
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
+import org.joda.time.format.ISODateTimeFormat
 import java.util.Date
 import java.util.LinkedHashSet
-
-typealias StructList = List<Struct>
-typealias Struct = Map<String, Any>
 
 data class ContactId(val value: String) {
     fun toUri(): Uri {
@@ -89,9 +87,10 @@ data class ContactKeys(
         return clauses.joinToString(" OR ")
     }
 
-    val params get() = arrayOf(identifier?.toString(), lookupKey)
-            .filterNotNull()
-            .toTypedArray()
+    val params
+        get() = arrayOf(identifier?.toString(), lookupKey)
+                .filterNotNull()
+                .toTypedArray()
 
     companion object {
         fun empty(mode: ContactMode) = ContactKeys(mode)
@@ -115,8 +114,7 @@ data class Contact(
         val phones: MutableList<Item> = mutableListOf(),
         val socialProfiles: MutableList<Item> = mutableListOf(),
         val urls: MutableList<Item> = mutableListOf(),
-        val dates: MutableList<Item> = mutableListOf(),
-
+        val dates: MutableList<ContactDate> = mutableListOf(),
         val postalAddresses: MutableList<PostalAddress> = mutableListOf(),
         /// read-only
         val linkedContactIds: MutableList<String> = mutableListOf(),
@@ -145,8 +143,8 @@ data class Contact(
     var singleContactId: Long?
         get() = keys?.singleContactId
         set(value) {
-            if(value != null && keys?.mode == UNIFIED) {
-                if("$value" !in linkedContactIds) {
+            if (value != null && keys?.mode == UNIFIED) {
+                if ("$value" !in linkedContactIds) {
                     linkedContactIds += "$value"
                 }
             }
@@ -160,66 +158,7 @@ data class Contact(
         }
 
 
-    fun toMap() = mutableMapOf(
-            "identifier" to identifier?.toString(),
-            "displayName" to displayName,
-            "givenName" to givenName,
-            "middleName" to middleName,
-            "familyName" to familyName,
-            "prefix" to prefix,
-            "suffix" to suffix,
-            "company" to company,
-            "jobTitle" to jobTitle,
-            "lastModified" to lastModified?.toIsoString(),
-            "avatar" to avatar,
-            "note" to note,
-            "phones" to phones.toItemMap(),
-            "emails" to emails.toItemMap(),
-            "groups" to groups.toList(),
-            "unifiedContactId" to unifiedContactId?.toString(),
-            "singleContactId" to singleContactId?.toString(),
-            "otherKeys" to mapOf("lookupKey" to keys?.lookupKey).filterValuesNotNull(),
-            "socialProfiles" to socialProfiles.toItemMap(),
-            "urls" to urls.toItemMap(),
-            "dates" to dates.toItemMap(),
-            "linkedContactIds" to linkedContactIds,
-            "postalAddresses" to postalAddresses.toAddressMap()
-    ).filterValuesNotNull()
-
-    companion object {
-
-        fun fromMap(mode: ContactMode, map: Map<String, *>): Contact {
-            val contact = Contact(
-                    keys = contactKeyOf(mode = mode,
-                            value = mapOf(
-                                    "unifiedContactId" to map["unifiedContactId"],
-                                    "singleContactId" to map["singleContactId"],
-                                    "lookupKey" to (map["otherKeys"].orEmptyMap()["lookupKey"] as String?),
-                                    "identifier" to map["identifier"])),
-
-                    givenName = map["givenName"] as String?,
-                    middleName = map["middleName"] as String?,
-                    familyName = map["familyName"] as String?,
-                    prefix = map["prefix"] as String?,
-                    suffix = map["suffix"] as String?,
-                    lastModified = (map["lastModified"] as? String)?.toDate(),
-                    company = map["company"] as String?,
-                    jobTitle = map["jobTitle"] as String?,
-                    avatar = (map["avatar"] as? ByteArray?),
-                    note = map["note"] as String?,
-                    linkedContactIds = map["linkedContactIds"].orEmptyList<String>().toMutableList(),
-                    groups = (map["groups"] as Iterable<String>?).orEmpty().toMutableSet(),
-                    emails = (map["emails"] as? StructList?).toItemList(),
-                    phones = (map["phones"] as? StructList?).toItemList(),
-                    socialProfiles = (map["socialProfiles"] as? StructList?).toItemList(),
-                    dates = (map["dates"] as? StructList?).toItemList(),
-                    urls = (map["urls"] as? StructList?).toItemList(),
-                    postalAddresses = (map["postalAddresses"] as? StructList?).toPostalAddressList()
-            )
-
-            return contact
-        }
-    }
+    companion object
 }
 
 fun Any?.toLongOrNull(): Long? = when (this) {
@@ -231,23 +170,7 @@ fun Any?.toLongOrNull(): Long? = when (this) {
 fun <E> Any?.orEmptyList(): List<E> = this as? List<E> ?: emptyList()
 fun Any?.orEmptyMap(): Map<String, Any?> = this as? Map<String, Any?> ?: emptyMap()
 
-val isoDateParser: DateTimeFormatter = DateTimeFormat.fullDateTime()
-fun String.toDate(): Date = isoDateParser.parseDateTime(this).toDate()
-fun MutableList<ContactDate>.toContactDateMap() = map { it.toMap() }
-fun MutableList<Item>.toItemMap() = map { it.toMap() }
-fun MutableList<PostalAddress>.toAddressMap() = map { it.toMap() }
-fun StructList?.toItemList(): MutableList<Item> = this?.map { Item.fromMap(it) }?.toMutableList()
-        ?: mutableListOf()
-
-fun StructList?.toContactDateList(): MutableList<ContactDate> = this?.map { ContactDate.fromMap(it) }?.toMutableList()
-        ?: mutableListOf()
-
-fun StructList?.toPostalAddressList(): MutableList<PostalAddress> = this
-        ?.map { PostalAddress.fromMap(it) }
-        ?.toMutableList() ?: mutableListOf()
-
 fun <T> Iterable<T>?.orEmpty() = this ?: emptyList()
-
 fun <T> Map<String, T?>.filterValuesNotNull(): Map<String, T> {
     return toList().filter { (_, v) -> v != null }.map { (k, v) -> k to v!! }.toMap()
 }

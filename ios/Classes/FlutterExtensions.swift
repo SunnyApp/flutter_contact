@@ -323,6 +323,7 @@ extension CNContact {
                 if let label = date.label{
                     dateDict["label"] = CNLabeledValue<NSString>.localizedString(forLabel: label)
                 }
+            
                 dates.append(dateDict)
             }
             if let bDay = contact.birthday?.toDict() {
@@ -420,7 +421,7 @@ extension CNMutableContact {
         // Dates
         if let dates = dictionary["dates"] as? [[String:Any?]] {
             var updatedItems = [CNLabeledValue<NSDateComponents>]()
-            for item in dates where nil != item["date"] && nil != item["label"] {
+            for item in dates where (nil != item["date"] || nil != item["value"]) && nil != item["label"] {
                 if let date = item["date"] as? [String:Int] {
                     let dateComp = convertNSDateComponents(date)
                     let label = item["label"] as! String
@@ -432,6 +433,23 @@ extension CNMutableContact {
                             label: item["label"] as? String ?? "",
                             value: dateComp))
                     }
+                } else if let value = item["value"] as? String {
+                    
+                    let parsedDateTime = value.parseDate(format: "yyyy-MM-dd")
+                    if let parsedDateTime = parsedDateTime {
+                        let label = item["label"] as! String
+                        let userCalendar = Calendar.current
+                        let dateComp = userCalendar.dateComponents(in: userCalendar.timeZone, from: parsedDateTime)
+                    
+                        if label == "birthday" {
+                            contact.birthday = dateComp
+                        } else {
+                            updatedItems.append(CNLabeledValue(
+                                label: item["label"] as? String ?? "",
+                                                    value: dateComp as NSDateComponents))
+                        }
+                    }
+                    
                 }
             }
             contact.dates = updatedItems

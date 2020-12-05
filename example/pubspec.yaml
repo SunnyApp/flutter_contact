@@ -1,6 +1,9 @@
 name: flutter_contact_example
 description: Demonstrates how to use the flutter_contact plugin
 
+environment:
+  sdk: '>=2.10.0 <3.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
@@ -13,13 +16,12 @@ dependencies:
   logging_config: ^0.4.7
   flutter_platform_widgets: any
   full_text_search: any
-  sunny_dart: any
+  sunny_dart: ^0.5.8+5
   permission_handler: ^5.0.1+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
 
   flutter_contact:
     path: ../
