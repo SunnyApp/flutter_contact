@@ -56,6 +56,8 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
             ),
             onPressed: () async {
               _formKey.currentState.save();
+              FocusManager.instance.primaryFocus?.unfocus();
+              await Future.delayed(300.ms);
               await Contacts.updateContact(contact);
               await Navigator.of(context).pushReplacementNamed('/');
             },
@@ -111,6 +113,15 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
                 onSaved: (v) => contact.company = v,
               ),
               TextFormField(
+                initialValue: contact.birthday?.dateOrValue ?? '',
+                decoration: const InputDecoration(labelText: 'Birthday'),
+                onSaved: (v) {
+                  final parsed = DateComponents.from(v);
+                  contact.birthday =
+                      ContactDate.ofDate(label: 'birthday', date: parsed);
+                },
+              ),
+              TextFormField(
                 initialValue: contact.jobTitle ?? '',
                 decoration: const InputDecoration(labelText: 'Job'),
                 onSaved: (v) => contact.jobTitle = v,
@@ -145,5 +156,22 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
         ),
       ),
     );
+  }
+}
+
+extension ContactBirthdayExt on Contact {
+  ContactDate get birthday => dates
+      .orEmpty()
+      .toList()
+      .firstOrNull((date) => date.label.toLowerCase() == 'birthday');
+
+  set birthday(ContactDate birthday) {
+    final bd = this.birthday;
+    if (bd == null) {
+      dates.add(birthday);
+    } else {
+      final index = dates.indexOf(bd);
+      dates[index] = birthday;
+    }
   }
 }

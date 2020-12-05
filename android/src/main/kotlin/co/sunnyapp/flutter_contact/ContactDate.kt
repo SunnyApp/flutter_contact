@@ -3,42 +3,34 @@
 package co.sunnyapp.flutter_contact
 
 import android.annotation.SuppressLint
+import org.joda.time.DateTime
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class DateComponents(val month: Int? = 0, val year: Int? = 0, val day: Int? = 0) {
-    companion object {
-        fun fromMap(map: Map<String, Int>): DateComponents {
-            return DateComponents(month = map["month"], year = map["year"], day = map["day"])
-        }
-    }
+/**
+ * Represents a date that may be missing components, such as year.
+ *
+ * see parsing options at the bottom of this file
+ */
+data class DateComponents(val month: Int? = null, val year: Int? = null, val day: Int? = null) {
+    override fun toString() = formatted()
+    fun formatted() = listOfNotNull(year, month, day).joinToString("-") { "$it".padStart(2, '0') }
+
+    companion object
 }
 
 /***
- * Represents an object which has a label and a value
- * such as an email or a phone
+ * Represents a date object.  In android, a date can be typed in by the user arbitrarily, so we
+ * attempt to parse out date components, but also provide the original value
  */
-data class ContactDate(val label: String?, val date: DateComponents) {
-    companion object {
-        fun fromMap(map: Map<String, *>): ContactDate {
-            return ContactDate(map["label"] as? String?, DateComponents.fromMap(map["date"] as Map<String, Int>))
-        }
-    }
-}
+data class ContactDate(val label: String?, val value: String, val date: DateComponents?) {
+    companion object
 
-fun DateComponents.toMap(): Map<String, Int> {
-    val result = mutableMapOf<String, Int>()
-    if (year != null) result["year"] = year
-    if (month != null) result["month"] = month
-    if (day != null) result["day"] = day
-    return result
-}
-
-fun ContactDate.toMap(): Map<String, *> {
-    return mutableMapOf(
-            "label" to label,
-            "date" to date.toMap())
+    /**
+     * Returns the date components value first, followed by the original value
+     */
+    fun toDateValue() = date?.formatted() ?: value
 }
 
 
@@ -52,4 +44,37 @@ fun Date?.toIsoString(): String? {
     val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'") // Quoted "Z" to indicate UTC, no timezone offset
     df.timeZone = tz
     return df.format(date)
+}
+
+/**
+ * Attempts to parse date components, eg:
+ * 12-28
+ * 2009-12-22
+ *
+ */
+fun DateComponents.Companion.tryParse(input: String) =
+        try {
+            fromDateTime(isoDateParser.parseDateTime(input.trim()))
+        } catch (e: Exception) {
+            val parts = input.split("-")
+                    .flatMap { it.split("/") }
+                    .filter { !it.isBlank() }
+                    .map { value -> value.trimStart('0') }
+                    .map { it.toInt() }
+
+            val fromParts = when (parts.size) {
+                3 -> DateComponents(year = parts[0], month = parts[1], day = parts[2])
+                1 -> DateComponents(year = parts[0])
+                2 -> when {
+                    parts[0] > 1000 -> DateComponents(year = parts[0], month = parts[1])
+                    else -> DateComponents(month = parts[0], day = parts[1])
+                }
+                else -> null
+            }
+            fromParts
+        }
+
+
+fun DateComponents.Companion.fromDateTime(date: DateTime): DateComponents {
+    return DateComponents(month = date.monthOfYear, year = date.year, day = date.dayOfMonth)
 }

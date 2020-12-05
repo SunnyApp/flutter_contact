@@ -7,10 +7,13 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contact/single_contacts.dart';
 import 'package:flutter_contact/unified_contacts.dart';
+import 'package:logging/logging.dart';
 import 'package:sunny_dart/helpers.dart';
 import 'package:sunny_dart/helpers/hash_codes.dart';
 import 'package:sunny_dart/sunny_dart.dart';
 import 'package:sunny_dart/time/date_components.dart';
+
+final flutterContactLog = Logger('flutterContact');
 
 enum ContactMode { single, unified }
 
@@ -392,27 +395,66 @@ class Contact {
 class ContactDate {
   final String label;
   final DateComponents date;
+  final String value;
 
-  ContactDate({this.label, this.date});
+  ContactDate.ofDate({this.label, @required this.date})
+      : assert(date != null),
+        value = "$date";
+
+  ContactDate.ofValue({
+    this.label,
+    @required this.value,
+    this.date,
+  }) : assert(value != null);
+
+  ContactDate({
+    this.label,
+    this.value,
+    this.date,
+  }) : assert(value != null || date != null);
 
   factory ContactDate.fromMap(final dyn) {
-    if (dyn is! Map<dynamic, dynamic> || dyn[_kdate] == null) return null;
-    return ContactDate(
-        label: dyn[_klabel] as String, date: DateComponents.from(dyn[_kdate]));
+    if (dyn is Map<dynamic, dynamic>) {
+      if (dyn[_kdate] == null && dyn[_kvalue] == null) {
+        flutterContactLog.warning(
+            "Received date with no value for either 'date' or 'value'");
+        return null;
+      }
+      final label = dyn[_klabel] as String;
+      DateComponents dateComponents;
+      try {
+        dateComponents = dyn[_kdate] != null
+            ? DateComponents.from(dyn[_kdate] ?? dyn[_kvalue])
+            : null;
+      } catch (e) {
+        flutterContactLog.finer("Error parsing date: $dyn");
+      }
+      if (dateComponents != null) {
+        return ContactDate.ofDate(date: dateComponents, label: label);
+      } else {
+        return ContactDate.ofValue(value: dyn[_kvalue] as String, label: label);
+      }
+    }
+    return null;
   }
+
+  String get dateOrValue => date?.toString() ?? value;
 
   @override
   String toString() {
-    return 'ContactDate{label: $label, date: $date}';
+    return 'ContactDate{label: $label, date: $date, value: $value}';
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ContactDate && label == other.label && date == other.date;
+      other is ContactDate &&
+          label == other.label &&
+          date == other.date &&
+          value == other.value;
 
   @override
-  int get hashCode => hashOf(label, date);
+  int get hashCode => hashOf(label, date, value);
 }
 
 // ignore: must_be_immutable
@@ -571,7 +613,8 @@ extension PostalAddressToMap on PostalAddress {
 
 Map _contactDateToMap(ContactDate date) => {
       _klabel: date.label,
-      _kdate: date.date?.toMap() ?? {},
+      _kdate: date.date?.toMap(),
+      _kvalue: date.value ?? date.date?.toString(),
     };
 
 typedef PhoneNumberSanitizer = String Function(String);
@@ -628,6 +671,7 @@ const _kdates = "dates";
 const _kavatar = "avatar";
 const _klabel = "label";
 const _kdate = "date";
+const _kvalue = "value";
 const _knote = "note";
 const _klastModified = "lastModified";
 

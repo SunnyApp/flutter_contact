@@ -52,7 +52,7 @@ interface ContactExtensions {
 
         val sortOrder = if (forCount) null else ContactSorting[sortBy]
 
-        return query(Data.CONTENT_URI, projections, selection, selectionArgs,  sortOrder + ContactSorting.byUnifiedContact)
+        return query(Data.CONTENT_URI, projections, selection, selectionArgs, sortOrder + ContactSorting.byUnifiedContact)
     }
 
     /**
@@ -155,7 +155,8 @@ interface ContactExtensions {
                 }
                 CommonDataKinds.Event.CONTENT_ITEM_TYPE -> {
                     cursor.string(CommonDataKinds.Event.START_DATE)?.also { eventDate ->
-                        contact.dates += Item(label = cursor.getEventLabel(), value = eventDate)
+                        val tryParse = DateComponents.tryParse(eventDate)
+                        contact.dates += ContactDate(label = cursor.getEventLabel(), date = tryParse, value = eventDate)
                     }
                 }
 

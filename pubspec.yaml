@@ -28,7 +28,7 @@ dependencies:
   quiver: ^2.1.3
 
   # Low-level utilities
-  sunny_dart: ^0.5.8
+  sunny_dart: ^0.5.8+5
 
   uuid: ^2.2.2
 
