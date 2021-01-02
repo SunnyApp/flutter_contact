@@ -174,7 +174,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         }
 
         val saveResult = context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-        val contactId = saveResult.first().uri.lastPathSegment?.toLong()
+        val contactId = saveResult.first().uri?.lastPathSegment?.toLong()
                 ?: pluginError("invalidId", "Expected a valid id")
 
         return getContact(ContactKeys(contactId), withThumbnails = true, photoHighResolution = true)
