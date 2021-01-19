@@ -96,6 +96,12 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                     contact.takeFromDictionary(call.args)
                     let saved = try self.addContact(contact: contact)
                     result(saved.toDictionary(self.mode))
+                case "addContactToGroup":
+                    let contact = CNMutableContact()
+                    contact.takeFromDictionary(call.args["contact"], call.args["identifier"])
+                    let saved = try self.addContact(contact: contact)
+                    result(saved.toDictionary(self.mode))
+
                 case "deleteContact":
                     let deleted = try self.deleteContact(call.args)
                     result(deleted)
@@ -361,6 +367,16 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
         return contact
     }
     
+    @available(iOS 9.0, *)
+    func addContactToGroup(contact : CNMutableContact, toContainerWithIdentifier : String) throws -> CNMutableContact  {
+        let store = CNContactStore()
+        let saveRequest = CNSaveRequest()
+
+        saveRequest.add(contact, toContainerWithIdentifier: toContainerWithIdentifier)
+        try store.execute(saveRequest)
+        return contact
+    }
+
     @available(iOS 9.0, *)
     func deleteContact(_ dictionary: [String:Any?]) throws -> Bool {
         let key = try contactKeyOf(dictionary["identifier"]!)

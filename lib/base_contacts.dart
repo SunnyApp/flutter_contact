@@ -60,6 +60,8 @@ abstract class ContactsContract implements FormsContract {
 
   Future<Contact> addContact(Contact contact);
 
+  Future<Contact> addContactToGroup(Contact contact, String identifier);
+
   Future<bool> deleteContact(Contact contact);
 
   Future<Contact> updateContact(Contact contact);
@@ -258,6 +260,13 @@ class ContactService implements ContactsContract {
   @override
   Future<Contact> addContact(Contact contact) async {
     final map = await channel.invokeMethod('addContact', contact.toMap());
+    return Contact.fromMap(map, mode);
+  }
+
+  @override
+  Future<Contact> addContactToGroup(Contact contact, String identifier) async {
+    final map = await channel.invokeMethod('addContactToGroup',
+        {'contact': contact.toMap(), 'identifier': identifier});
     return Contact.fromMap(map, mode);
   }
 
