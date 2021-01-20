@@ -23,7 +23,6 @@ dependencies:
   logging: ^0.11.4
   logging_config: ^0.4.7
 
-  permission_handler: ^5.0.1+1
   # Utilities (== hashCode generation)
   quiver: ^2.1.3
 
