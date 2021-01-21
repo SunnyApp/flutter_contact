@@ -6,18 +6,31 @@ import 'package:flutter_contact_example/update_person_page.dart';
 
 import 'extensions.dart';
 
-class PersonDetailsPage extends StatelessWidget {
-  PersonDetailsPage(this._contact,
-      {this.onContactDeviceSave, @required this.contactService});
+class PersonDetailsPage extends StatefulWidget {
+  PersonDetailsPage(
+      {this.contact, this.onContactDeviceSave, @required this.contactService});
 
-  final Contact _contact;
+  Contact contact;
   final Function(Contact) onContactDeviceSave;
   final ContactService contactService;
 
+  @override
+  _PersonDetailsPageState createState() => _PersonDetailsPageState();
+}
+
+class _PersonDetailsPageState extends State<PersonDetailsPage> {
+  Contact _contact;
+
+  void initState() {
+    super.initState();
+    _contact = widget.contact;
+  }
+
   Future _openExistingContactOnDevice(BuildContext context) async {
-    var contact = await contactService.openContactEditForm(_contact.identifier);
-    if (onContactDeviceSave != null) {
-      onContactDeviceSave(contact);
+    var contact =
+        await widget.contactService.openContactEditForm(_contact.identifier);
+    if (widget.onContactDeviceSave != null) {
+      widget.onContactDeviceSave(contact);
     }
     Navigator.of(context).pop();
   }
@@ -31,7 +44,7 @@ class PersonDetailsPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: () async {
-              final res = await contactService.deleteContact(_contact);
+              final res = await widget.contactService.deleteContact(_contact);
               if (res) {
                 Navigator.pop(context, true);
               }
@@ -100,8 +113,16 @@ class PersonDetailsPage extends StatelessWidget {
               trailing: Text(_contact.jobTitle ?? ''),
             ),
             AddressesTile(_contact.postalAddresses),
-            ItemsTile('Phones', _contact.phones),
-            ItemsTile('Emails', _contact.emails)
+            ItemsTile('Phones', _contact.phones, () async {
+              _contact = await Contacts.updateContact(_contact);
+              setState(() {});
+              widget.onContactDeviceSave(_contact);
+            }),
+            ItemsTile('Emails', _contact.emails, () async {
+              _contact = await Contacts.updateContact(_contact);
+              setState(() {});
+              widget.onContactDeviceSave(_contact);
+            })
           ],
         ),
       ),

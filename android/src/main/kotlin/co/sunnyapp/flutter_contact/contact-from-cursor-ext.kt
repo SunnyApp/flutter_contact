@@ -165,7 +165,7 @@ interface ContactExtensions {
 
                     CommonDataKinds.Website.CONTENT_ITEM_TYPE -> {
                         cursor.string(CommonDataKinds.Website.URL)?.also { url ->
-                            contact.urls += Item(label = cursor.getWebsiteLabel(), value = url)
+                            contact.urls += Item(label = cursor.getUrlLabel(), value = url)
                         }
                     }
 

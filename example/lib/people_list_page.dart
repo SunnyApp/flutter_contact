@@ -183,7 +183,7 @@ class _PeopleListPageState extends State<PeopleListPage> {
                     final res = await Navigator.of(context).push(
                         MaterialPageRoute(builder: (BuildContext context) {
                       return PersonDetailsPage(
-                        _contact,
+                        contact: _contact,
                         onContactDeviceSave: contactOnDeviceHasBeenUpdated,
                         contactService: _contactService,
                       );

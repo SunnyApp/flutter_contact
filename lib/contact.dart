@@ -326,7 +326,8 @@ class Contact {
   }
 
   Map<String, dynamic> toMap() {
-    return _contactToMap(this);
+    final _ = _contactToMap(this);
+    return _;
   }
 
   /// The [+] operator fills in this contact's empty fields with the fields from [other]

@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
+import java.util.*
 
 @TargetApi(Build.VERSION_CODES.ECLAIR)
 data class PostalAddress(
@@ -45,20 +46,6 @@ fun String?.toEventType(): Int {
 
 }
 
-
-
-fun String?.toPostalAddressType(): Int {
-    val label = this;
-    if (label != null) {
-        return when (label) {
-            "home" -> StructuredPostal.TYPE_HOME
-            "work" -> StructuredPostal.TYPE_WORK
-            else -> StructuredPostal.TYPE_OTHER
-        }
-    }
-    return StructuredPostal.TYPE_OTHER
-}
-
 fun Cursor.string(index: String): String? {
     return getString(getColumnIndex(index))
 }
@@ -82,25 +69,4 @@ fun Cursor.getLabel(): String {
         }
     }
     return "other"
-}
-
-
-@SuppressLint("DefaultLocale")
-fun String?.toUrlType(): Int {
-    val label = this;
-
-    if (label != null) {
-        return when (label.toLowerCase()) {
-            "work" -> ContactsContract.CommonDataKinds.Website.TYPE_WORK
-            "blog" -> ContactsContract.CommonDataKinds.Website.TYPE_BLOG
-            "home" -> ContactsContract.CommonDataKinds.Website.TYPE_HOME
-            "website" -> ContactsContract.CommonDataKinds.Website.TYPE_HOMEPAGE
-            "homepage" -> ContactsContract.CommonDataKinds.Website.TYPE_HOMEPAGE
-            "ftp" -> ContactsContract.CommonDataKinds.Website.TYPE_FTP
-            "profile" -> ContactsContract.CommonDataKinds.Website.TYPE_PROFILE
-            else -> ContactsContract.CommonDataKinds.Website.TYPE_OTHER
-        }
-    }
-    return ContactsContract.CommonDataKinds.Event.TYPE_OTHER
-
 }
