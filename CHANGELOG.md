@@ -1,3 +1,6 @@
+## 0.6.5+2
+ * Lowered minimum iOS deployment target from 12.0 to 9.0.
+
 ## 0.6.4
  * Fixed issue with lastModified timestamp on Android.
  * Improved permissions and split example project into different files
