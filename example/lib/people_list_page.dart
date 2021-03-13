@@ -90,7 +90,13 @@ class _PeopleListPageState extends State<PeopleListPage> {
   }
 
   Future _openContactForm() async {
-    final contact = await Contacts.openContactInsertForm();
+    final contact = await Contacts.openContactInsertForm(
+        Contact(givenName: 'Bob', familyName: 'McRichards', emails: [
+      Item(
+        label: 'home',
+        value: '480-123-3324',
+      )
+    ]));
     if (contact != null) {
       await refreshContacts();
     }

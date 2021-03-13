@@ -1,8 +1,10 @@
+@file:Suppress("NAME_SHADOWING")
+
 package co.sunnyapp.flutter_contact
 
+import android.content.ContentProviderOperation
 import android.content.ContentValues
 import android.content.Intent
-import android.net.Uri
 import android.provider.ContactsContract
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
@@ -66,7 +68,7 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
         try {
             this.result = result
             val intent = Intent(Intent.ACTION_INSERT, mode.contentUri)
-            contact.applyToIntent(intent)
+            contact.applyToIntent(mode, intent)
             intent.putExtra("finishActivityOnSaveCompleted", true)
             startIntent(intent, REQUEST_OPEN_CONTACT_FORM)
         } catch (e: MethodCallException) {
@@ -95,11 +97,109 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
 }
 
 /// For now, only copies basic properties
-fun Contact.applyToIntent(intent: Intent) {
+fun Contact.applyToIntent(mode: ContactMode, intent: Intent) {
+    val contact = this
+
+    val inboundData = ArrayList<ContentValues>()
+
+    inboundData += contentValues(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, contact.givenName)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME, contact.middleName)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, contact.familyName)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.PREFIX, contact.prefix)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.SUFFIX, contact.suffix)
+
+
+    inboundData += contentValues(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Note.NOTE, contact.note)
+
+
+    inboundData += contentValues(ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, contact.company)
+            .withValue(ContactsContract.CommonDataKinds.Organization.TITLE, contact.jobTitle)
+
+    //Phones
+    for (phone in contact.phones) {
+        inboundData += contentValues(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone.value)
+                .withTypeAndLabel(ItemType.phone, phone.label)
+    }
+
+    //Emails
+    for (email in contact.emails) {
+        inboundData += contentValues(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.Email.ADDRESS, email.value)
+                .withTypeAndLabel(ItemType.email, email.label)
+    }
+
+    //Postal addresses
+    for (address in contact.postalAddresses) {
+        inboundData += contentValues(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE)
+                .withTypeAndLabel(ItemType.address, address.label)
+                .withValue(ContactsContract.CommonDataKinds.StructuredPostal.STREET, address.street)
+                .withValue(ContactsContract.CommonDataKinds.StructuredPostal.CITY, address.city)
+                .withValue(ContactsContract.CommonDataKinds.StructuredPostal.REGION, address.region)
+                .withValue(ContactsContract.CommonDataKinds.StructuredPostal.POSTCODE, address.postcode)
+                .withValue(ContactsContract.CommonDataKinds.StructuredPostal.COUNTRY, address.country)
+    }
+
+
+    for (date in contact.dates) {
+        inboundData += contentValues(ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+                .withTypeAndLabel(ItemType.event, date.label)
+                .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, date.toDateValue())
+
+    }
+
+    for (url in contact.urls) {
+        inboundData += contentValues(ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
+                .withTypeAndLabel(ItemType.url, url.label)
+                .withValue(ContactsContract.CommonDataKinds.Website.URL, url.value)
+    }
+
+
+
     intent.apply {
         putExtra(ContactsContract.Intents.Insert.EMAIL, emails.firstOrNull()?.value)
         putExtra(ContactsContract.Intents.Insert.PHONE, phones.firstOrNull()?.value)
+        putExtra(ContactsContract.Intents.Insert.NAME, listOfNotNull(contact.givenName, contact.familyName).let {
+            when {
+                it.isNotEmpty() -> it
+                else -> listOfNotNull(contact.displayName)
+            }
+        }.joinToString(" "))
         putExtra(ContactsContract.Intents.Insert.COMPANY, company)
-        putExtra(ContactsContract.Intents.Insert.NAME, displayName)
+        putExtra(ContactsContract.Intents.Insert.NOTES, note)
+        putParcelableArrayListExtra(ContactsContract.Intents.Insert.DATA, inboundData)
+    }
+
+}
+
+fun ContentValues.withValue(key: String, value: String?) = apply {
+    val value = value ?: return@apply
+    put(key, value)
+}
+
+fun ContentValues.withValue(key: String, value: Int?) = apply {
+    val value = value ?: return@apply
+    put(key, value)
+}
+
+fun ContentValues.withTypeAndLabel(type: ItemType, labelString: String?) = apply {
+    val label = labelString ?: return@apply
+    return when (val typeInt = type.calculateTypeInt(label)) {
+        type.otherType -> withValue(type.typeField, typeInt)
+                .withValue(type.labelField, label)
+        else -> withValue(type.typeField, typeInt)
+    }
+
+}
+
+fun contentValues(mimeType: String, vararg values: Pair<String, String?>) = ContentValues().apply {
+    put(ContactsContract.Data.MIMETYPE, mimeType)
+    for ((k, v) in values) {
+        if (v != null) {
+            put(k, v)
+        }
     }
 }
