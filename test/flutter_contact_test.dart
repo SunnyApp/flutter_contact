@@ -10,8 +10,9 @@ import 'mock_contact_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   const MethodChannel channel =
-      MethodChannel('github.com/sunnyapp/flutter_contact');
+      MethodChannel('github.com/sunnyapp/flutter_unified_contact');
   final mock = ContactsMocks();
   channel.setMockMethodCallHandler(mock.handler);
 
@@ -86,7 +87,7 @@ void main() {
     final contact = Contact(
       givenName: 'Bob',
       dates: [
-        ContactDate(label: 'birthday', date: DateComponents(month: 12, day: 28))
+        ContactDate(label: 'birthday', date: FlexiDate.of(month: 12, day: 28))
       ],
       phones: [Item(label: 'label')],
       postalAddresses: [PostalAddress(label: 'label')],
@@ -133,10 +134,8 @@ void main() {
       givenName: "givenName",
       familyName: "familyName",
       dates: [
-        ContactDate(
-            label: "birthday", date: DateComponents(month: 12, day: 28)),
-        ContactDate(
-            label: "birthday", date: DateComponents(month: 12, day: 28)),
+        ContactDate(label: "birthday", date: FlexiDate.of(month: 12, day: 28)),
+        ContactDate(label: "birthday", date: FlexiDate.of(month: 12, day: 28)),
       ],
       emails: [
         Item(label: "home", value: "smartytime@gmail.com"),
@@ -247,27 +246,23 @@ void main() {
     expect(contact1 + contact2, contact1);
   });
 
+  test('Parse intl date', () {
+    final date = FlexiDate.parse("6 июля 1983");
+    expect(date, isNotNull);
+  });
+
   test('should provide a map of the contact', () {
     Contact contact = Contact(givenName: "givenName", familyName: "familyName");
     expect(contact.toMap(), {
-      "identifier": null,
-      "displayName": null,
       "givenName": "givenName",
-      "middleName": null,
       "familyName": "familyName",
-      "lastModified": null,
+      "otherKeys": {},
       "socialProfiles": [],
       "dates": [],
       "urls": [],
-      "prefix": null,
-      "suffix": null,
-      "company": null,
-      "jobTitle": null,
       "emails": [],
       "phones": [],
       "postalAddresses": [],
-      "avatar": null,
-      "note": null
     });
   });
 }

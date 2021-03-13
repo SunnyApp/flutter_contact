@@ -1,6 +1,6 @@
 import 'package:flexidate/flexidate.dart';
 
-extension DateComponentsFormat on DateComponents {
+extension FlexiDateFormat on FlexiDate {
   String format() {
     return [year, month, day].where((d) => d != null).join('-');
   }

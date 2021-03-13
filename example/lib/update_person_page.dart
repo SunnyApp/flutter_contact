@@ -117,7 +117,7 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
                 initialValue: contact.birthday?.dateOrValue ?? '',
                 decoration: const InputDecoration(labelText: 'Birthday'),
                 onSaved: (v) {
-                  final parsed = DateComponents.from(v);
+                  final parsed = FlexiDate.from(v);
                   if (parsed == null) {
                     contact.birthday = null;
                   } else {

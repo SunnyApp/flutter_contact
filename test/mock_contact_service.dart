@@ -12,8 +12,8 @@ class ContactsMocks {
   final List<MethodCall> _log;
   final Map<String, dynamic> _data;
 
-  ContactsMocks({Map<String, dynamic> data = const {}, List<MethodCall>? log})
-      : _data = data,
+  ContactsMocks({Map<String, dynamic>? data, List<MethodCall>? log})
+      : _data = data ?? {},
         _log = log ?? [] {
     _mockMethods = <String, RawMethodHandler>{
       "getContacts": _getContacts,

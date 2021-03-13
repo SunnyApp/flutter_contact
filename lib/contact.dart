@@ -5,7 +5,7 @@ import 'package:collection/collection.dart'
     hide IterableExtension, IterableNullableExtension;
 import 'package:dartxx/dartxx.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flexidate/date_components.dart';
+import 'package:flexidate/flexidate.dart';
 import 'package:flutter_contact/single_contacts.dart';
 import 'package:flutter_contact/unified_contacts.dart';
 import 'package:logging/logging.dart';
@@ -393,10 +393,10 @@ class Contact {
 
 class ContactDate {
   final String? label;
-  final DateComponents? date;
+  final FlexiDate? date;
   final String? value;
 
-  ContactDate.ofDate({this.label, required DateComponents this.date})
+  ContactDate.ofDate({this.label, required FlexiDate this.date})
       : value = "$date";
 
   ContactDate.ofValue({
@@ -419,16 +419,18 @@ class ContactDate {
         return null;
       }
       final label = dyn[_klabel] as String?;
-      DateComponents? dateComponents;
+      FlexiDate? flexi;
       try {
-        dateComponents = dyn[_kdate] != null
-            ? DateComponents.from(dyn[_kdate] ?? dyn[_kvalue])
+        flexi = dyn[_kdate] != null
+            ? FlexiDate.from(dyn[_kdate] ?? dyn[_kvalue])
             : null;
       } catch (e) {
         flutterContactLog.finer("Error parsing date: $dyn");
       }
-      if (dateComponents != null) {
-        return ContactDate.ofDate(date: dateComponents, label: label);
+      if (flexi?.isValid == true) {
+        return ContactDate.ofDate(date: flexi!, label: label);
+      } else if (flexi?.isValid == false && flexi?.source != null) {
+        return ContactDate.ofValue(value: "$flexi", label: label);
       } else {
         return ContactDate.ofValue(value: dyn[_kvalue] as String, label: label);
       }
@@ -619,7 +621,7 @@ Map<String, dynamic>? _contactDateToMap(ContactDate? date) => date == null
     ? null
     : {
         _klabel: date.label,
-        _kdate: date.date?.toMap(),
+        _kdate: date.date?.toDateMap(),
         _kvalue: date.value ?? date.date?.toString(),
       }.valuesNotNull();
 
@@ -687,7 +689,15 @@ const _kpostcode = "postcode";
 const _kregion = "region";
 const _kcountry = "country";
 
-extension _DateComponentsExt on DateComponents {}
+extension FlexiDateToMap on FlexiDate {
+  Map<String, int?>? toDateMap() {
+    if (this is FlexiDateData && this.isValid) {
+      return (this as FlexiDateData).toMap();
+    } else {
+      return null;
+    }
+  }
+}
 
 extension ContactKeyAccessExt on Contact {
   ContactMode? get mode {
