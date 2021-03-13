@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
@@ -36,13 +34,13 @@ class _ItemsTileState extends State<ItemsTile> {
                       final newLabel = await showPlatformDialog<String>(
                           context: context,
                           builder: (context) {
-                            return EditLabelPage(label: i.label);
+                            return EditLabelPage(label: i.label ?? 'No Label');
                           });
 
                       setState(() {
                         i.label = newLabel;
                       });
-                      widget.onChange?.call();
+                      widget.onChange.call();
                     },
                   ),
                 ),
@@ -104,14 +102,14 @@ class AddressesTile extends StatelessWidget {
 class EditLabelPage extends StatefulWidget {
   final String label;
 
-  const EditLabelPage({Key key, this.label}) : super(key: key);
+  const EditLabelPage({Key? key, required this.label}) : super(key: key);
 
   @override
   _EditLabelPageState createState() => _EditLabelPageState();
 }
 
 class _EditLabelPageState extends State<EditLabelPage> {
-  TextEditingController _controller;
+  late TextEditingController _controller;
 
   @override
   void initState() {
@@ -138,15 +136,16 @@ class _EditLabelPageState extends State<EditLabelPage> {
       ),
       actions: [
         PlatformDialogAction(
-            child: Text('Save'),
             onPressed: () {
               Navigator.pop(context, _controller.text);
-            }),
+            },
+            child: Text('Save')),
         PlatformDialogAction(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.pop(context);
-            })
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Cancel'),
+        )
       ],
     );
   }

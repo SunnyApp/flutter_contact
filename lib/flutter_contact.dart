@@ -1,4 +1,4 @@
-export 'package:sunny_dart/time.dart';
+library flutter_contact;
 
 export 'base_contacts.dart';
 export 'contact.dart';

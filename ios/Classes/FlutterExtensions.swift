@@ -87,6 +87,38 @@ protocol DComponents {
     var day: Int { get set }
 }
 
+extension Dictionary where Key == String, Value==Any? {
+    // Retrieves a value from a dictionary and verifies that it exists and isn't null
+    func getAny(_ key:String, desc: String? = nil) throws -> Any {
+        guard let anyValue = self[key] else {
+            var msg = "Missing value for key \(key)"
+            if let desc:String = desc {
+              msg += " (\(desc)"
+            }
+            throw PluginError.runtimeError(code: "key.notFound.\(key)", message: msg)
+        }
+        
+        guard let nonNull:Any = anyValue else {
+            var msg = "Value was null, expected non-null for key \(key)"
+            if let desc:String = desc {
+              msg += " (\(desc)"
+            }
+            throw PluginError.runtimeError(code: "key.nullValue.\(key)", message: msg)
+        }
+        return nonNull
+    }
+    
+    // Retrieves a value from a dictionary and verifies that it exists and is a String
+    func getString(_ key:String, desc: String? = nil) throws -> String {
+        let any = try self.getAny(key)
+        guard let string = any as? String else {
+            throw PluginError.runtimeError(code: "key.notString.\(key)", message: "Expected string value \(key) but found \(type(of: any)) for Couldn't find contact")
+        }
+        return string
+    }
+    
+}
+
 extension DComponents {
     // Takes values from a dictionary
     mutating func takeFrom(dictionary: [String:Int]) {

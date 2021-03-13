@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contact/paging_iterable.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_config/logging_config.dart';
-import 'package:sunny_dart/sunny_dart.dart';
 
 import 'contact.dart';
 import 'contact_events.dart';
@@ -21,52 +20,52 @@ const _kphotoHighResolution = "photoHighResolution";
 abstract class FormsContract {
   /// Opens a native edit form for the contact with [identifier].  This can be a
   /// simple string, but you can also provide a [ContactKeys] instance
-  Future<Contact> openContactEditForm(identifier);
+  Future<Contact?> openContactEditForm(identifier);
 
   /// Opens a native insert form with [data] preloaded
-  Future<Contact> openContactInsertForm(Contact data);
+  Future<Contact?> openContactInsertForm(Contact data);
 }
 
 abstract class ContactsContract implements FormsContract {
   Stream<Contact> streamContacts(
-      {String query,
-      bool phoneQuery,
+      {String? query,
+      bool? phoneQuery,
       int bufferSize = 20,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
       bool withUnifyInfo = false,
-      ContactSortOrder sortBy});
+      ContactSortOrder? sortBy});
 
-  Future<int> getTotalContacts({String query, bool phoneQuery});
+  Future<int?> getTotalContacts({String? query, bool? phoneQuery});
 
   PagingList<Contact> listContacts({
-    String query,
-    bool phoneQuery,
+    String? query,
+    bool? phoneQuery,
     int bufferSize = 20,
     bool withThumbnails = true,
     bool withHiResPhoto = true,
     bool withUnifyInfo = false,
-    ContactSortOrder sortBy,
+    ContactSortOrder? sortBy,
   });
 
-  void configureLogs({Level level, LoggingHandler onLog});
+  void configureLogs({Level? level, LoggingHandler? onLog});
 
-  Future<Contact> getContact(String identifier,
+  Future<Contact?> getContact(String identifier,
       {bool withThumbnails = true,
       bool withUnifyInfo = true,
       bool withHiResPhoto = true});
 
-  Future<Uint8List> getContactImage(String identifier);
+  Future<Uint8List?> getContactImage(String identifier);
 
   Future<Contact> addContact(Contact contact);
 
-  Future<bool> deleteContact(Contact contact);
+  Future<bool?> deleteContact(Contact contact);
 
   Future<Contact> updateContact(Contact contact);
 
   Future<Iterable<Group>> getGroups();
 
-  Stream<ContactEvent> get contactEvents;
+  Stream<ContactEvent?> get contactEvents;
 }
 
 const kwithThumbnails = 'withThumbnails';
@@ -81,14 +80,14 @@ const kids = 'ids';
 
 PageGenerator<Contact> _defaultPageGenerator(
         ContactService _service,
-        String query,
-        bool phoneQuery,
+        String? query,
+        bool? phoneQuery,
         bool withThumbnails,
         bool withHiResPhoto,
         bool withUnifyInfo,
-        ContactSortOrder sortBy) =>
+        ContactSortOrder? sortBy) =>
     (int limit, int offset) async {
-      final List page = await _service.channel.invokeMethod('getContacts', {
+      final List page = await (_service.channel.invokeMethod('getContacts', {
         kquery: query,
         klimit: limit,
         ksortBy: sortBy?._value ?? _service.defaultSort._value,
@@ -97,10 +96,12 @@ PageGenerator<Contact> _defaultPageGenerator(
         kwithUnifyInfo: withUnifyInfo,
         kwithThumbnails: withThumbnails,
         kphotoHighResolution: withHiResPhoto,
-      });
+      })) as List<dynamic>;
 
       return [
-        ...page.whereNotNull().map((_) => Contact.fromMap(_, _service.mode))
+        ...page
+            .whereType<Object>()
+            .map((_) => Contact.fromMap(_, _service.mode))
       ];
     };
 
@@ -114,24 +115,17 @@ class ContactService implements ContactsContract {
   final MethodChannel channel;
   final EventChannel events;
   final ContactMode mode;
+  ContactSortOrder defaultSort = ContactSortOrder.displayName();
 
-  ContactSortOrder _defaultSort = ContactSortOrder.displayName();
-  set defaultSort(ContactSortOrder order) {
-    assert(order != null);
-    _defaultSort = order;
-  }
-
-  ContactSortOrder get defaultSort => _defaultSort;
-
-  ContactService(this.channel, this.events, this.mode) : assert(mode != null);
+  ContactService(this.channel, this.events, this.mode);
 
   @override
-  Future<Contact> openContactInsertForm([Contact data]) async {
+  Future<Contact?> openContactInsertForm([Contact? data]) async {
     final map =
         await channel.invokeMethod('openContactInsertForm', data?.toMap());
     if (map["success"] == true) {
       final contact = Contact.of(map["contact"] ?? <String, dynamic>{}, mode);
-      _log.info("Saved contact: ${contact.identifier}");
+      _log.info("Saved contact: ${contact?.identifier}");
       return contact;
     } else {
       _log.info("Contact form was not saved: ${map["code"] ?? 'unknown'}");
@@ -140,13 +134,13 @@ class ContactService implements ContactsContract {
   }
 
   @override
-  Future<Contact> openContactEditForm(dynamic identifier) async {
+  Future<Contact?> openContactEditForm(dynamic identifier) async {
     final contactKey = ContactKeys.of(mode, identifier);
     final map = await channel.invokeMethod(
         'openContactEditForm', {"identifier": contactKey.toMap()});
     if (map["success"] == true) {
       final contact = Contact.of(map["contact"] ?? <String, dynamic>{}, mode);
-      _log.info("Saved contact: ${contact.identifier}");
+      _log.info("Saved contact: ${contact?.identifier}");
       return contact;
     } else {
       _log.info("Contact form was not saved: ${map["code"] ?? 'unknown'}");
@@ -158,13 +152,13 @@ class ContactService implements ContactsContract {
   /// matching [query].  The stream terminates once the items are all iterated.
   @override
   Stream<Contact> streamContacts({
-    String query,
-    bool phoneQuery,
+    String? query,
+    bool? phoneQuery,
     bool withThumbnails = true,
     bool withHiResPhoto = true,
     bool withUnifyInfo = false,
     int bufferSize = 20,
-    ContactSortOrder sortBy,
+    ContactSortOrder? sortBy,
   }) {
     final stream = PagingStream<Contact>(
       pageGenerator: _defaultPageGenerator(
@@ -184,18 +178,18 @@ class ContactService implements ContactsContract {
   bool get isAggregate => mode == ContactMode.unified;
 
   @override
-  Future<Uint8List> getContactImage(identifier) async {
+  Future<Uint8List?> getContactImage(Object? identifier) async {
     if (identifier == null) return null;
 
     final data = await channel.invokeMethod('getContactImage',
         {'identifier': ContactKeys.of(mode, identifier).toMap()});
-    return data as Uint8List;
+    return data as Uint8List?;
   }
 
   @override
-  Future<int> getTotalContacts({
-    String query,
-    bool phoneQuery,
+  Future<int?> getTotalContacts({
+    String? query,
+    bool? phoneQuery,
   }) {
     return channel.invokeMethod('getTotalContacts', {
       kquery: query,
@@ -205,13 +199,13 @@ class ContactService implements ContactsContract {
 
   @override
   PagingList<Contact> listContacts(
-      {String query,
-      bool phoneQuery,
+      {String? query,
+      bool? phoneQuery,
       bool withThumbnails = true,
       bool withHiResPhoto = true,
       bool withUnifyInfo = false,
       int bufferSize = 20,
-      ContactSortOrder sortBy}) {
+      ContactSortOrder? sortBy}) {
     final list = PagingList<Contact>(
       pageGenerator: _defaultPageGenerator(
         this,
@@ -230,15 +224,15 @@ class ContactService implements ContactsContract {
 
   /// Configures logging.  FlutterPhoneState uses the [logging] plugin.
   @override
-  void configureLogs({Level level, LoggingHandler onLog}) {
+  void configureLogs({Level? level, LoggingHandler? onLog}) {
     configureLogging(LogConfig(
-        logLevels: {"contactsService": level},
+        logLevels: {"contactsService": level!},
         handler: onLog ?? LoggingHandler.dev()));
   }
 
   /// Retrieves a single contact by identifier
   @override
-  Future<Contact> getContact(identifier,
+  Future<Contact?> getContact(identifier,
       {bool withThumbnails = true,
       bool withHiResPhoto = true,
       bool withUnifyInfo = true}) async {
@@ -263,8 +257,8 @@ class ContactService implements ContactsContract {
 
   /// Deletes the [contact] if it has a valid identifier
   @override
-  Future<bool> deleteContact(Contact contact) =>
-      channel.invokeMethod('deleteContact', contact.toMap());
+  Future<bool> deleteContact(Contact contact) async =>
+      (await channel.invokeMethod('deleteContact', contact.toMap())) == true;
 
   /// Updates the [contact] if it has a valid identifier
   @override
@@ -276,25 +270,26 @@ class ContactService implements ContactsContract {
   /// Updates the [contact] if it has a valid identifier
   @override
   Future<Iterable<Group>> getGroups() async {
-    Iterable groups = await channel.invokeMethod('getGroups', {});
+    Iterable groups = await (channel.invokeMethod('getGroups', {})
+        as FutureOr<Iterable<dynamic>>);
     return groups.map((g) => Group.fromMap(g));
   }
 
-  Stream<dynamic> _eventStream;
+  Stream<dynamic>? _eventStream;
 
   @override
-  Stream<ContactEvent> get contactEvents {
+  Stream<ContactEvent?> get contactEvents {
     _eventStream ??= events.receiveBroadcastStream();
-    return _eventStream.map((final input) {
+    return _eventStream!.map((final input) {
       if (input is! Map) {
         _log.severe("Invalid contact event.  Not passing through");
         return null;
       }
 
-      final dyn = (input as Map).cast<String, dynamic>();
+      final dyn = input.cast<String, dynamic>();
 
       try {
-        String eventType = dyn["event"] as String;
+        String? eventType = dyn["event"] as String?;
         ContactEvent event;
         switch (eventType) {
           case "contacts-changed":
@@ -319,7 +314,9 @@ class ContactSortOrder extends Equatable {
   final String _value;
 
   const ContactSortOrder.lastName() : _value = "lastName";
+
   const ContactSortOrder.displayName() : _value = "displayName";
+
   const ContactSortOrder.firstName() : _value = "firstName";
 
   @override

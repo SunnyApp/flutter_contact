@@ -1,3 +1,4 @@
+import 'package:flexidate/flexidate.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,7 +6,7 @@ import 'package:flutter_contact/contacts.dart';
 import 'package:sunny_dart/sunny_dart.dart';
 
 class UpdatePersonPage extends StatefulWidget {
-  UpdatePersonPage({@required this.contact});
+  UpdatePersonPage({required this.contact});
 
   final Contact contact;
 
@@ -14,11 +15,11 @@ class UpdatePersonPage extends StatefulWidget {
 }
 
 class _UpdatePersonPageState extends State<UpdatePersonPage> {
-  Contact contact;
-  PostalAddress address;
-  Item email;
-  Item phone;
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late Contact contact;
+  PostalAddress? address;
+  Item? email;
+  Item? phone;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -27,19 +28,19 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
     address = contact.postalAddresses.firstOrNull();
     if (address == null) {
       address = PostalAddress(label: 'home');
-      contact.postalAddresses.add(address);
+      contact.postalAddresses.add(address!);
     }
 
     email = contact.emails.firstOrNull();
     if (email == null) {
       email = Item(label: 'home');
-      contact.emails.add(email);
+      contact.emails.add(email!);
     }
 
     phone = contact.phones.firstOrNull();
     if (phone == null) {
       phone = Item(label: 'home');
-      contact.phones.add(phone);
+      contact.phones.add(phone!);
     }
   }
 
@@ -55,7 +56,7 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
               color: Colors.white,
             ),
             onPressed: () async {
-              _formKey.currentState.save();
+              _formKey.currentState!.save();
               FocusManager.instance.primaryFocus?.unfocus();
               await Future.delayed(300.ms);
               await Contacts.updateContact(contact);
@@ -97,14 +98,14 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Phone'),
-                initialValue: phone.value,
-                onSaved: (v) => phone.value = v,
+                initialValue: phone?.value,
+                onSaved: (v) => phone?.value = v,
                 keyboardType: TextInputType.phone,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                initialValue: email.value,
-                onSaved: (v) => email.value = v,
+                initialValue: email?.value,
+                onSaved: (v) => email?.value = v,
                 keyboardType: TextInputType.emailAddress,
               ),
               TextFormField(
@@ -133,29 +134,29 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
                 onSaved: (v) => contact.jobTitle = v,
               ),
               TextFormField(
-                initialValue: address.street ?? '',
+                initialValue: address?.street ?? '',
                 decoration: const InputDecoration(labelText: 'Street'),
-                onSaved: (v) => address.street = v,
+                onSaved: (v) => address?.street = v,
               ),
               TextFormField(
-                initialValue: address.city ?? '',
+                initialValue: address?.city ?? '',
                 decoration: const InputDecoration(labelText: 'City'),
-                onSaved: (v) => address.city = v,
+                onSaved: (v) => address?.city = v,
               ),
               TextFormField(
-                initialValue: address.region ?? '',
+                initialValue: address?.region ?? '',
                 decoration: const InputDecoration(labelText: 'Region'),
-                onSaved: (v) => address.region = v,
+                onSaved: (v) => address?.region = v,
               ),
               TextFormField(
-                initialValue: address.postcode ?? '',
+                initialValue: address?.postcode ?? '',
                 decoration: const InputDecoration(labelText: 'Postal code'),
-                onSaved: (v) => address.postcode = v,
+                onSaved: (v) => address?.postcode = v,
               ),
               TextFormField(
-                initialValue: address.country ?? '',
+                initialValue: address?.country ?? '',
                 decoration: const InputDecoration(labelText: 'Country'),
-                onSaved: (v) => address.country = v,
+                onSaved: (v) => address?.country = v,
               ),
             ],
           ),
@@ -166,22 +167,21 @@ class _UpdatePersonPageState extends State<UpdatePersonPage> {
 }
 
 extension ContactBirthdayExt on Contact {
-  ContactDate get birthday => dates
-      .orEmpty()
-      .toList()
-      .firstOrNull((date) => date.label.toLowerCase() == 'birthday');
+  ContactDate? get birthday =>
+      dates.firstOrNull((date) => date.label?.toLowerCase() == 'birthday');
 
-  set birthday(ContactDate birthday) {
+  set birthday(ContactDate? birthday) {
     if (birthday == null) {
       dates
           .removeWhere((element) => element.label?.toLowerCase() == 'birthday');
-    }
-    final bd = this.birthday;
-    if (bd == null) {
-      dates.add(birthday);
     } else {
-      final index = dates.indexOf(bd);
-      dates[index] = birthday;
+      final bd = this.birthday;
+      if (bd == null) {
+        dates.add(birthday);
+      } else {
+        final index = dates.indexOf(bd);
+        dates[index] = birthday;
+      }
     }
   }
 }

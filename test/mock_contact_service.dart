@@ -12,8 +12,8 @@ class ContactsMocks {
   final List<MethodCall> _log;
   final Map<String, dynamic> _data;
 
-  ContactsMocks({Map<String, dynamic> data, List<MethodCall> log})
-      : _data = data = {},
+  ContactsMocks({Map<String, dynamic> data = const {}, List<MethodCall>? log})
+      : _data = data,
         _log = log ?? [] {
     _mockMethods = <String, RawMethodHandler>{
       "getContacts": _getContacts,
@@ -26,7 +26,7 @@ class ContactsMocks {
     };
   }
 
-  Map<String, RawMethodHandler> _mockMethods;
+  late Map<String, RawMethodHandler> _mockMethods;
 
   MethodHandler get handler => (MethodCall call) async {
         addLog(call);
@@ -38,8 +38,8 @@ class ContactsMocks {
   void addLog(MethodCall log) => _log.add(log);
 
   Future<dynamic> _getContacts(args) async {
-    final offset = args["offset"] as int ?? 0;
-    final limit = args["limit"] as int ?? 50;
+    final offset = args["offset"] as int? ?? 0;
+    final limit = args["limit"] as int? ?? 50;
     final allItems = [..._data.values];
     if (allItems.length > offset) {
       return allItems.sublist(offset, min(allItems.length, offset + limit));
@@ -54,7 +54,7 @@ class ContactsMocks {
   }
 
   RawMethodHandler operator [](String key) {
-    return _mockMethods[key];
+    return _mockMethods[key]!;
   }
 
   Future<dynamic> _getContact(args) async {
@@ -64,7 +64,7 @@ class ContactsMocks {
   }
 
   Future<dynamic> _updateContact(args) async {
-    final id = args["identifier"] as String;
+    final id = args["identifier"] as String?;
     if (id == null) return null;
     _data[id] = args;
     return _data;
@@ -101,7 +101,7 @@ class ContactsMocks {
     if (contact.identifier?.isNotEmpty != true) {
       contact.identifier = Uuid().v4();
     }
-    _data[contact.identifier] = contact.toMap();
+    _data[contact.identifier!] = contact.toMap();
   }
 }
 

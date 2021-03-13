@@ -391,8 +391,8 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
     
     @available(iOS 9.0, *)
     func updateContact(_ dictionary : [String:Any?]) throws -> CNMutableContact {
-        
-        let key = try contactKeyOf(dictionary["identifier"]!)
+        let identifier = try dictionary.getAny("identifier") 
+        let key = try contactKeyOf(identifier)
         
         let store = CNContactStore()
         var keys = contactFetchKeys
@@ -603,3 +603,4 @@ extension CNContact {
         return UnifiedContact(contact: self, mode: mode, unifiedContactId: unifiedContactId, linkedContactIds: linkedContactIds)
     }
 }
+

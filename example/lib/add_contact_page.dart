@@ -11,7 +11,7 @@ class AddContactPage extends StatefulWidget {
 class _AddContactPageState extends State<AddContactPage> {
   Contact contact = Contact();
   PostalAddress address = PostalAddress(label: 'Home');
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +19,9 @@ class _AddContactPageState extends State<AddContactPage> {
       appBar: AppBar(
         title: Text('Add a contact'),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             onPressed: () {
-              _formKey.currentState.save();
+              _formKey.currentState!.save();
               contact.postalAddresses = [address];
               Contacts.addContact(contact);
               Navigator.of(context).pop();

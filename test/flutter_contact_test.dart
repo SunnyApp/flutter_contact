@@ -1,10 +1,10 @@
+import 'package:flexidate/flexidate.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact/paging_iterable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiver/iterables.dart';
-import 'package:sunny_dart/time.dart';
 
 import 'mock_contact_service.dart';
 
@@ -54,7 +54,7 @@ void main() {
     var i = 0;
     while (await contacts.moveNext()) {
       final curr = await contacts.current;
-      expect(curr.givenName, 'Contact$i');
+      expect(curr?.givenName, 'Contact$i');
       i++;
     }
     expect(i, equals(100));
@@ -69,7 +69,7 @@ void main() {
     await contacts.moveNextPage();
     final cpage = await contacts.currentPage;
     expect(cpage, hasLength(20));
-    expect(cpage[0].identifier, '0');
+    expect(cpage![0].identifier, '0');
   });
 
   test('should add contact', () async {

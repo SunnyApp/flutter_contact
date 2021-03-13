@@ -1,30 +1,18 @@
 PODS:
-  - device_info (0.0.1):
-    - Flutter
-  - devicelocale (0.0.1):
-    - Flutter
   - Flutter (1.0.0)
   - flutter_contact (0.0.1):
     - Flutter
-  - flutter_native_timezone (0.0.1):
-    - Flutter
-  - get_ip (0.0.1):
-    - Flutter
-  - libphonenumber (0.0.1):
+  - libPhoneNumber-iOS (0.9.15)
+  - libphonenumber2 (0.0.1):
     - Flutter
     - libPhoneNumber-iOS
-  - libPhoneNumber-iOS (0.9.15)
-  - "permission_handler (5.0.1+1)":
+  - "permission_handler (5.1.0+2)":
     - Flutter
 
 DEPENDENCIES:
-  - device_info (from `.symlinks/plugins/device_info/ios`)
-  - devicelocale (from `.symlinks/plugins/devicelocale/ios`)
   - Flutter (from `Flutter`)
   - flutter_contact (from `.symlinks/plugins/flutter_contact/ios`)
-  - flutter_native_timezone (from `.symlinks/plugins/flutter_native_timezone/ios`)
-  - get_ip (from `.symlinks/plugins/get_ip/ios`)
-  - libphonenumber (from `.symlinks/plugins/libphonenumber/ios`)
+  - libphonenumber2 (from `.symlinks/plugins/libphonenumber2/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
 SPEC REPOS:
@@ -32,34 +20,22 @@ SPEC REPOS:
     - libPhoneNumber-iOS
 
 EXTERNAL SOURCES:
-  device_info:
-    :path: ".symlinks/plugins/device_info/ios"
-  devicelocale:
-    :path: ".symlinks/plugins/devicelocale/ios"
   Flutter:
     :path: Flutter
   flutter_contact:
     :path: ".symlinks/plugins/flutter_contact/ios"
-  flutter_native_timezone:
-    :path: ".symlinks/plugins/flutter_native_timezone/ios"
-  get_ip:
-    :path: ".symlinks/plugins/get_ip/ios"
-  libphonenumber:
-    :path: ".symlinks/plugins/libphonenumber/ios"
+  libphonenumber2:
+    :path: ".symlinks/plugins/libphonenumber2/ios"
   permission_handler:
     :path: ".symlinks/plugins/permission_handler/ios"
 
 SPEC CHECKSUMS:
-  device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
-  devicelocale: feebbe5e7a30adb8c4f83185de1b50ff19b44f00
-  Flutter: 446b87ace8a3747a167979213b4aef59a0b5e5fa
-  flutter_contact: 3e9390b4afb2a6af4b8ae968bd8afc2b54b01ec1
-  flutter_native_timezone: 0dad754602c1576cfaedfa582a9f42fa1f935b02
-  get_ip: 6cc064e967a6b5d5cd137dc214cf8c7926835cb0
-  libphonenumber: bd14d5abfc5939ab0b0767234e2d8e2593af258e
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
+  flutter_contact: de1260a343986ae87ef21dcda46f4ae584eceb8c
   libPhoneNumber-iOS: 0a32a9525cf8744fe02c5206eb30d571e38f7d75
-  permission_handler: d5c9aaa52049a4cdf38b636f53844b5085540774
+  libphonenumber2: 72ed3c7970f639c54aef73d9f195403a73b3cfb8
+  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
 
-PODFILE CHECKSUM: 4e8f8b2be68aeea4c0d5beb6ff1e79fface1d048
+PODFILE CHECKSUM: a75497545d4391e2d394c3668e20cfb1c2bbd4aa
 
 COCOAPODS: 1.10.0

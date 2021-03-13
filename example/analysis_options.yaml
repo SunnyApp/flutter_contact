@@ -38,6 +38,7 @@ analyzer:
     missing_return: warning
     # allow having TODOs in the code
     todo: ignore
+    sort_child_properties_last: ignore
     # Ignore analyzer hints for updating pubspecs when using Future or
     # Stream and not importing dart:async
     # Please see https://github.com/flutter/flutter/pull/24528 for details.

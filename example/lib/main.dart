@@ -34,7 +34,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _hasPermission;
+  bool? _hasPermission;
   @override
   void initState() {
     super.initState();
@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _askPermissions() async {
-    PermissionStatus permissionStatus;
+    PermissionStatus? permissionStatus;
     while (permissionStatus != PermissionStatus.granted) {
       try {
         permissionStatus = await _getContactPermission();
@@ -54,29 +54,30 @@ class _HomePageState extends State<HomePage> {
         }
       } catch (e) {
         if (await showPlatformDialog(
-            context: context,
-            builder: (context) {
-              return PlatformAlertDialog(
-                title: Text('Contact Permissions'),
-                content: Text(
-                    'We are having problems retrieving permissions.  Would you like to '
-                    'open the app settings to fix?'),
-                actions: [
-                  PlatformDialogAction(
-                    child: Text('Close'),
-                    onPressed: () {
-                      Navigator.pop(context, false);
-                    },
-                  ),
-                  PlatformDialogAction(
-                    child: Text('Settings'),
-                    onPressed: () {
-                      Navigator.pop(context, true);
-                    },
-                  ),
-                ],
-              );
-            })) {
+                context: context,
+                builder: (context) {
+                  return PlatformAlertDialog(
+                    title: Text('Contact Permissions'),
+                    content: Text(
+                        'We are having problems retrieving permissions.  Would you like to '
+                        'open the app settings to fix?'),
+                    actions: [
+                      PlatformDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context, false);
+                        },
+                        child: Text('Close'),
+                      ),
+                      PlatformDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        child: Text('Settings'),
+                      ),
+                    ],
+                  );
+                }) ==
+            true) {
           await openAppSettings();
         }
       }
@@ -89,7 +90,7 @@ class _HomePageState extends State<HomePage> {
     final status = await Permission.contacts.status;
     if (!status.isGranted) {
       final result = await Permission.contacts.request();
-      return result ?? PermissionStatus.undetermined;
+      return result;
     } else {
       return status;
     }
@@ -119,12 +120,12 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  RaisedButton(
+                  ElevatedButton(
                     child: const Text('Contacts list'),
                     onPressed: () =>
                         Navigator.pushNamed(context, '/contactsList'),
                   ),
-                  RaisedButton(
+                  ElevatedButton(
                     child: const Text('Native Contacts picker'),
                     onPressed: () =>
                         Navigator.pushNamed(context, '/nativeContactPicker'),

@@ -14,12 +14,11 @@ class PeopleListPage extends StatefulWidget {
 }
 
 class _PeopleListPageState extends State<PeopleListPage> {
-  ContactService _contactService;
-  List<Contact> _contacts;
-  bool _loading;
-  String searchTerm;
-
-  String _searchTerm;
+  late ContactService _contactService;
+  List<Contact> _contacts = [];
+  bool _loading = false;
+  String? searchTerm;
+  String _searchTerm = '';
 
   @override
   void initState() {
@@ -27,7 +26,6 @@ class _PeopleListPageState extends State<PeopleListPage> {
     configureLogging(LogConfig.root(Level.INFO, handler: LoggingHandler.dev()));
     _contactService = UnifiedContacts;
     refreshContacts();
-    _loading = false;
   }
 
   @override
@@ -53,12 +51,14 @@ class _PeopleListPageState extends State<PeopleListPage> {
               contact.familyName,
               ...contact.phones
                   .expand((number) => tokenizePhoneNumber(number.value)),
-            ].whereNotBlank();
+            ].where((s) => s != null && s != '').toList();
           },
           ignoreCase: true,
           isMatchAll: true,
           isStartsWith: true,
-        ).execute().thenMap((results) => results.result)
+        ).execute().then((results) => [
+              for (var result in results) result.result,
+            ])
       ];
     } else {
       final contacts = _contactService.listContacts(
@@ -68,7 +68,7 @@ class _PeopleListPageState extends State<PeopleListPage> {
           sortBy: ContactSortOrder.firstName());
       var tmp = <Contact>[];
       while (await contacts.moveNext()) {
-        tmp.add(await contacts.current);
+        (await contacts.current)?.let((self) => tmp.add(self));
       }
       _newList = tmp;
     }
@@ -81,9 +81,8 @@ class _PeopleListPageState extends State<PeopleListPage> {
   }
 
   Future updateContact() async {
-    final ninja = _contacts
-        .toList()
-        .firstWhere((contact) => contact.familyName.startsWith('Ninja'));
+    final ninja = _contacts.toList().firstWhere(
+        (contact) => contact.familyName?.startsWith('Ninja') == true);
     ninja.avatar = null;
     await _contactService.updateContact(ninja);
 
@@ -174,16 +173,16 @@ class _PeopleListPageState extends State<PeopleListPage> {
                 ),
               ),
             ),
-            ...?_contacts?.map((contact) {
+            ..._contacts.map((contact) {
               return SliverToBoxAdapter(
                 child: ListTile(
                   onTap: () async {
                     final _contact =
-                        await _contactService.getContact(contact.identifier);
+                        await _contactService.getContact(contact.identifier!);
                     final res = await Navigator.of(context).push(
                         MaterialPageRoute(builder: (BuildContext context) {
                       return PersonDetailsPage(
-                        contact: _contact,
+                        contact: _contact!,
                         onContactDeviceSave: contactOnDeviceHasBeenUpdated,
                         contactService: _contactService,
                       );
@@ -192,12 +191,13 @@ class _PeopleListPageState extends State<PeopleListPage> {
                       await refreshContacts();
                     }
                   },
-                  leading: (contact.avatar != null && contact.avatar.isNotEmpty)
+                  leading: (contact.avatar != null &&
+                          contact.avatar.isNotNullOrEmpty)
                       ? CircleAvatar(
-                          backgroundImage: MemoryImage(contact.avatar))
+                          backgroundImage: MemoryImage(contact.avatar!))
                       : CircleAvatar(child: Text(contact.initials())),
                   title: Text(contact.displayName ?? ''),
-                  trailing: (contact.linkedContactIds?.length ?? 0) < 2
+                  trailing: (contact.linkedContactIds.length) < 2
                       ? null
                       : InputChip(
                           avatar: CircleAvatar(
@@ -215,7 +215,6 @@ class _PeopleListPageState extends State<PeopleListPage> {
   }
 
   void contactOnDeviceHasBeenUpdated(Contact contact) {
-    if (contact == null) return;
     setState(() {
       var id = _contacts.indexWhere((c) => c.identifier == contact.identifier);
       _contacts[id] = contact;

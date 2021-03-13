@@ -8,10 +8,12 @@ import 'extensions.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   PersonDetailsPage(
-      {this.contact, this.onContactDeviceSave, @required this.contactService});
+      {required this.contact,
+      required this.onContactDeviceSave,
+      required this.contactService});
 
-  Contact contact;
-  final Function(Contact) onContactDeviceSave;
+  final Contact contact;
+  final Function(Contact contact) onContactDeviceSave;
   final ContactService contactService;
 
   @override
@@ -19,8 +21,9 @@ class PersonDetailsPage extends StatefulWidget {
 }
 
 class _PersonDetailsPageState extends State<PersonDetailsPage> {
-  Contact _contact;
+  late Contact _contact;
 
+  @override
   void initState() {
     super.initState();
     _contact = widget.contact;
@@ -29,7 +32,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
   Future _openExistingContactOnDevice(BuildContext context) async {
     var contact =
         await widget.contactService.openContactEditForm(_contact.identifier);
-    if (widget.onContactDeviceSave != null) {
+    if (contact != null) {
       widget.onContactDeviceSave(contact);
     }
     Navigator.of(context).pop();
@@ -99,10 +102,10 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
               title: Text('Suffix'),
               trailing: Text(_contact.suffix ?? ''),
             ),
-            for (final d in (_contact.dates ?? <ContactDate>[]))
+            for (final d in (_contact.dates))
               ListTile(
-                title: Text(d.label),
-                trailing: Text(d.date.format()),
+                title: Text(d.label ?? ''),
+                trailing: Text(d.date?.format() ?? ''),
               ),
             ListTile(
               title: Text('Company'),

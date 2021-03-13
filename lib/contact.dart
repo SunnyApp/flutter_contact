@@ -3,21 +3,18 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart'
     hide IterableExtension, IterableNullableExtension;
+import 'package:dartxx/dartxx.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flexidate/date_components.dart';
 import 'package:flutter_contact/single_contacts.dart';
 import 'package:flutter_contact/unified_contacts.dart';
 import 'package:logging/logging.dart';
-import 'package:sunny_dart/helpers.dart';
-import 'package:sunny_dart/helpers/hash_codes.dart';
-import 'package:sunny_dart/sunny_dart.dart';
-import 'package:sunny_dart/time/date_components.dart';
 
 final flutterContactLog = Logger('flutterContact');
 
 enum ContactMode { single, unified }
 
-ContactMode contactModeOf(dyn) {
+ContactMode? contactModeOf(dyn) {
   if (dyn == null) return null;
   switch (dyn.toString()) {
     case 'single':
@@ -35,18 +32,18 @@ ContactMode contactModeOf(dyn) {
 /// and what keys can be used to find, reference, or update it.
 // ignore: must_be_immutable
 class ContactKeys extends Equatable {
-  ContactMode mode;
-  String identifier;
-  String singleContactId;
-  String unifiedContactId;
+  ContactMode? mode;
+  String? identifier;
+  String? singleContactId;
+  String? unifiedContactId;
   Map<String, String> otherKeys;
 
   factory ContactKeys(
-      {@required ContactMode mode,
-      String identifier,
-      String singleContactId,
-      String unifiedContactId,
-      Map<String, String> otherKeys}) {
+      {required ContactMode? mode,
+      String? identifier,
+      String? singleContactId,
+      String? unifiedContactId,
+      Map<String, String>? otherKeys}) {
     assert(mode != null || identifier == null,
         "You must provide a mode if you provide an identifier");
     if (mode == null) {
@@ -82,23 +79,22 @@ class ContactKeys extends Equatable {
         );
 
       default:
-        return illegalState("This can't happen");
+        return (throw "This can't happen");
     }
   }
 
   ContactKeys.empty(this.mode)
-      : assert(mode != null),
-        identifier = null,
+      : identifier = null,
         unifiedContactId = null,
         singleContactId = null,
         otherKeys = <String, String>{};
 
   ContactKeys._({
-    @required this.mode,
-    @required this.identifier,
-    @required this.singleContactId,
-    @required this.unifiedContactId,
-    Map<String, String> otherKeys,
+    required this.mode,
+    required this.identifier,
+    required this.singleContactId,
+    required this.unifiedContactId,
+    Map<String, String>? otherKeys,
   }) : otherKeys = otherKeys ?? <String, String>{};
 
   factory ContactKeys.of(ContactMode mode, dyn) {
@@ -111,7 +107,7 @@ class ContactKeys extends Equatable {
     } else if (dyn is String) {
       return ContactKeys.id(mode, dyn);
     } else {
-      return illegalState("Invalid input for ContactKeys");
+      return (throw "Invalid input for ContactKeys");
     }
   }
 
@@ -140,7 +136,7 @@ class ContactKeys extends Equatable {
   }
 
   @override
-  List<Object> get props =>
+  List<Object?> get props =>
       [mode, singleContactId, unifiedContactId, otherKeys];
 
   /// Contact keys that is based on the logic PK for the mode
@@ -166,13 +162,13 @@ class Contact {
       this.familyName,
       this.company,
       this.jobTitle,
-      List<String> linkedContactIds,
-      List<Item> emails,
-      List<Item> phones,
-      List<PostalAddress> postalAddresses,
-      List<Item> socialProfiles,
-      List<Item> urls,
-      List<ContactDate> dates,
+      List<String>? linkedContactIds,
+      List<Item>? emails,
+      List<Item>? phones,
+      List<PostalAddress>? postalAddresses,
+      List<Item>? socialProfiles,
+      List<Item>? urls,
+      List<ContactDate>? dates,
       this.avatar,
       this.lastModified,
       this.note})
@@ -184,9 +180,9 @@ class Contact {
         _linkedContactIds = [...?linkedContactIds],
         _postalAddresses = [...?postalAddresses];
 
-  final ContactKeys keys;
+  final ContactKeys? keys;
 
-  String identifier,
+  String? identifier,
       displayName,
       givenName,
       middleName,
@@ -205,14 +201,14 @@ class Contact {
   final List<Item> _urls;
   final List<PostalAddress> _postalAddresses;
 
-  DateTime lastModified;
-  Uint8List avatar;
+  DateTime? lastModified;
+  Uint8List? avatar;
 
   /// If the avatar is already loaded, uses it.  Otherwise, fetches the avatar from the server,
   /// but does not cache the result in memory.
   ///
   /// May be null.
-  FutureOr<Uint8List> getOrFetchAvatar() {
+  FutureOr<Uint8List?> getOrFetchAvatar() {
     if (avatar != null) return avatar;
 
     if (keys?.unifiedContactId == keys?.singleContactId) {
@@ -224,49 +220,49 @@ class Contact {
 
   List<Item> get emails => _emails;
 
-  set emails(List<Item> value) {
+  set emails(List<Item>? value) {
     _emails.clear();
     emails.addAll([...?value]);
   }
 
   List<Item> get phones => _phones;
 
-  set phones(List<Item> value) {
+  set phones(List<Item>? value) {
     _phones.clear();
     phones.addAll([...?value]);
   }
 
   List<Item> get socialProfiles => _socialProfiles;
 
-  set socialProfiles(List<Item> value) {
+  set socialProfiles(List<Item>? value) {
     _socialProfiles.clear();
     _socialProfiles.addAll([...?value]);
   }
 
   List<ContactDate> get dates => _dates;
 
-  set dates(List<ContactDate> value) {
+  set dates(List<ContactDate>? value) {
     _dates.clear();
     dates.addAll([...?value]);
   }
 
   List<String> get linkedContactIds => _linkedContactIds;
 
-  set linkedContactIds(List<String> value) {
+  set linkedContactIds(List<String>? value) {
     _linkedContactIds.clear();
     _linkedContactIds.addAll([...?value]);
   }
 
   List<Item> get urls => _urls;
 
-  set urls(List<Item> value) {
+  set urls(List<Item>? value) {
     _urls.clear();
     urls.addAll([...?value]);
   }
 
   List<PostalAddress> get postalAddresses => _postalAddresses;
 
-  set postalAddresses(List<PostalAddress> value) {
+  set postalAddresses(List<PostalAddress>? value) {
     _postalAddresses.clear();
     postalAddresses.addAll([...?value]);
   }
@@ -274,12 +270,12 @@ class Contact {
   bool get hasAvatar => avatar?.isNotEmpty == true;
 
   String initials() {
-    return ((this.givenName?.isNotEmpty == true ? this.givenName[0] : "") +
-            (this.familyName?.isNotEmpty == true ? this.familyName[0] : ""))
+    return ((this.givenName?.isNotEmpty == true ? this.givenName![0] : "") +
+            (this.familyName?.isNotEmpty == true ? this.familyName![0] : ""))
         .toUpperCase();
   }
 
-  factory Contact.of(final dyn, ContactMode mode) {
+  static Contact? of(final dyn, ContactMode mode) {
     if (dyn == null) {
       return null;
     } else if (dyn is Contact) {
@@ -289,39 +285,41 @@ class Contact {
     }
   }
 
-  factory Contact.fromMap(final dyn, ContactMode mode) {
-    mode ??= contactModeOf(dyn["mode"]);
-    assert(mode != null, "You must provide a mode when creating a contact");
+  factory Contact.fromMap(final dyn, ContactMode? mode) {
+    mode ??= contactModeOf(dyn["mode"])!;
     return Contact(
-      identifier: dyn[_kidentifier] as String,
-      displayName: dyn[_kdisplayName] as String,
-      givenName: dyn[_kgivenName] as String,
-      middleName: dyn[_kmiddleName] as String,
-      familyName: dyn[_kfamilyName] as String,
-      prefix: dyn[_kprefix] as String,
+      identifier: dyn[_kidentifier] as String?,
+      displayName: dyn[_kdisplayName] as String?,
+      givenName: dyn[_kgivenName] as String?,
+      middleName: dyn[_kmiddleName] as String?,
+      familyName: dyn[_kfamilyName] as String?,
+      prefix: dyn[_kprefix] as String?,
       keys: ContactKeys.of(mode, dyn),
       lastModified: parseDateTime(dyn[_klastModified]),
-      suffix: dyn[_ksuffix] as String,
-      company: dyn[_kcompany] as String,
-      jobTitle: dyn[_kjobTitle] as String,
+      suffix: dyn[_ksuffix] as String?,
+      company: dyn[_kcompany] as String?,
+      jobTitle: dyn[_kjobTitle] as String?,
       linkedContactIds: <String>[
         for (final c in _iterableKey(dyn, _klinkedContactIds)) "$c",
       ],
-      emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)],
-      phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)],
+      emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)]
+          .notNull(),
+      phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)]
+          .notNull(),
       socialProfiles: [
         for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
-      ],
-      urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)],
+      ].whereType<Item>().toList(),
+      urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)]
+          .notNull(),
       dates: [
         for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-      ],
+      ].notNull(),
       postalAddresses: [
         for (final m in _iterableKey(dyn, _kpostalAddresses))
           PostalAddress.fromMap(m)
-      ],
-      avatar: dyn[_kavatar] as Uint8List,
-      note: dyn[_knote] as String,
+      ].notNull(),
+      avatar: dyn[_kavatar] as Uint8List?,
+      note: dyn[_knote] as String?,
     );
   }
 
@@ -345,14 +343,14 @@ class Contact {
       jobTitle: this.jobTitle ?? other.jobTitle,
       linkedContactIds: this.linkedContactIds + other.linkedContactIds,
       note: this.note ?? other.note,
-      emails: {...?this.emails, ...?other.emails}.toList(),
+      emails: {...this.emails, ...other.emails}.toList(),
       socialProfiles:
-          {...?this.socialProfiles, ...?other.socialProfiles}.toList(),
-      dates: {...?this.dates, ...?other.dates}.toList(),
-      urls: {...?this.urls, ...?other.urls}.toList(),
-      phones: {...?this.phones, ...?other.phones}.toList(),
+          {...this.socialProfiles, ...other.socialProfiles}.toList(),
+      dates: {...this.dates, ...other.dates}.toList(),
+      urls: {...this.urls, ...other.urls}.toList(),
+      phones: {...this.phones, ...other.phones}.toList(),
       postalAddresses:
-          {...?this.postalAddresses, ...?other.postalAddresses}.toList(),
+          {...this.postalAddresses, ...other.postalAddresses}.toList(),
       avatar: this.avatar ?? other.avatar);
 
   /// Removes duplicates from the collections.  Duplicates are defined as having the exact same value
@@ -394,19 +392,18 @@ class Contact {
 }
 
 class ContactDate {
-  final String label;
-  final DateComponents date;
-  final String value;
+  final String? label;
+  final DateComponents? date;
+  final String? value;
 
-  ContactDate.ofDate({this.label, @required this.date})
-      : assert(date != null),
-        value = "$date";
+  ContactDate.ofDate({this.label, required DateComponents this.date})
+      : value = "$date";
 
   ContactDate.ofValue({
     this.label,
-    @required this.value,
+    required String this.value,
     this.date,
-  }) : assert(value != null);
+  });
 
   ContactDate({
     this.label,
@@ -414,15 +411,15 @@ class ContactDate {
     this.date,
   }) : assert(value != null || date != null);
 
-  factory ContactDate.fromMap(final dyn) {
+  static ContactDate? fromMap(final dyn) {
     if (dyn is Map<dynamic, dynamic>) {
       if (dyn[_kdate] == null && dyn[_kvalue] == null) {
         flutterContactLog.warning(
             "Received date with no value for either 'date' or 'value'");
         return null;
       }
-      final label = dyn[_klabel] as String;
-      DateComponents dateComponents;
+      final label = dyn[_klabel] as String?;
+      DateComponents? dateComponents;
       try {
         dateComponents = dyn[_kdate] != null
             ? DateComponents.from(dyn[_kdate] ?? dyn[_kvalue])
@@ -439,7 +436,7 @@ class ContactDate {
     return null;
   }
 
-  String get dateOrValue => date?.toString() ?? value;
+  String? get dateOrValue => date?.toString() ?? value;
 
   @override
   String toString() {
@@ -468,16 +465,20 @@ class PostalAddress extends Equatable {
       this.region,
       this.country});
 
-  String label, street, city, postcode, region, country;
+  String? label, street, city, postcode, region, country;
 
-  PostalAddress.fromMap(final dyn) {
+  static PostalAddress? fromMap(final dyn) {
     if (dyn is Map) {
-      label = dyn[_klabel] as String;
-      street = dyn[_kstreet] as String;
-      city = dyn[_kcity] as String;
-      postcode = dyn[_kpostcode] as String;
-      region = dyn[_kregion] as String;
-      country = dyn[_kcountry] as String;
+      return PostalAddress(
+        label: dyn[_klabel] as String?,
+        street: dyn[_kstreet] as String?,
+        city: dyn[_kcity] as String?,
+        postcode: dyn[_kpostcode] as String?,
+        region: dyn[_kregion] as String?,
+        country: dyn[_kcountry] as String?,
+      );
+    } else {
+      return null;
     }
   }
 
@@ -498,16 +499,20 @@ class PostalAddress extends Equatable {
 class Item extends Equatable {
   Item({this.label, this.value});
 
-  String label, value;
+  String? label, value;
 
-  Item.fromMap(final dyn) {
+  static Item? fromMap(final dyn) {
     if (dyn is Map) {
-      value = dyn["value"] as String;
-      label = dyn["label"] as String;
+      return Item(
+        value: dyn["value"] as String?,
+        label: dyn["label"] as String?,
+      );
+    } else {
+      return null;
     }
   }
 
-  String get equalsValue => value;
+  String? get equalsValue => value;
 
   @override
   List get props => [equalsValue];
@@ -517,7 +522,7 @@ class Item extends Equatable {
 class PhoneNumber extends Item {
   final String _unformattedNumber;
 
-  PhoneNumber({String label, String number})
+  PhoneNumber({String? label, String? number})
       : _unformattedNumber = _sanitizer(number),
         super(label: label, value: number);
 
@@ -529,22 +534,35 @@ class PhoneNumber extends Item {
   static PhoneNumberSanitizer _sanitizer = defaultPhoneNumberSanitizer;
 
   static set sanitizer(PhoneNumberSanitizer sanitizer) {
-    assert(sanitizer != null);
     _sanitizer = sanitizer;
   }
 }
 
-extension ItemToMap on Item {
-  Map<String, dynamic> toMap() {
-    if (this == null) return null;
-    if (value.isNullOrBlank) return null;
-    return {"label": label, "value": value};
+extension ItemToMap on Item? {
+  Map<String, String>? toMap() {
+    if (this == null) {
+      return null;
+    } else {
+      if (this?.value?.isNotEmpty != true) return null;
+      return {
+        "label": this!.label,
+        "value": this!.value,
+      }.valuesNotNull();
+    }
+  }
+}
+
+extension ItemListsToMap on Iterable<Item> {
+  List<Map<String, String>> toJson() {
+    return [
+      for (var i in this) i.toMap(),
+    ].notNull();
   }
 }
 
 Iterable _iterableKey(map, String key) {
   if (map == null) return [];
-  return map[key] as Iterable ?? [];
+  return map[key] as Iterable? ?? [];
 }
 
 Map<String, dynamic> _contactToMap(Contact contact) {
@@ -562,42 +580,27 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     _ksuffix: contact.suffix,
     _kcompany: contact.company,
     _kjobTitle: contact.jobTitle,
-    _kemails: [
-      for (final item in contact.emails.map((i) => i.toMap()))
-        if (item != null) item,
-    ],
-    _kphones: [
-      for (final item in contact.phones.map((i) => i.toMap()))
-        if (item != null) item,
-    ],
+    _kemails: contact.emails.toJson(),
+    _kphones: contact.phones.toJson(),
     _kdates: [
-      for (final item in contact.dates.where(notNull())) _contactDateToMap(item)
-    ],
-    _ksocialProfiles: [
-      for (final item in contact.socialProfiles.map((i) => i.toMap()))
-        if (item != null) item,
-    ],
-    _kurls: [
-      for (final item in contact.urls.map((i) => i.toMap()))
-        if (item != null) item,
-    ],
+      for (final item in contact.dates) _contactDateToMap(item),
+    ].notNull(),
+    _ksocialProfiles: contact.socialProfiles.toJson(),
+    _kurls: contact.urls.toJson(),
     _kpostalAddresses: [
-      for (final address in contact.postalAddresses
-          .map((address) => address.toMap())
-          .whereNotNull())
-        address
-    ],
+      for (final address in contact.postalAddresses) address.toMap(),
+    ].notNull(),
     _kavatar: contact.avatar,
     _knote: contact.note
-  };
+  }.valuesNotNull();
 }
 
 bool Function(T item) notNull<T>() => (item) => item != null;
 
-extension PostalAddressToMap on PostalAddress {
-  Map toMap() {
+extension PostalAddressToMap on PostalAddress? {
+  Map<String, String>? toMap() {
     if (this == null) return null;
-    final address = this;
+    final address = this!;
     final map = {
       _klabel: address.label,
       _kstreet: address.street,
@@ -605,25 +608,27 @@ extension PostalAddressToMap on PostalAddress {
       _kpostcode: address.postcode,
       _kregion: address.region,
       _kcountry: address.country
-    }.whereValues((v) => v.isNotNullOrBlank);
+    }.valuesNotNull();
 
     /// There will always be a type field, so make sure there's at least one more
     return map.length <= 1 ? null : map;
   }
 }
 
-Map _contactDateToMap(ContactDate date) => {
-      _klabel: date.label,
-      _kdate: date.date?.toMap(),
-      _kvalue: date.value ?? date.date?.toString(),
-    };
+Map<String, dynamic>? _contactDateToMap(ContactDate? date) => date == null
+    ? null
+    : {
+        _klabel: date.label,
+        _kdate: date.date?.toMap(),
+        _kvalue: date.value ?? date.date?.toString(),
+      }.valuesNotNull();
 
-typedef PhoneNumberSanitizer = String Function(String);
+typedef PhoneNumberSanitizer = String Function(String?);
 
-String defaultPhoneNumberSanitizer(String input) {
+String defaultPhoneNumberSanitizer(String? input) {
   String out = "";
 
-  for (var i = 0; i < input.length; ++i) {
+  for (var i = 0; i < input!.length; ++i) {
     var char = input[i];
     if (_isNumeric((char))) {
       out += char;
@@ -637,14 +642,14 @@ String defaultPhoneNumberSanitizer(String input) {
   }
 }
 
-bool _isNumeric(String str) {
+bool _isNumeric(String? str) {
   if (str == null) {
     return false;
   }
   return double.tryParse(str) != null;
 }
 
-DateTime parseDateTime(final dyn) {
+DateTime? parseDateTime(final dyn) {
   if (dyn is DateTime) return dyn;
   if (dyn == null) return null;
   return DateTime.tryParse(dyn.toString());
@@ -685,7 +690,7 @@ const _kcountry = "country";
 extension _DateComponentsExt on DateComponents {}
 
 extension ContactKeyAccessExt on Contact {
-  ContactMode get mode {
+  ContactMode? get mode {
     return keys?.mode;
   }
 
@@ -693,11 +698,11 @@ extension ContactKeyAccessExt on Contact {
     return keys?.mode == ContactMode.unified;
   }
 
-  String get unifiedContactId {
+  String? get unifiedContactId {
     return keys?.unifiedContactId;
   }
 
-  String get singleContactId {
+  String? get singleContactId {
     return keys?.singleContactId;
   }
 
@@ -705,7 +710,7 @@ extension ContactKeyAccessExt on Contact {
     return keys?.otherKeys ?? const {};
   }
 
-  String getKey(String name) {
+  String? getKey(String name) {
     switch (name) {
       case _kunifiedContactId:
         return keys?.unifiedContactId;
@@ -715,7 +720,7 @@ extension ContactKeyAccessExt on Contact {
         return identifier;
       default:
         if (keys?.otherKeys == null) return null;
-        return keys.otherKeys[name];
+        return keys!.otherKeys[name];
     }
   }
 }
