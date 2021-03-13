@@ -1,3 +1,7 @@
+## 0.8.1-nullsafety
+* Introduced null-safety
+* Changed underlying date library to improve date parsing.  This will require changing DateComponents references to FlexiDate
+
 ## 0.6.4
  * Fixed issue with lastModified timestamp on Android.
  * Improved permissions and split example project into different files
