@@ -13,16 +13,14 @@ dependencies:
   flexidate: ^0.6.0+2
   intl: ^0.17.0
   logging: ^1.0.0
-  logging_config: ^0.6.7
+  logging_config: ^0.6.7+6
   quiver: ^3.0.0
   uuid: ^3.0.1
-  flutter: 
-    sdk: flutter
-dev_dependencies: 
-  pedantic: ^1.11.0
+dev_dependencies:
   flutter_test: 
     sdk: flutter
-flutter: 
+  pedantic: ^1.11.0
+flutter:
   plugin: 
     platforms: 
       android: 
