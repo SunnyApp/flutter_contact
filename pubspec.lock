@@ -56,14 +56,14 @@ packages:
       name: dartx
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.0"
+    version: "0.7.1"
   dartxx:
     dependency: "direct main"
     description:
       name: dartxx
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.4+2"
+    version: "0.5.0+2"
   equatable:
     dependency: "direct main"
     description:
@@ -84,7 +84,7 @@ packages:
       name: flexidate
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.4+5"
+    version: "0.5.0+1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -101,7 +101,7 @@ packages:
       name: inflection3
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.3+1"
+    version: "0.5.3+2"
   intl:
     dependency: "direct main"
     description:
@@ -225,7 +225,7 @@ packages:
       name: time
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.5.0-nullsafety.1"
+    version: "2.0.0"
   timezone:
     dependency: transitive
     description:
@@ -246,7 +246,7 @@ packages:
       name: uuid
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.1"
+    version: "3.0.2"
   vector_math:
     dependency: transitive
     description:
