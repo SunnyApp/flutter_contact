@@ -302,22 +302,25 @@ class Contact {
       linkedContactIds: <String>[
         for (final c in _iterableKey(dyn, _klinkedContactIds)) "$c",
       ],
-      emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)]
-          .notNull(),
-      phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)]
-          .notNull(),
+      emails: List<Item>.from([
+        for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)
+      ].notNull()),
+      phones: List<Item>.from([
+        for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)
+      ].notNull()),
       socialProfiles: [
         for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
       ].whereType<Item>().toList(),
-      urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)]
-          .notNull(),
-      dates: [
+      urls: List<Item>.from([
+        for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)
+      ].notNull()),
+      dates: List<ContactDate>.from([
         for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-      ].notNull(),
-      postalAddresses: [
+      ].notNull()),
+      postalAddresses: List<PostalAddress>.from([
         for (final m in _iterableKey(dyn, _kpostalAddresses))
           PostalAddress.fromMap(m)
-      ].notNull(),
+      ].notNull()),
       avatar: dyn[_kavatar] as Uint8List?,
       note: dyn[_knote] as String?,
     );
@@ -556,9 +559,9 @@ extension ItemToMap on Item? {
 
 extension ItemListsToMap on Iterable<Item> {
   List<Map<String, String>> toJson() {
-    return [
+    return List<Map<String, String>>.from([
       for (var i in this) i.toMap(),
-    ].notNull();
+    ].notNull());
   }
 }
 
