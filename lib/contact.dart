@@ -303,21 +303,21 @@ class Contact {
         for (final c in _iterableKey(dyn, _klinkedContactIds)) "$c",
       ],
       emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)]
-          .notNull(),
+          .notNull().toList(),
       phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)]
-          .notNull(),
+          .notNull().toList(),
       socialProfiles: [
         for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
       ].whereType<Item>().toList(),
       urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)]
-          .notNull(),
+          .notNull().toList(),
       dates: [
         for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-      ].notNull(),
+      ].notNull().toList(),
       postalAddresses: [
         for (final m in _iterableKey(dyn, _kpostalAddresses))
           PostalAddress.fromMap(m)
-      ].notNull(),
+      ].notNull().toList(),
       avatar: dyn[_kavatar] as Uint8List?,
       note: dyn[_knote] as String?,
     );
@@ -558,7 +558,7 @@ extension ItemListsToMap on Iterable<Item> {
   List<Map<String, String>> toJson() {
     return [
       for (var i in this) i.toMap(),
-    ].notNull();
+    ].notNull().toList();
   }
 }
 
