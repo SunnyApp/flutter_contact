@@ -46,7 +46,7 @@ interface ContactExtensions {
 
         val projections = if (forCount) mode.projectionsIdsOnly else mode.projections
         if (query != null) {
-            selectionArgs = arrayOf("$query%")
+            selectionArgs = arrayOf("%$query%")
             selection = "${Data.DISPLAY_NAME_PRIMARY} LIKE ?"
         }
 
