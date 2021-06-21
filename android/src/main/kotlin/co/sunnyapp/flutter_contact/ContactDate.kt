@@ -52,28 +52,39 @@ fun Date?.toIsoString(): String? {
  * 2009-12-22
  *
  */
-fun DateComponents.Companion.tryParse(input: String) =
-        try {
-            fromDateTime(isoDateParser.parseDateTime(input.trim()))
-        } catch (e: Exception) {
-            val parts = input.split("-")
-                    .flatMap { it.split("/") }
-                    .filter { !it.isBlank() }
-                    .map { value -> value.trimStart('0') }
-                    .map { it.toInt() }
+fun DateComponents.Companion.tryParse(input: String): DateComponents? {
+    val fromDateTime = try {
+        fromDateTime(isoDateParser.parseDateTime(input.trim()))
+    } catch (e: Exception) {
+        null
+    }
 
-            val fromParts = when (parts.size) {
-                3 -> DateComponents(year = parts[0], month = parts[1], day = parts[2])
-                1 -> DateComponents(year = parts[0])
-                2 -> when {
-                    parts[0] > 1000 -> DateComponents(year = parts[0], month = parts[1])
-                    else -> DateComponents(month = parts[0], day = parts[1])
-                }
-                else -> null
+    if (fromDateTime != null) return fromDateTime
+
+    val fromParts = try {
+        val parts = input.split("-")
+                .flatMap { it.split("/") }
+                .filter { !it.isBlank() }
+                .map { it.trimStart('0') }
+                .map { it.toInt() }
+
+        when (parts.size) {
+            3 -> DateComponents(year = parts[0], month = parts[1], day = parts[2])
+            1 -> DateComponents(year = parts[0])
+            2 -> when {
+                parts[0] > 1000 -> DateComponents(year = parts[0], month = parts[1])
+                else -> DateComponents(month = parts[0], day = parts[1])
             }
-            fromParts
+            else -> null
         }
+    } catch (e: Exception) {
+        null
+    }
 
+    if (fromParts != null) return fromParts
+
+    return null
+}
 
 fun DateComponents.Companion.fromDateTime(date: DateTime): DateComponents {
     return DateComponents(month = date.monthOfYear, year = date.year, day = date.dayOfMonth)
