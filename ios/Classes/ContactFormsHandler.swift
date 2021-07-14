@@ -13,7 +13,7 @@ import Flutter
 var flutterResult: FlutterResult? = nil
 
 @available(iOS 9.0, *)
-extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
+extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactPickerDelegate {
     
     
     func openContactInsertForm(result: @escaping FlutterResult, contact: CNContact?=nil) ->  [String:Any]? {
@@ -74,6 +74,34 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
             NSLog(error.localizedDescription)
             throw PluginError.runtimeError( code: ErrorCodes.formCouldNotBeOpened.description,
                                             message: "Error opening form: \(error.localizedDescription)")
+        }
+    }
+
+    func openContactPicker(result: @escaping FlutterResult) {
+        flutterResult = result
+        DispatchQueue.main.async {
+          let contactPicker = CNContactPickerViewController()
+          contactPicker.delegate = self
+          var rvc = UIApplication.shared.keyWindow?.rootViewController
+          while let nextView = rvc?.presentedViewController {
+            rvc = nextView
+          }
+          rvc?.present(contactPicker, animated:true, completion: nil)
+        }
+    }
+
+    //MARK:- CNContactPickerDelegate Method
+    public func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+        if let result = flutterResult {
+          result(contactResult(self.mode, contact: contact))
+          flutterResult = nil
+        }
+    }
+
+    public func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+        if let result = flutterResult {
+          result(contactFailResult(code: ErrorCodes.formOperationCancelled.description))
+          flutterResult = nil
         }
     }
     

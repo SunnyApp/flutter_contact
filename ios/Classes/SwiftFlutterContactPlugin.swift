@@ -125,7 +125,10 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                         contact = mutable
                     }
                     let _ = self.openContactInsertForm(result: result, contact: contact)
-                    
+
+                case "openContactPicker":
+                    let _ = self.openContactPicker(result: result);
+
                 default:
                     result(FlutterMethodNotImplemented)
                 }
