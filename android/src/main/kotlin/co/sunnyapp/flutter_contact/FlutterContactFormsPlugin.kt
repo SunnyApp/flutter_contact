@@ -37,6 +37,29 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
                     }
                 }
             }
+            REQUEST_OPEN_CONTACT_PICKER -> when (val uri = intent?.data) {
+                null -> {
+                    result?.success(mapOf("success" to false, "code" to ErrorCodes.PICKER_OPERATION_CANCELED))
+                    false
+                }
+                else -> when (val contactIdString = uri.lastPathSegment) {
+                    null -> {
+                        result?.success(mapOf("success" to false, "code" to ErrorCodes.PICKER_OPERATION_CANCELED))
+                        false
+                    }
+                    else -> {
+                        result?.success(mapOf(
+                                "success" to true,
+                                "contact" to plugin.getContact(ContactKeys(plugin.mode, contactIdString.toLong()),
+                                        withThumbnails = false, photoHighResolution = false)))
+                        true
+                    }
+                }
+            }
+            REQUEST_INSERT_OR_UPDATE_CONTACT -> {
+                result?.success(mapOf("success" to true))
+                true
+            }
             else -> {
                 result?.success(ErrorCodes.FORM_COULD_NOT_BE_OPENED)
                 false
@@ -80,6 +103,37 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
         }
     }
 
+    fun openContactPicker(result: Result, mode: ContactMode) {
+        try {
+            this.result = result
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = ContactsContract.Contacts.CONTENT_TYPE
+            startIntent(intent, REQUEST_OPEN_CONTACT_PICKER)
+        } catch (e: MethodCallException) {
+            result.error(e.code, "Error with ${e.method}: ${e.error}", e.error)
+            this.result = null
+        } catch (e: Exception) {
+            result.error(ErrorCodes.UNKNOWN_ERROR, "Problem opening contact picker", "$e")
+            this.result = null
+        }
+    }
+
+    fun insertOrUpdateContactViaPicker(result: Result, mode: ContactMode, contact: Contact) {
+        try {
+            this.result = result
+            val intentInsertEdit = Intent(Intent.ACTION_INSERT_OR_EDIT)
+            intentInsertEdit.type = ContactsContract.Contacts.CONTENT_ITEM_TYPE
+            contact.applyToIntent(mode, intentInsertEdit)
+            startIntent(intentInsertEdit, REQUEST_INSERT_OR_UPDATE_CONTACT)
+        } catch (e: MethodCallException) {
+            result.error(e.code, "Error with ${e.method}: ${e.error}", e.error)
+            this.result = null
+        } catch (e: Exception) {
+            result.error(ErrorCodes.UNKNOWN_ERROR, "Problem opening contact picker", "$e")
+            this.result = null
+        }
+    }
+
     private fun startIntent(intent: Intent, request: Int) {
         if (registrar.activity() != null) {
             registrar.activity().startActivityForResult(intent, request)
@@ -92,6 +146,8 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
     companion object {
         const val REQUEST_OPEN_CONTACT_FORM = 52941
         const val REQUEST_OPEN_EXISTING_CONTACT = 52942
+        const val REQUEST_OPEN_CONTACT_PICKER = 52943
+        const val REQUEST_INSERT_OR_UPDATE_CONTACT = 52944
     }
 
 }

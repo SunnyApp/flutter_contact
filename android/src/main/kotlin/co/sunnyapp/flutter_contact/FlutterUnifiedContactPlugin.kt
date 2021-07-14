@@ -87,6 +87,15 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                             ?: emptyMap<String, Any?>())
                     contactForms.openContactInsertForm(result, mode, contactFromArgs)
                 }
+                "openContactPicker" -> {
+                    contactForms.openContactPicker(result, mode)
+                }
+                "insertOrUpdateContactViaPicker" -> {
+                    val contactFromArgs = Contact.fromMap(mode, call.arguments as? Map<String, *>
+                            ?: emptyMap<String, Any?>())
+                    println(contactFromArgs.toMap())
+                    contactForms.insertOrUpdateContactViaPicker(result, mode, contactFromArgs)
+                }
                 else -> result.notImplemented()
             }
 

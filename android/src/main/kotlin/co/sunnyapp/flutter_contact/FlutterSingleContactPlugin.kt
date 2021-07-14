@@ -88,6 +88,14 @@ class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContac
                             ?: emptyMap<String, Any?>())
                     contactForms.openContactInsertForm(result, mode, contactFromArgs)
                 }
+                "openContactPicker" -> {
+                    contactForms.openContactPicker(result, mode)
+                }
+                "insertOrUpdateContactViaPicker" -> {
+                    val contactFromArgs = Contact.fromMap(mode, call.arguments as? Map<String, *>
+                            ?: emptyMap<String, Any?>())
+                    contactForms.insertOrUpdateContactViaPicker(result, mode, contactFromArgs)
+                }
                 else -> result.notImplemented()
             }
 
