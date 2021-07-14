@@ -24,6 +24,11 @@ abstract class FormsContract {
 
   /// Opens a native insert form with [data] preloaded
   Future<Contact?> openContactInsertForm(Contact data);
+
+  /// opens a native contact picker
+  Future<Contact?> openContactPicker();
+
+  Future<void> insertOrUpdateContactViaPicker(Contact data);
 }
 
 abstract class ContactsContract implements FormsContract {
@@ -146,6 +151,24 @@ class ContactService implements ContactsContract {
       _log.info("Contact form was not saved: ${map["code"] ?? 'unknown'}");
       return null;
     }
+  }
+
+  @override
+  Future<Contact?> openContactPicker() async {
+    final map = await channel.invokeMethod('openContactPicker');
+    if (map["success"] == true) {
+      final contact = Contact.of(map["contact"] ?? <String, dynamic>{}, mode);
+      _log.info("picked contact: ${contact?.identifier}");
+      return contact;
+    } else {
+      _log.info("Contact was not picked: ${map["code"] ?? 'unknown'}");
+      return null;
+    }
+  }
+
+  @override
+  Future<void> insertOrUpdateContactViaPicker(Contact data) async {
+    await channel.invokeMethod('insertOrUpdateContactViaPicker', data.toMap());
   }
 
   /// Fetches all contacts, or when specified, the contacts with a name
