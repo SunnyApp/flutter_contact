@@ -137,12 +137,12 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactP
 }
 
 func contactFailResult(code: String)-> [String:Any] {
-    return ["successful": false, "code": code]
+    return ["success": false, "code": code]
     
 }
 
 @available(iOS 9.0, *)
 func contactResult(_ mode: ContactMode, contact:CNContact)-> [String:Any] {
-    return ["successful": true, "contact": contact.toDictionary(mode)]
+    return ["success": true, "contact": contact.toDictionary(mode)]
     
 }
