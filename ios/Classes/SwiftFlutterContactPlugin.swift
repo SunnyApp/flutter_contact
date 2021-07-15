@@ -129,6 +129,16 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                 case "openContactPicker":
                     let _ = self.openContactPicker(result: result);
 
+                case "insertOrUpdateContactViaPicker":
+                    let contactData:[String:Any?]? = call.arguments as? [String:Any?]
+                    var contact:CNContact? = nil
+                    if let contactData = contactData {
+                        let mutable = CNMutableContact()
+                        mutable.takeFromDictionary(contactData)
+                        contact = mutable
+                    }
+                    let _ = self.insertOrUpdateContactViaPicker(result: result, contact: contact)
+
                 default:
                     result(FlutterMethodNotImplemented)
                 }

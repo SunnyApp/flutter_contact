@@ -90,6 +90,26 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactP
         }
     }
 
+    func insertOrUpdateContactViaPicker(result: @escaping FlutterResult, contact: CNContact?=nil) -> [String:Any]? {
+        flutterResult = result
+        let contact = contact ?? CNMutableContact()
+        DispatchQueue.main.async {
+          let cnvc = CNContactViewController.init(forUnknownContact: contact)
+          cnvc.delegate = self
+          cnvc.contactStore = CNContactStore()
+          cnvc.allowsActions = false
+          cnvc.view.layoutIfNeeded()
+          let navigationController = UINavigationController.init(rootViewController: cnvc)
+          navigationController.isNavigationBarHidden = false
+          var rvc = UIApplication.shared.keyWindow?.rootViewController
+          while let nextView = rvc?.presentedViewController {
+            rvc = nextView
+          }
+          rvc?.present(navigationController, animated:true, completion: nil)
+        }
+        return nil
+      }
+
     //MARK:- CNContactPickerDelegate Method
     public func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
         if let result = flutterResult {
