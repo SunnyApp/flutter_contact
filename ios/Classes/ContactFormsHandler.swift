@@ -94,21 +94,29 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactP
         flutterResult = result
         let contact = contact ?? CNMutableContact()
         DispatchQueue.main.async {
-          let cnvc = CNContactViewController.init(forUnknownContact: contact)
-          cnvc.delegate = self
-          cnvc.contactStore = CNContactStore()
-          cnvc.allowsActions = false
-          cnvc.view.layoutIfNeeded()
-          let navigationController = UINavigationController.init(rootViewController: cnvc)
-          navigationController.isNavigationBarHidden = false
-          var rvc = UIApplication.shared.keyWindow?.rootViewController
-          while let nextView = rvc?.presentedViewController {
-            rvc = nextView
-          }
-          rvc?.present(navigationController, animated:true, completion: nil)
+            let cnvc = CNContactViewController(forUnknownContact:contact)
+            cnvc.delegate = self
+            cnvc.contactStore = CNContactStore()
+            cnvc.displayedPropertyKeys = [CNContactPhoneNumbersKey]
+            cnvc.allowsActions = false
+            cnvc.allowsEditing = false
+            cnvc.edgesForExtendedLayout = []
+            cnvc.view.layoutIfNeeded()
+            let navigationController = UINavigationController .init(rootViewController: cnvc)
+            if #available(iOS 13.0, *) {
+                // use the feature available in iOS 13 or later
+                navigationController.navigationBar.backgroundColor = .systemBackground
+            } else {
+                navigationController.navigationBar.backgroundColor = .white
+            }
+            var rvc = UIApplication.shared.keyWindow?.rootViewController
+            while let nextView = rvc?.presentedViewController {
+                rvc = nextView
+            }
+            rvc?.present(navigationController, animated: true, completion: nil)
         }
         return nil
-      }
+    }
 
     //MARK:- CNContactPickerDelegate Method
     public func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
