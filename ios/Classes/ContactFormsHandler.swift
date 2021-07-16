@@ -97,7 +97,7 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactP
             let cnvc = CNContactViewController(forUnknownContact:contact)
             cnvc.delegate = self
             cnvc.contactStore = CNContactStore()
-            cnvc.displayedPropertyKeys = [CNContactPhoneNumbersKey]
+//             cnvc.displayedPropertyKeys = [CNContactPhoneNumbersKey]
             cnvc.allowsActions = false
             cnvc.allowsEditing = false
             cnvc.edgesForExtendedLayout = []
