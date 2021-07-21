@@ -167,8 +167,18 @@ class ContactService implements ContactsContract {
   }
 
   @override
-  Future<void> insertOrUpdateContactViaPicker(Contact data) async {
-    await channel.invokeMethod('insertOrUpdateContactViaPicker', data.toMap());
+  Future<Contact?> insertOrUpdateContactViaPicker(Contact data) async {
+    final map = await channel.invokeMethod(
+        'insertOrUpdateContactViaPicker', data.toMap());
+    if (map["success"] == true) {
+      final contact = Contact.of(map["contact"] ?? <String, dynamic>{}, mode);
+      _log.info("inserted or updated contact: ${contact?.identifier}");
+      return contact;
+    } else {
+      _log.info(
+          "Contact was not inserted or updated: ${map["code"] ?? 'unknown'}");
+      return null;
+    }
   }
 
   /// Fetches all contacts, or when specified, the contacts with a name

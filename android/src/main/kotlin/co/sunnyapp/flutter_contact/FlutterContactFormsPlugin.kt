@@ -18,7 +18,7 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
     var result: Result? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?): Boolean {
         val success = when (requestCode) {
-            REQUEST_OPEN_EXISTING_CONTACT, REQUEST_OPEN_CONTACT_FORM -> when (val uri = intent?.data) {
+            REQUEST_OPEN_EXISTING_CONTACT, REQUEST_OPEN_CONTACT_FORM, REQUEST_INSERT_OR_UPDATE_CONTACT -> when (val uri = intent?.data) {
                 null -> {
                     result?.success(mapOf("success" to false, "code" to ErrorCodes.FORM_OPERATION_CANCELED))
                     false
@@ -55,10 +55,6 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
                         true
                     }
                 }
-            }
-            REQUEST_INSERT_OR_UPDATE_CONTACT -> {
-                result?.success(mapOf("success" to true))
-                true
             }
             else -> {
                 result?.success(ErrorCodes.FORM_COULD_NOT_BE_OPENED)
@@ -124,6 +120,7 @@ class FlutterContactForms(private val plugin: FlutterContactPlugin, private val 
             val intentInsertEdit = Intent(Intent.ACTION_INSERT_OR_EDIT)
             intentInsertEdit.type = ContactsContract.Contacts.CONTENT_ITEM_TYPE
             contact.applyToIntent(mode, intentInsertEdit)
+            intentInsertEdit.putExtra("finishActivityOnSaveCompleted", true)
             startIntent(intentInsertEdit, REQUEST_INSERT_OR_UPDATE_CONTACT)
         } catch (e: MethodCallException) {
             result.error(e.code, "Error with ${e.method}: ${e.error}", e.error)
