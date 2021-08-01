@@ -106,14 +106,9 @@ class UrlType : ItemType(otherType = Website.TYPE_CUSTOM, labelField = Website.L
 
 class EventType : ItemType(otherType = Event.TYPE_CUSTOM, labelField = Event.LABEL, typeField = Event.TYPE) {
     override fun calculateTypeInt(type: String?) = when (type?.toLowerCase()) {
-        "work" -> Website.TYPE_WORK
-        "blog" -> Website.TYPE_BLOG
-        "home" -> Website.TYPE_HOME
-        "website" -> Website.TYPE_HOMEPAGE
-        "homepage" -> Website.TYPE_HOMEPAGE
-        "ftp" -> Website.TYPE_FTP
-        "profile" -> Website.TYPE_PROFILE
-        else -> Website.TYPE_CUSTOM
+        "anniversary" -> Event.TYPE_ANNIVERSARY
+        "birthday" -> Event.TYPE_ANNIVERSARY
+        else -> Event.TYPE_CUSTOM
     }
 
     override fun calculateTypeValue(type: Int) = when (type) {

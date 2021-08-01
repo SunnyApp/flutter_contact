@@ -303,21 +303,21 @@ class Contact {
         for (final c in _iterableKey(dyn, _klinkedContactIds)) "$c",
       ],
       emails: [for (final m in _iterableKey(dyn, _kemails)) Item.fromMap(m)]
-          .notNull(),
+          .notNullList(),
       phones: [for (final m in _iterableKey(dyn, _kphones)) Item.fromMap(m)]
-          .notNull(),
+          .notNullList(),
       socialProfiles: [
         for (final m in _iterableKey(dyn, _ksocialProfiles)) Item.fromMap(m)
       ].whereType<Item>().toList(),
       urls: [for (final m in _iterableKey(dyn, _kurls)) Item.fromMap(m)]
-          .notNull(),
+          .notNullList(),
       dates: [
         for (final m in _iterableKey(dyn, _kdates)) ContactDate.fromMap(m)
-      ].notNull(),
+      ].notNullList(),
       postalAddresses: [
         for (final m in _iterableKey(dyn, _kpostalAddresses))
           PostalAddress.fromMap(m)
-      ].notNull(),
+      ].notNullList(),
       avatar: dyn[_kavatar] as Uint8List?,
       note: dyn[_knote] as String?,
     );
@@ -421,7 +421,7 @@ class ContactDate {
       final label = dyn[_klabel] as String?;
       FlexiDate? flexi;
       try {
-        flexi = dyn[_kdate] != null
+        flexi = (dyn[_kdate] != null || dyn[_kvalue] != null)
             ? FlexiDate.from(dyn[_kdate] ?? dyn[_kvalue])
             : null;
       } catch (e) {
@@ -558,7 +558,7 @@ extension ItemListsToMap on Iterable<Item> {
   List<Map<String, String>> toJson() {
     return [
       for (var i in this) i.toMap(),
-    ].notNull();
+    ].notNullList();
   }
 }
 
@@ -586,18 +586,18 @@ Map<String, dynamic> _contactToMap(Contact contact) {
     _kphones: contact.phones.toJson(),
     _kdates: [
       for (final item in contact.dates) _contactDateToMap(item),
-    ].notNull(),
+    ].notNullList(),
     _ksocialProfiles: contact.socialProfiles.toJson(),
     _kurls: contact.urls.toJson(),
     _kpostalAddresses: [
       for (final address in contact.postalAddresses) address.toMap(),
-    ].notNull(),
+    ].notNullList(),
     _kavatar: contact.avatar,
     _knote: contact.note
   }.valuesNotNull();
 }
 
-bool Function(T item) notNull<T>() => (item) => item != null;
+bool Function(T item) notNullList<T>() => (item) => item != null;
 
 extension PostalAddressToMap on PostalAddress? {
   Map<String, String>? toMap() {

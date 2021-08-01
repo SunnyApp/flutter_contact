@@ -13,9 +13,12 @@ void main() {
 
   const MethodChannel channel =
       MethodChannel('github.com/sunnyapp/flutter_unified_contact');
+  const MethodChannel channel2 =
+      MethodChannel('github.com/sunnyapp/flutter_single_contact');
+
   final mock = ContactsMocks();
   channel.setMockMethodCallHandler(mock.handler);
-
+  channel.setMockMethodCallHandler(mock.handler);
   tearDown(() {
     mock.clear();
   });

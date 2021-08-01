@@ -4,15 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contact/contact.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dartxx/dartxx.dart';
 
 import 'flutter_contact_test.dart';
 
 /// Class that assists in mocking and tracking calls
 class ContactsMocks {
   final List<MethodCall> _log;
-  final Map<String, dynamic> _data;
+  final Map<String, Map<String, dynamic>> _data;
 
-  ContactsMocks({Map<String, dynamic>? data, List<MethodCall>? log})
+  ContactsMocks(
+      {Map<String, Map<String, dynamic>>? data, List<MethodCall>? log})
       : _data = data ?? {},
         _log = log ?? [] {
     _mockMethods = <String, RawMethodHandler>{
@@ -32,15 +34,16 @@ class ContactsMocks {
         addLog(call);
         final handle = _mockMethods[call.method];
         if (handle == null) throw "No mock provided for ${call.method}";
-        return handle(call.arguments);
+        var result = await handle(call.arguments);
+        return result;
       };
 
   void addLog(MethodCall log) => _log.add(log);
 
-  Future<dynamic> _getContacts(args) async {
+  Future<List<Map<String, dynamic>>> _getContacts(args) async {
     final offset = args["offset"] as int? ?? 0;
     final limit = args["limit"] as int? ?? 50;
-    final allItems = [..._data.values];
+    final allItems = [..._data.values].notNullList();
     if (allItems.length > offset) {
       return allItems.sublist(offset, min(allItems.length, offset + limit));
     } else {
@@ -66,7 +69,7 @@ class ContactsMocks {
   Future<dynamic> _updateContact(args) async {
     final id = args["identifier"] as String?;
     if (id == null) return null;
-    _data[id] = args;
+    _data[id] = (args as Map).cast<String, dynamic>();
     return _data;
   }
 
@@ -81,10 +84,10 @@ class ContactsMocks {
     return true;
   }
 
-  Future<dynamic> _addContact(args) async {
+  Future<dynamic> _addContact(dynamic args) async {
     final id = Uuid().v4();
     args["identifier"] = id;
-    _data[id] = args;
+    _data[id] = (args as Map).cast<String, dynamic>();
     return _data;
   }
 
