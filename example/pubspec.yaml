@@ -13,16 +13,16 @@ dependencies:
 
   equatable: ^2.0.0
   flexidate: ^0.4.4+1
-  flutter_platform_widgets: ^1.0.1-nullsafety.0
   flutter:
     sdk: flutter
+  flutter_platform_widgets: ^1.0.1-nullsafety.0
+  full_text_search: ^0.7.5+2
   intl: ^0.17.0
   logging: ^1.0.0
   logging_config: ^0.6.7+6
-
   quiver: ^3.0.0
   uuid: ^3.0.1
-  full_text_search: ^0.7.5+2
+
   permission_handler: ^6.1.0
 
 dependency_overrides:
