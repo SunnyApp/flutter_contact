@@ -41,7 +41,8 @@ data class ContactDate(val label: String?, val value: String, val date: DateComp
 fun Date?.toIsoString(): String? {
     val date = this ?: return null
     val tz: TimeZone = TimeZone.getTimeZone("UTC")
-    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'") // Quoted "Z" to indicate UTC, no timezone offset
+    val df: DateFormat =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'") // Quoted "Z" to indicate UTC, no timezone offset
     df.timeZone = tz
     return df.format(date)
 }
@@ -53,14 +54,15 @@ fun Date?.toIsoString(): String? {
  *
  */
 fun DateComponents.Companion.tryParse(input: String) =
+    try {
+        fromDateTime(isoDateParser.parseDateTime(input.trim()))
+    } catch (e: Exception) {
         try {
-            fromDateTime(isoDateParser.parseDateTime(input.trim()))
-        } catch (e: Exception) {
             val parts = input.split("-")
-                    .flatMap { it.split("/") }
-                    .filter { !it.isBlank() }
-                    .map { value -> value.trimStart('0') }
-                    .map { it.toInt() }
+                .flatMap { it.split("/") }
+                .filter { it.isNotBlank() }
+                .map { value -> value.trimStart('0') }
+                .map { it.toInt() }
 
             val fromParts = when (parts.size) {
                 3 -> DateComponents(year = parts[0], month = parts[1], day = parts[2])
@@ -72,7 +74,10 @@ fun DateComponents.Companion.tryParse(input: String) =
                 else -> null
             }
             fromParts
+        } catch (e1: Exception) {
+            null
         }
+    }
 
 
 fun DateComponents.Companion.fromDateTime(date: DateTime): DateComponents {
