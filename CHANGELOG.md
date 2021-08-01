@@ -1,3 +1,8 @@
+## [0.8.1+3]
+ * Updating gemfile
+Upgrading dependencies
+Updating dependencies
+
 ## 0.8.1-nullsafety
 * Introduced null-safety
 * Changed underlying date library to improve date parsing.  This will require changing DateComponents references to FlexiDate
