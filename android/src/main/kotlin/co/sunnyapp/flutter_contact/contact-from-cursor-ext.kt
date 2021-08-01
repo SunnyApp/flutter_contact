@@ -82,6 +82,8 @@ interface ContactExtensions {
             /// We overshoot because one record could involve multiple rows.
             if(skipped.size > offset) {
                 skipped.remove(skipped.last())
+                // move the cursor to previous position as we don't want to skip this contact row
+                cursor.moveToPrevious()
             }
         }
 
