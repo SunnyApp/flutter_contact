@@ -29,6 +29,7 @@
 **/*.g.dart
 /build/
 
+.release-notes
 
 .gradle/
 *.cer
