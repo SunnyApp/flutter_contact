@@ -1,3 +1,6 @@
+## [0.9.1+7]
+ * Dont return avatar
+
 ## [0.9.1+6]
  * Fixing reverse type mapping for events.
 
