@@ -54,7 +54,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.update),
+            icon: Icon(Icons.edit),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => UpdatePersonPage(
@@ -64,7 +64,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
             ),
           ),
           IconButton(
-              icon: Icon(Icons.edit),
+              icon: Icon(Icons.contact_page),
               onPressed: () => _openExistingContactOnDevice(context)),
         ],
       ),

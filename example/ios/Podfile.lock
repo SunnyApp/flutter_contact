@@ -2,6 +2,8 @@ PODS:
   - Flutter (1.0.0)
   - flutter_contact (0.0.1):
     - Flutter
+  - image_picker (0.0.1):
+    - Flutter
   - libPhoneNumber-iOS (0.9.15)
   - libphonenumber2 (0.0.1):
     - Flutter
@@ -12,6 +14,7 @@ PODS:
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_contact (from `.symlinks/plugins/flutter_contact/ios`)
+  - image_picker (from `.symlinks/plugins/image_picker/ios`)
   - libphonenumber2 (from `.symlinks/plugins/libphonenumber2/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
@@ -24,6 +27,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_contact:
     :path: ".symlinks/plugins/flutter_contact/ios"
+  image_picker:
+    :path: ".symlinks/plugins/image_picker/ios"
   libphonenumber2:
     :path: ".symlinks/plugins/libphonenumber2/ios"
   permission_handler:
@@ -32,10 +37,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   flutter_contact: de1260a343986ae87ef21dcda46f4ae584eceb8c
+  image_picker: e06f7a68f000bd36f552c1847e33cda96ed31f1f
   libPhoneNumber-iOS: 0a32a9525cf8744fe02c5206eb30d571e38f7d75
   libphonenumber2: 72ed3c7970f639c54aef73d9f195403a73b3cfb8
   permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
 
 PODFILE CHECKSUM: a75497545d4391e2d394c3668e20cfb1c2bbd4aa
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.1

@@ -86,7 +86,16 @@ public class SwiftFlutterContactPlugin: NSObject, FlutterPlugin {
                                                       withThumbnails: call.getBool("withThumbnails"),
                                                       photoHighResolution: call.getBool("photoHighResolution"),
                                                       withUnifyInfo: call.getBool("withUnifyInfo"))
-                    result(contact?.toDictionary())
+                    var contactDictionary = contact?.toDictionary()
+                    if (!call.getBool("withThumbnails")) {
+                        contactDictionary?.removeValue(forKey: "avatarThumbnail")
+                    }
+                    
+                    if(!call.getBool("photoHighResolution")) {
+                        contactDictionary?.removeValue(forKey: "avatar")
+                    }
+                    
+                    result(contactDictionary)
                 case "getUnifySummary":
                     result(try self.calculateLinkedContacts())
                 case "getGroups":
