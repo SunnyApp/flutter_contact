@@ -1,3 +1,6 @@
+## [0.9.1+6]
+ * Fixing reverse type mapping for events.
+
 ## [0.8.1+3]
  * Updating gemfile
 Upgrading dependencies
