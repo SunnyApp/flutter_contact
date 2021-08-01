@@ -421,7 +421,7 @@ class ContactDate {
       final label = dyn[_klabel] as String?;
       FlexiDate? flexi;
       try {
-        flexi = dyn[_kdate] != null
+        flexi = (dyn[_kdate] != null || dyn[_kvalue] != null)
             ? FlexiDate.from(dyn[_kdate] ?? dyn[_kvalue])
             : null;
       } catch (e) {
@@ -597,7 +597,7 @@ Map<String, dynamic> _contactToMap(Contact contact) {
   }.valuesNotNull();
 }
 
-bool Function(T item) notNull<T>() => (item) => item != null;
+bool Function(T item) notNullList<T>() => (item) => item != null;
 
 extension PostalAddressToMap on PostalAddress? {
   Map<String, String>? toMap() {
