@@ -1,3 +1,6 @@
+## [0.9.1+8]
+ * Prepare for publish
+
 ## [0.9.1+7]
  * Dont return avatar
 
