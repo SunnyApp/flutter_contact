@@ -11,7 +11,7 @@ dependencies:
   collection: ^1.15.0
   cupertino_icons: ^1.0.3
   equatable: ^2.0.3
-  flexidate: ^0.6.0+2
+  flexidate: ^0.8.0+3
   flutter:
     sdk: flutter
   flutter_platform_widgets: ^1.9.5
