@@ -144,7 +144,16 @@ interface ContactExtensions {
                                 ?: cursor.string(CommonDataKinds.StructuredName.PREFIX)
                         contact.suffix = contact.suffix
                                 ?: cursor.string(CommonDataKinds.StructuredName.SUFFIX)
-                        contact.displayName = contact.displayName ?: cursor.string(mode.nameRef)
+                        contact.displayName = contact.displayName ?: when (mode) {
+                            ContactMode.UNIFIED -> {
+                                // get the primary display name.
+                                cursor.string(Contacts.DISPLAY_NAME)
+                            }
+                            ContactMode.SINGLE -> {
+                                // get the raw contact display name
+                                cursor.string(mode.nameRef)
+                            }
+                        }
                     }
                     CommonDataKinds.Note.CONTENT_ITEM_TYPE -> contact.note = cursor.string(CommonDataKinds.Note.NOTE)
                     CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
