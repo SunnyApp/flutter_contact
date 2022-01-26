@@ -38,6 +38,7 @@ class ContactsContentObserver(private val sink: EventChannel.EventSink, handler:
 object ErrorCodes {
     const val FORM_OPERATION_CANCELED = "formOperationCancelled"
     const val FORM_COULD_NOT_BE_OPENED = "formCouldNotBeOpened"
+    const val PICKER_OPERATION_CANCELED = "pickerOperationCancelled"
     const val NOT_FOUND = "notFound"
     const val UNKNOWN_ERROR = "unknownError"
     const val INVALID_PARAMETER = "invalidParameter"

@@ -131,6 +131,11 @@ interface ContactExtensions {
                     }
                 }
 
+                // set the display name as primary and outside the mime type check.
+                // if the raw contact has no name then there will be no mime type about name data,
+                // so display name will be null.
+                contact.displayName = cursor.string(Contacts.DISPLAY_NAME)
+
                 //NAMES
                 when (mimeType) {
                     CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
@@ -144,7 +149,6 @@ interface ContactExtensions {
                                 ?: cursor.string(CommonDataKinds.StructuredName.PREFIX)
                         contact.suffix = contact.suffix
                                 ?: cursor.string(CommonDataKinds.StructuredName.SUFFIX)
-                        contact.displayName = contact.displayName ?: cursor.string(mode.nameRef)
                     }
                     CommonDataKinds.Note.CONTENT_ITEM_TYPE -> contact.note = cursor.string(CommonDataKinds.Note.NOTE)
                     CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {

@@ -3,14 +3,12 @@
 package co.sunnyapp.flutter_contact
 
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
 const val flutterContactsChannelName = "github.com/sunnyapp/flutter_unified_contact"
@@ -19,10 +17,7 @@ const val flutterContactsEventName = "github.com/sunnyapp/flutter_unified_contac
 /**
  * The variant that operates on Aggregate contacts vs raw contacts
  */
-class FlutterAggregateContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
-        MethodCallHandler {
-
-    override val contactForms = FlutterContactForms(this, registrar)
+class FlutterAggregateContactPlugin : BaseFlutterContactPlugin(), MethodCallHandler {
 
     override val mode = ContactMode.UNIFIED
 
@@ -50,7 +45,8 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                 }
                 "getContact" -> asyncTask(result) {
                     this.getContact(
-                            identifier = contactKeyOf(mode, call.argument("identifier")) ?: badParameter("getContact", "identifier"),
+                            identifier = contactKeyOf(mode, call.argument("identifier"))
+                                    ?: badParameter("getContact", "identifier"),
                             withThumbnails = call.argument<Any?>("withThumbnails") == true,
                             photoHighResolution = call.argument<Any?>("photoHighResolution") == true)
                 }
@@ -77,7 +73,8 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                     when (val contactId = call.argument<Any?>("identifier")) {
                         null -> result.error(ErrorCodes.INVALID_PARAMETER, "Missing parameter: identifier", null)
                         else -> {
-                            val keys = contactKeyOf(mode, contactId) ?: badParameter("openEditForm", "identifier")
+                            val keys = contactKeyOf(mode, contactId)
+                                    ?: badParameter("openEditForm", "identifier")
                             contactForms.openContactEditForm(result, keys)
                         }
                     }
@@ -87,6 +84,15 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
                             ?: emptyMap<String, Any?>())
                     contactForms.openContactInsertForm(result, mode, contactFromArgs)
                 }
+                "openContactPicker" -> {
+                    contactForms.openContactPicker(result, mode)
+                }
+                "insertOrUpdateContactViaPicker" -> {
+                    val contactFromArgs = Contact.fromMap(mode, call.arguments as? Map<String, *>
+                            ?: emptyMap<String, Any?>())
+                    println(contactFromArgs.toMap())
+                    contactForms.insertOrUpdateContactViaPicker(result, mode, contactFromArgs)
+                }
                 else -> result.notImplemented()
             }
 
@@ -95,16 +101,18 @@ class FlutterAggregateContactPlugin(override val registrar: Registrar) : Flutter
         }
     }
 
-    companion object {
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), flutterContactsChannelName)
-            val events = EventChannel(registrar.messenger(), flutterContactsEventName)
-            val plugin = FlutterAggregateContactPlugin(registrar)
-            channel.setMethodCallHandler(plugin)
-            events.setStreamHandler(plugin)
-
+    override fun initInstance(applicationContext: Context, messenger: BinaryMessenger, registrar: PluginRegistry.Registrar?) {
+        methodChannel = MethodChannel(messenger, flutterContactsChannelName)
+        eventChannel = EventChannel(messenger, flutterContactsEventName)
+        methodChannel!!.setMethodCallHandler(this)
+        eventChannel!!.setStreamHandler(this)
+        context = applicationContext
+        contactForms = if (registrar == null) {
+            // initializing the instance with v2 embedding
+            FlutterContactForms(this, context)
+        } else {
+            // initializing the instance with v1 embedding
+            FlutterContactFormsOld(this, registrar)
         }
     }
 }
-
