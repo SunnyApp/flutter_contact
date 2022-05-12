@@ -12,7 +12,7 @@ class FlutterContactFormsOld(plugin: BaseFlutterContactPlugin, private val regis
 
     override fun startIntent(intent: Intent, request: Int) {
         if (registrar.activity() != null) {
-            registrar.activity().startActivityForResult(intent, request)
+            registrar.activity()!!.startActivityForResult(intent, request)
         } else {
             registrar.context().startActivity(intent)
         }
