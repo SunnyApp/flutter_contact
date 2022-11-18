@@ -3,30 +3,38 @@ version: 0.9.1+7
 homepage: https://github.com/SunnyApp/flutter_contact
 description: A Flutter plugin to retrieve, create and save contacts and contact-related events on Android and iOS devices.
 maintainer: Eric Martineau
-environment: 
+environment:
   sdk: '>=2.14.0 <3.0.0'
   flutter: '>=1.10.0'
-dependencies: 
+dependencies:
   collection: ^1.15.0
   dartxx: ^0.5.3+2
   equatable: ^2.0.3
   flexidate: ^0.8.0+3
+  flutter:
+    sdk: flutter
   intl: ^0.17.0
   logging: ^1.0.2
   logging_config: ^0.6.7+7
   quiver: ^3.0.1+1
   uuid: ^3.0.5
-  flutter: 
+
+dependency_overrides:
+  flexidate:
+    git:
+      url: https://github.com/agendaboa/flexidate-0.8.0-3
+      ref: 7931be0c4ee95d5349dccc2f135874e67c9e3530
+
+dev_dependencies:
+  flutter_test:
     sdk: flutter
-dev_dependencies: 
   pedantic: ^1.11.1
-  flutter_test: 
-    sdk: flutter
-flutter: 
-  plugin: 
-    platforms: 
-      android: 
+
+flutter:
+  plugin:
+    platforms:
+      android:
         package: co.sunnyapp.flutter_contact
         pluginClass: FlutterContactPlugin
-      ios: 
+      ios:
         pluginClass: FlutterContactPlugin
