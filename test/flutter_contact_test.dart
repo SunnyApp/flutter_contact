@@ -2,7 +2,6 @@ import 'package:flexidate/flexidate.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:flutter_contact/paging_iterable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiver/iterables.dart';
 
@@ -13,8 +12,6 @@ void main() {
 
   const MethodChannel channel =
       MethodChannel('github.com/sunnyapp/flutter_unified_contact');
-  const MethodChannel channel2 =
-      MethodChannel('github.com/sunnyapp/flutter_single_contact');
 
   final mock = ContactsMocks();
   channel.setMockMethodCallHandler(mock.handler);

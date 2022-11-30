@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:flutter_contact/flutter_contact.dart';
 
 class AddContactPage extends StatefulWidget {
   @override

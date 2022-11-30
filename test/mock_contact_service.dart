@@ -1,10 +1,10 @@
 import 'dart:math';
 
+import 'package:dartxx/dartxx.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contact/contact.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
-import 'package:dartxx/dartxx.dart';
 
 import 'flutter_contact_test.dart';
 

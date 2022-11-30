@@ -1,7 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:sunny_platform_widgets/sunny_platform_widgets.dart';
 
 class ItemsTile extends StatefulWidget {
   ItemsTile(this._title, this._items, this.onChange);

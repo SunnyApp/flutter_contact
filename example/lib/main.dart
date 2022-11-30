@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contact_example/people_list_page.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:sunny_platform_widgets/sunny_platform_widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_config/logging_config.dart';
 import 'package:permission_handler/permission_handler.dart';

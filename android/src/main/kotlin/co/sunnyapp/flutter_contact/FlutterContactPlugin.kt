@@ -3,16 +3,18 @@
 package co.sunnyapp.flutter_contact
 
 
-import android.annotation.TargetApi
 import android.content.ContentProviderOperation
 import android.content.ContentResolver
 import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.provider.ContactsContract
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.nio.ByteBuffer
 import java.util.*
+
 
 /**
  * Base class for the flutter_contact plugin.  There are two modes for this plugin: aggregate and raw.
@@ -20,19 +22,35 @@ import java.util.*
  * Aggregate deals with linked contacts, where there will be one record per group of linked contacts
  * Raw deals with the individual contacts
  */
-abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHandler {
+abstract class FlutterContactPluginInstance : ContactExtensions,
+    FlutterPlugin, BinaryMessenger.BinaryMessageHandler {
 
-    abstract val registrar: Registrar
+    abstract val messageChannelName: String
+
+    var aggregatePlugin = FlutterAggregateContactPlugin()
+    var rawPlugin = FlutterRawContactPlugin()
+
+
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        aggregatePlugin.onAttachedToEngine(binding)
+        rawPlugin.onAttachedToEngine(binding)
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        aggregatePlugin.onDetachedFromEngine(binding)
+        rawPlugin.onDetachedFromEngine(binding)
+    }
+
+
     abstract override val mode: ContactMode
 
     abstract val contactForms: FlutterContactForms
 
     override val resolver: ContentResolver
-        get() = registrar.context().contentResolver
+        get() = context.contentResolver
 
-    protected val context: Context get() = registrar.context()
+    protected abstract val context: Context
 
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
     protected fun getContacts(query: String?, withThumbnails: Boolean, photoHighResolution: Boolean,
                               sortBy: String? = null,
                               phoneQuery: Boolean?, offset: Int?, limit: Int?): StructList {
@@ -307,7 +325,8 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
     }
 
     var contentObserver: ContactsContentObserver? = null
-    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+
+    fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         if (events != null) {
             try {
                 val contentObserver = ContactsContentObserver(events, Handler(context.mainLooper))
@@ -321,7 +340,8 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
         }
     }
 
-    override fun onCancel(arguments: Any?) {
+
+    fun onCancel(arguments: Any?) {
 
         when (val observer = contentObserver) {
             null -> {
@@ -333,5 +353,7 @@ abstract class FlutterContactPlugin() : ContactExtensions, EventChannel.StreamHa
             }
         }
     }
+
+
 }
 

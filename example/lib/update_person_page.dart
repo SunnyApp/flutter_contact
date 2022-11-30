@@ -1,7 +1,5 @@
 import 'package:flexidate/flexidate.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:sunny_dart/sunny_dart.dart';
 

@@ -1,11 +1,9 @@
-import 'package:flexidate/flexidate.dart';
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_contact/contacts.dart';
-import 'package:flutter_contact/date_components_compat.dart';
-import 'package:flutter_contact/paging_iterable.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quiver/iterables.dart';
 
 import 'mock_contact_service.dart';
 

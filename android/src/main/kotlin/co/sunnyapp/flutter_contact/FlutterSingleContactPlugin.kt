@@ -3,8 +3,7 @@
 package co.sunnyapp.flutter_contact
 
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -19,13 +18,12 @@ const val flutterRawContactsEventName = "github.com/sunnyapp/flutter_single_cont
 /**
  * Instance of plugin that deals with non-unified single contacts
  */
-class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
+class FlutterRawContactPlugin(override val context: FlutterPlugin.FlutterPluginBinding) : FlutterContactPluginInstance(),
         MethodCallHandler, EventChannel.StreamHandler {
 
     override val mode = ContactMode.SINGLE
-    override val contactForms = FlutterContactForms(this, registrar)
+    override val contactForms = FlutterContactForms(this)
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
         try {
             when (call.method) {

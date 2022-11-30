@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contact/contacts.dart';
 import 'package:flutter_contact_example/person_details_page.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:sunny_platform_widgets/sunny_platform_widgets.dart';
 import 'package:full_text_search/full_text_search.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_config/logging_config.dart';

@@ -3,8 +3,7 @@
 package co.sunnyapp.flutter_contact
 
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -19,14 +18,13 @@ const val flutterContactsEventName = "github.com/sunnyapp/flutter_unified_contac
 /**
  * The variant that operates on Aggregate contacts vs raw contacts
  */
-class FlutterAggregateContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
+class FlutterAggregateContactPlugin() : FlutterContactPluginInstance(),
         MethodCallHandler {
 
     override val contactForms = FlutterContactForms(this, registrar)
 
     override val mode = ContactMode.UNIFIED
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
         try {
             when (call.method) {

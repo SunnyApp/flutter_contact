@@ -396,7 +396,7 @@ class ContactDate {
   final FlexiDate? date;
   final String? value;
 
-  ContactDate.ofDate({this.label, required FlexiDate this.date})
+  ContactDate.ofDate({this.label, required this.date})
       : value = "$date";
 
   ContactDate.ofValue({

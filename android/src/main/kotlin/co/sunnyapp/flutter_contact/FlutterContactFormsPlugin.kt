@@ -6,16 +6,37 @@ import android.content.ContentProviderOperation
 import android.content.ContentValues
 import android.content.Intent
 import android.provider.ContactsContract
-import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 
+//import io.flutter.plugin.common.MethodChannel.Result
+//import io.flutter.plugin.common.PluginRegistry
+
 /// Class that facilitates edit/add contacts
-class FlutterContactForms(private val plugin: FlutterContactPlugin, private val registrar: PluginRegistry.Registrar) : PluginRegistry.ActivityResultListener {
-    init {
-        registrar.addActivityResultListener(this)
+class FlutterContactForms(private val plugin: FlutterContactPluginInstance, val result: MethodChannel.Result) : ActivityAware,
+    PluginRegistry.ActivityResultListener {
+
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        binding.addActivityResultListener(this)
+
     }
 
-    var result: Result? = null
+    override fun onDetachedFromActivityForConfigChanges() {
+
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+
+    }
+
+    override fun onDetachedFromActivity() {
+
+    }
+
+//    var result: Result? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?): Boolean {
         val success = when (requestCode) {
             REQUEST_OPEN_EXISTING_CONTACT, REQUEST_OPEN_CONTACT_FORM -> when (val uri = intent?.data) {

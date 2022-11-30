@@ -1,28 +1,27 @@
 name: flutter_contact_example
 description: Demonstrates how to use the flutter_contact plugin
 environment: 
-  sdk: '>=2.12.0 <3.0.0'
-  flutter: ^1.10.0
+  sdk: '>=2.17.0 <3.0.0'
 dependencies: 
   collection: ^1.16.0
-  cupertino_icons: ^1.0.4
-  equatable: ^2.0.3
-  flutter_platform_widgets: ^1.9.5
+  cupertino_icons: ^1.0.5
+  equatable: ^2.0.5
   intl: ^0.17.0
   logging: ^1.0.2
-  logging_config: ^0.6.7+7
-  permission_handler: ^9.2.0
-  quiver: ^3.0.1
-  uuid: ^3.0.4
-  flexidate: 
-    path: /Users/ericm/sunny/player_rank/packages/flexidate
+  permission_handler: ^10.2.0
+  quiver: ^3.0.1+1
+  uuid: ^3.0.6
+  sunny_platform_widgets: 
+    path: /Users/ericm/sunny/trippi_plugins/sunny_platform_widgets
+  flutter_contact: 
+    path: /Users/ericm/sunny/trippi_plugins/flutter_contact
   flutter: 
     sdk: flutter
   full_text_search: 
-    path: /Users/ericm/sunny/player_rank/packages/full_text_search
+    path: /Users/ericm/sunny/trippi_plugins/full_text_search
+  logging_config: 
+    path: /Users/ericm/sunny/trippi_plugins/logging_config
 dev_dependencies: 
-  flutter_contact: 
-    path: /Users/ericm/sunny/player_rank/packages/flutter_contact
   flutter_test: 
     sdk: flutter
 flutter: 

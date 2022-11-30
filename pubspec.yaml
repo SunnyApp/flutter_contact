@@ -4,22 +4,23 @@ homepage: https://github.com/SunnyApp/flutter_contact
 description: A Flutter plugin to retrieve, create and save contacts and contact-related events on Android and iOS devices.
 maintainer: Eric Martineau
 environment: 
-  sdk: '>=2.14.0 <3.0.0'
+  sdk: '>=2.17.0 <3.0.0'
   flutter: '>=1.10.0'
 dependencies: 
   collection: ^1.16.0
-  equatable: ^2.0.3
+  equatable: ^2.0.5
   intl: ^0.17.0
   logging: ^1.0.2
-  logging_config: ^0.6.7+7
   quiver: ^3.0.1+1
-  uuid: ^3.0.5
+  uuid: ^3.0.6
   dartxx: 
-    path: /Users/ericm/sunny/player_rank/packages/dartxx
+    path: /Users/ericm/sunny/trippi_plugins/dartxx
   flexidate: 
-    path: /Users/ericm/sunny/player_rank/packages/flexidate
+    path: /Users/ericm/sunny/trippi_plugins/flexidate
   flutter: 
     sdk: flutter
+  logging_config: 
+    path: /Users/ericm/sunny/trippi_plugins/logging_config
 dev_dependencies: 
   pedantic: ^1.11.1
   flutter_test: 
