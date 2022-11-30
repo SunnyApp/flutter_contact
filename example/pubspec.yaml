@@ -10,19 +10,28 @@ dependencies:
   flutter_platform_widgets: ^1.9.5
   intl: ^0.17.0
   logging: ^1.0.2
-  logging_config: ^0.6.7+7
   permission_handler: ^9.2.0
   quiver: ^3.0.1
   uuid: ^3.0.4
+  logging_config: 
+    git: 
+      url: git@github.com:SunnyApp/logging_config
+      ref: trippi_app
   flexidate: 
-    path: /Users/ericm/sunny/player_rank/packages/flexidate
+    git: 
+      url: git@github.com:TrippiApp/flexidate
+      ref: trippi_app
   flutter: 
     sdk: flutter
   full_text_search: 
-    path: /Users/ericm/sunny/player_rank/packages/full_text_search
+    git: 
+      url: git@github.com:SunnyApp/full_text_search
+      ref: trippi_app
 dev_dependencies: 
   flutter_contact: 
-    path: /Users/ericm/sunny/player_rank/packages/flutter_contact
+    git: 
+      url: git@github.com:SunnyApp/flutter_contact
+      ref: trippi_app
   flutter_test: 
     sdk: flutter
 flutter: 

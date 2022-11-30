@@ -11,13 +11,20 @@ dependencies:
   equatable: ^2.0.3
   intl: ^0.17.0
   logging: ^1.0.2
-  logging_config: ^0.6.7+7
   quiver: ^3.0.1+1
   uuid: ^3.0.5
+  logging_config: 
+    git: 
+      url: git@github.com:SunnyApp/logging_config
+      ref: trippi_app
   dartxx: 
-    path: /Users/ericm/sunny/player_rank/packages/dartxx
+    git: 
+      url: git@github.com:ericmartineau/dartxx.git
+      ref: trippi_app
   flexidate: 
-    path: /Users/ericm/sunny/player_rank/packages/flexidate
+    git: 
+      url: git@github.com:TrippiApp/flexidate
+      ref: trippi_app
   flutter: 
     sdk: flutter
 dev_dependencies: 
