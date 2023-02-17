@@ -13,7 +13,7 @@ import Flutter
 var flutterResult: FlutterResult? = nil
 
 @available(iOS 9.0, *)
-extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
+extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate, CNContactPickerDelegate {
     
     
     func openContactInsertForm(result: @escaping FlutterResult, contact: CNContact?=nil) ->  [String:Any]? {
@@ -76,6 +76,62 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
                                             message: "Error opening form: \(error.localizedDescription)")
         }
     }
+
+    func openContactPicker(result: @escaping FlutterResult) {
+        flutterResult = result
+        DispatchQueue.main.async {
+          let contactPicker = CNContactPickerViewController()
+          contactPicker.delegate = self
+          var rvc = UIApplication.shared.keyWindow?.rootViewController
+          while let nextView = rvc?.presentedViewController {
+            rvc = nextView
+          }
+          rvc?.present(contactPicker, animated:true, completion: nil)
+        }
+    }
+
+    func insertOrUpdateContactViaPicker(result: @escaping FlutterResult, contact: CNContact?=nil) -> [String:Any]? {
+        flutterResult = result
+        let contact = contact ?? CNMutableContact()
+        DispatchQueue.main.async {
+            let cnvc = CNContactViewController(forUnknownContact:contact)
+            cnvc.delegate = self
+            cnvc.contactStore = CNContactStore()
+//             cnvc.displayedPropertyKeys = [CNContactPhoneNumbersKey]
+            cnvc.allowsActions = false
+            cnvc.allowsEditing = false
+            cnvc.edgesForExtendedLayout = []
+            cnvc.view.layoutIfNeeded()
+            let navigationController = UINavigationController .init(rootViewController: cnvc)
+            if #available(iOS 13.0, *) {
+                // use the feature available in iOS 13 or later
+                navigationController.navigationBar.backgroundColor = .systemBackground
+            } else {
+                navigationController.navigationBar.backgroundColor = .white
+            }
+            var rvc = UIApplication.shared.keyWindow?.rootViewController
+            while let nextView = rvc?.presentedViewController {
+                rvc = nextView
+            }
+            rvc?.present(navigationController, animated: true, completion: nil)
+        }
+        return nil
+    }
+
+    //MARK:- CNContactPickerDelegate Method
+    public func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+        if let result = flutterResult {
+          result(contactResult(self.mode, contact: contact))
+          flutterResult = nil
+        }
+    }
+
+    public func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+        if let result = flutterResult {
+          result(contactFailResult(code: ErrorCodes.formOperationCancelled.description))
+          flutterResult = nil
+        }
+    }
     
     public func contactViewController(_ viewController: CNContactViewController, didCompleteWith contact: CNContact?) {
         viewController.dismiss(animated: true, completion: nil)
@@ -109,12 +165,12 @@ extension SwiftFlutterContactPlugin: CNContactViewControllerDelegate {
 }
 
 func contactFailResult(code: String)-> [String:Any] {
-    return ["successful": false, "code": code]
+    return ["success": false, "code": code]
     
 }
 
 @available(iOS 9.0, *)
 func contactResult(_ mode: ContactMode, contact:CNContact)-> [String:Any] {
-    return ["successful": true, "contact": contact.toDictionary(mode)]
+    return ["success": true, "contact": contact.toDictionary(mode)]
     
 }

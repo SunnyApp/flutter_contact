@@ -153,7 +153,7 @@ class PagingStream<T> extends Stream<T> {
     _controller ??= StreamController(
       onListen: () => _resume(),
       onCancel: () {
-//        if (!_controller.isClosed) _controller.close();
+        if (!_controller!.isClosed) _controller!.close();
       },
       onPause: () => _isPaused = true,
       onResume: () => _resume(),

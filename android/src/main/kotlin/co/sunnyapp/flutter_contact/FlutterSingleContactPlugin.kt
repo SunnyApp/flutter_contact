@@ -3,14 +3,12 @@
 package co.sunnyapp.flutter_contact
 
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
 const val flutterRawContactsChannelName = "github.com/sunnyapp/flutter_single_contact"
@@ -19,11 +17,9 @@ const val flutterRawContactsEventName = "github.com/sunnyapp/flutter_single_cont
 /**
  * Instance of plugin that deals with non-unified single contacts
  */
-class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContactPlugin(),
-        MethodCallHandler, EventChannel.StreamHandler {
+class FlutterRawContactPlugin : BaseFlutterContactPlugin(), MethodCallHandler {
 
     override val mode = ContactMode.SINGLE
-    override val contactForms = FlutterContactForms(this, registrar)
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -88,6 +84,15 @@ class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContac
                             ?: emptyMap<String, Any?>())
                     contactForms.openContactInsertForm(result, mode, contactFromArgs)
                 }
+                "openContactPicker" -> {
+                    contactForms.openContactPicker(result, mode)
+                }
+                "insertOrUpdateContactViaPicker" -> {
+                    val contactFromArgs = Contact.fromMap(mode, call.arguments as? Map<String, *>
+                            ?: emptyMap<String, Any?>())
+                    println(contactFromArgs.toMap())
+                    contactForms.insertOrUpdateContactViaPicker(result, mode, contactFromArgs)
+                }
                 else -> result.notImplemented()
             }
 
@@ -96,14 +101,18 @@ class FlutterRawContactPlugin(override val registrar: Registrar) : FlutterContac
         }
     }
 
-    companion object {
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), flutterRawContactsChannelName)
-            val events = EventChannel(registrar.messenger(), flutterRawContactsEventName)
-            val plugin = FlutterRawContactPlugin(registrar)
-            channel.setMethodCallHandler(plugin)
-            events.setStreamHandler(plugin)
+    override fun initInstance(applicationContext: Context, messenger: BinaryMessenger, registrar: PluginRegistry.Registrar?) {
+        methodChannel = MethodChannel(messenger, flutterRawContactsChannelName)
+        eventChannel = EventChannel(messenger, flutterRawContactsEventName)
+        methodChannel!!.setMethodCallHandler(this)
+        eventChannel!!.setStreamHandler(this)
+        context = applicationContext
+        contactForms = if (registrar == null) {
+            // initializing the instance with v2 embedding
+            FlutterContactForms(this, context)
+        } else {
+            // initializing the instance with v1 embedding
+            FlutterContactFormsOld(this, registrar)
         }
     }
 }
