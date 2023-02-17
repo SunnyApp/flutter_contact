@@ -41,10 +41,14 @@ abstract class BaseFlutterContactForms(private val plugin: BaseFlutterContactPlu
                         false
                     }
                     else -> {
-                        result?.success(mapOf(
-                                "success" to true,
-                                "contact" to plugin.getContact(ContactKeys(plugin.mode, contactIdString.toLong()),
-                                        withThumbnails = false, photoHighResolution = false)))
+                        try {
+                            result?.success(mapOf(
+                                    "success" to true,
+                                    "contact" to plugin.getContact(ContactKeys(plugin.mode, contactIdString.toLong()),
+                                            withThumbnails = false, photoHighResolution = false)))
+                        } catch (e: MethodCallException) {
+                            result?.success(mapOf("success" to false, "code" to e.code))
+                        }
                         true
                     }
                 }
@@ -60,10 +64,14 @@ abstract class BaseFlutterContactForms(private val plugin: BaseFlutterContactPlu
                         false
                     }
                     else -> {
-                        result?.success(mapOf(
-                                "success" to true,
-                                "contact" to plugin.getContact(ContactKeys(plugin.mode, contactIdString.toLong()),
-                                        withThumbnails = false, photoHighResolution = false)))
+                        try {
+                            result?.success(mapOf(
+                                    "success" to true,
+                                    "contact" to plugin.getContact(ContactKeys(plugin.mode, contactIdString.toLong()),
+                                            withThumbnails = false, photoHighResolution = false)))
+                        } catch (e: MethodCallException) {
+                            result?.success(mapOf("success" to false, "code" to e.code))
+                        }
                         true
                     }
                 }
