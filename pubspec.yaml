@@ -7,18 +7,18 @@ environment:
   sdk: '>=2.14.0 <3.0.0'
   flutter: '>=1.10.0'
 dependencies: 
-  collection: ^1.17.1
+  collection: ^1.17.2
   equatable: ^2.0.5
-  intl: ^0.18.0
-  logging: ^1.1.1
+  intl: ^0.18.1
+  logging: 1.2.0
   quiver: ^3.0.1+1
-  uuid: ^3.0.0
+  uuid: ^3.0.7
   dartxx: 
-    path: /Users/ericm/reliveit/checkout/ericmartineau/dartxx
+    path: /Users/ericm/aesthetika/checkout/ericmartineau/dartxx
   flexidate: 
-    path: /Users/ericm/reliveit/checkout/ericmartineau/flexidate
+    path: /Users/ericm/aesthetika/checkout/ericmartineau/flexidate
   logging_config: 
-    path: /Users/ericm/reliveit/checkout/SunnyApp/logging_config
+    path: /Users/ericm/aesthetika/checkout/SunnyApp/logging_config
   flutter: 
     sdk: flutter
 dev_dependencies: 
