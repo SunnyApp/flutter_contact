@@ -10,12 +10,12 @@ To use this plugin, add `flutter_contact` as a [dependency in your `pubspec.yaml
 For example:  
 ```yaml  
 dependencies:  
-    flutter_contact: ^0.6.1
+    flutter_contact: ^0.9.1+7
 ```
   
 ## Permissions  
 ### Android  
-Add the following permissions to your AndroidManifest.xml:  
+Add the following permissions to your `AndroidManifest.xml`:  
   
 ```xml  
 <uses-permission android:name="android.permission.READ_CONTACTS" />  
