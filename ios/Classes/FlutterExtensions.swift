@@ -197,18 +197,21 @@ extension DComponents {
 }
 
 extension DateComponents: DComponents {
+    // As per crash reports on iOS 17, the fields have nil value.
+    // Using "!" crashes the app.
+    // So returning "0" as default value, if nil.
     var year: Int {
-        get { self.value(for: .year)! }
+        get { self.value(for: .year) ?? 0 }
         set(value) { self.setValue(value, for: .year) }
     }
     
     var month: Int {
-        get { self.value(for: .month)! }
+        get { self.value(for: .month) ?? 0 }
         set(value) { self.setValue(value, for: .month) }
     }
     
     var day: Int {
-        get { self.value(for: .day)! }
+        get { self.value(for: .day) ?? 0 }
         set(value) { self.setValue(value, for: .day) }
     }
 }
