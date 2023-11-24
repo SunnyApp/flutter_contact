@@ -21,7 +21,7 @@ dependencies:
   logging: ^1.0.2
   logging_config: ^0.6.7+7
   quiver: ^3.0.1+1
-  uuid: ^3.0.5
+  uuid: ^4.2.1
 
 dev_dependencies:
   flutter_test:
